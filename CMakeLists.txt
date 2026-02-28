@@ -41,39 +41,14 @@ target_include_directories(tax
         $<INSTALL_INTERFACE:include>
 )
 
-# -------------------------------
-# Optional dependency: Eigen
-# -------------------------------
-# Contract:
-# - Build tree: if Eigen isn't installed, we may FetchContent it so builds work.
-# - Install/export: tax does NOT export Eigen; installed consumers must provide Eigen.
 if(TAX_ENABLE_EIGEN)
-    include(FetchContent)
-
     find_package(Eigen3 QUIET)
-
-    if(NOT Eigen3_FOUND)
-        message(STATUS "Eigen3 not found, fetching via FetchContent...")
-
-        FetchContent_Declare(
-            eigen
-            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-            GIT_TAG 5.0.0
-        )
-        FetchContent_MakeAvailable(eigen)
-
-        # Provide a build-tree compatible Eigen3::Eigen target so we can link
-        # consistently without exporting Eigen's build targets.
-        if(NOT TARGET Eigen3::Eigen)
-            add_library(Eigen3::Eigen INTERFACE IMPORTED)
-            set_target_properties(Eigen3::Eigen PROPERTIES
-                INTERFACE_INCLUDE_DIRECTORIES "${eigen_SOURCE_DIR}"
-            )
-        endif()
+    if(Eigen3_FOUND)
+        target_link_libraries(tax INTERFACE Eigen3::Eigen)
+    else()
+        message(STATUS "Eigen3 not found, disabling TAX_ENABLE_EIGEN")
+        set(TAX_ENABLE_EIGEN OFF)
     endif()
-
-    # IMPORTANT: only ever reference Eigen3::Eigen (export-safe)
-    target_link_libraries(tax INTERFACE Eigen3::Eigen)
 endif()
 
 # -------------------------------
