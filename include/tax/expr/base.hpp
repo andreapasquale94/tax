@@ -1,11 +1,12 @@
 #pragma once
 
-#include <tax/utils/fwd.hpp>
-#include <tax/utils/combinatorics.hpp>
 #include <tax/kernels.hpp>
+#include <tax/utils/combinatorics.hpp>
+#include <tax/utils/fwd.hpp>
 #include <tax/utils/leaf.hpp>
 
-namespace tax {
+namespace tax
+{
 
 // =============================================================================
 // CRTP expression base
@@ -18,47 +19,53 @@ namespace tax {
  * @tparam N Maximum total polynomial order.
  * @tparam M Number of variables.
  */
-template <typename Derived, typename T, int N, int M>
-struct DAExpr {
-    using scalar_type                  = T;
-    static constexpr int  order        = N;
-    static constexpr int  nvars        = M;
-    static constexpr std::size_t ncoef = detail::numMonomials(N, M);
-    using coeff_array                  = std::array<T, ncoef>;
+template < typename Derived, typename T, int N, int M >
+struct DAExpr
+{
+    using scalar_type = T;
+    static constexpr int order = N;
+    static constexpr int nvars = M;
+    static constexpr std::size_t ncoef = detail::numMonomials( N, M );
+    using coeff_array = std::array< T, ncoef >;
 
     /// @brief Access the concrete expression implementation.
     [[nodiscard]] constexpr const Derived& self() const noexcept
-    { return static_cast<const Derived&>(*this); }
+    {
+        return static_cast< const Derived& >( *this );
+    }
 
     /**
      * @brief Evaluate this expression into `out`.
      * @param out Destination coefficient buffer.
      */
-    constexpr void evalTo(coeff_array& out) const noexcept { self().evalTo(out); }
+    constexpr void evalTo( coeff_array& out ) const noexcept { self().evalTo( out ); }
 
     /**
      * @brief Accumulate this expression into `out`.
      * @param out Destination buffer updated as `out += eval()`.
      */
-    constexpr void addTo(coeff_array& out) const noexcept {
+    constexpr void addTo( coeff_array& out ) const noexcept
+    {
         coeff_array tmp{};
-        self().evalTo(tmp);
-        detail::addInPlace<T, ncoef>(out, tmp);
+        self().evalTo( tmp );
+        detail::addInPlace< T, ncoef >( out, tmp );
     }
     /**
      * @brief Subtract this expression from `out`.
      * @param out Destination buffer updated as `out -= eval()`.
      */
-    constexpr void subTo(coeff_array& out) const noexcept {
+    constexpr void subTo( coeff_array& out ) const noexcept
+    {
         coeff_array tmp{};
-        self().evalTo(tmp);
-        detail::subInPlace<T, ncoef>(out, tmp);
+        self().evalTo( tmp );
+        detail::subInPlace< T, ncoef >( out, tmp );
     }
 
     /// @brief Materialize this expression as a coefficient array.
-    [[nodiscard]] constexpr coeff_array eval() const noexcept {
+    [[nodiscard]] constexpr coeff_array eval() const noexcept
+    {
         coeff_array out{};
-        self().evalTo(out);
+        self().evalTo( out );
         return out;
     }
 
@@ -66,18 +73,22 @@ struct DAExpr {
     [[nodiscard]] constexpr T value() const noexcept { return eval()[0]; }
 
     /// @brief Coefficient corresponding to multi-index `alpha`.
-    [[nodiscard]] constexpr T coeff(const MultiIndex<M>& alpha) const noexcept
-    { return eval()[detail::flatIndex<M>(alpha)]; }
+    [[nodiscard]] constexpr T coeff( const MultiIndex< M >& alpha ) const noexcept
+    {
+        return eval()[detail::flatIndex< M >( alpha )];
+    }
 
     /**
      * @brief Partial derivative selected by `alpha` at the expansion point.
      * @details Returns `coeff(alpha) * prod_i alpha[i]!`.
      */
-    [[nodiscard]] constexpr T derivative(const MultiIndex<M>& alpha) const noexcept {
+    [[nodiscard]] constexpr T derivative( const MultiIndex< M >& alpha ) const noexcept
+    {
         std::size_t fac = 1;
-        for (int i = 0; i < M; ++i) for (int j = 1; j <= alpha[i]; ++j) fac *= std::size_t(j);
-        return eval()[detail::flatIndex<M>(alpha)] * T(fac);
+        for ( int i = 0; i < M; ++i )
+            for ( int j = 1; j <= alpha[i]; ++j ) fac *= std::size_t( j );
+        return eval()[detail::flatIndex< M >( alpha )] * T( fac );
     }
 };
 
-} // namespace tax
+}  // namespace tax
