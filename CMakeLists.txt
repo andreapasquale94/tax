@@ -41,28 +41,39 @@ target_include_directories(tax
         $<INSTALL_INTERFACE:include>
 )
 
+# -------------------------------
+# Optional dependency: Eigen
+# -------------------------------
+# Contract:
+# - Build tree: if Eigen isn't installed, we may FetchContent it so builds work.
+# - Install/export: tax does NOT export Eigen; installed consumers must provide Eigen.
 if(TAX_ENABLE_EIGEN)
     include(FetchContent)
-    find_package(Eigen3 5 QUIET)
-    if(Eigen3_FOUND)
-        target_link_libraries(tax INTERFACE Eigen3::Eigen)
-    else()
+
+    find_package(Eigen3 QUIET)
+
+    if(NOT Eigen3_FOUND)
         message(STATUS "Eigen3 not found, fetching via FetchContent...")
+
         FetchContent_Declare(
             eigen
             GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
             GIT_TAG 5.0.0
         )
         FetchContent_MakeAvailable(eigen)
-        if(NOT TARGET eigen)
-            message(FATAL_ERROR "Fetched Eigen target is unavailable after dependency resolution")
+
+        # Provide a build-tree compatible Eigen3::Eigen target so we can link
+        # consistently without exporting Eigen's build targets.
+        if(NOT TARGET Eigen3::Eigen)
+            add_library(Eigen3::Eigen INTERFACE IMPORTED)
+            set_target_properties(Eigen3::Eigen PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${eigen_SOURCE_DIR}"
+            )
         endif()
-        target_include_directories(tax
-            INTERFACE
-                $<BUILD_INTERFACE:${eigen_SOURCE_DIR}>
-        )
-        target_link_libraries(tax INTERFACE $<INSTALL_INTERFACE:Eigen3::Eigen>)
     endif()
+
+    # IMPORTANT: only ever reference Eigen3::Eigen (export-safe)
+    target_link_libraries(tax INTERFACE Eigen3::Eigen)
 endif()
 
 # -------------------------------
@@ -101,6 +112,13 @@ install(EXPORT taxTargets
     NAMESPACE tax::
     DESTINATION ${TAX_INSTALL_CMAKEDIR}
 )
+
+# Configure whether installed package requires Eigen
+if(TAX_ENABLE_EIGEN)
+    set(TAX_CONFIG_EIGEN_DEP "find_dependency(Eigen3)")
+else()
+    set(TAX_CONFIG_EIGEN_DEP "")
+endif()
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/taxConfig.cmake.in"
