@@ -105,6 +105,21 @@ TEST(DAAccess, Coeff_Alpha) {
     EXPECT_NEAR(x.coeff({2}), 0.0, kTol);
 }
 
+TEST(DAAccess, Coeff_TemplateUnivariate) {
+    auto x = DA<4>::variable<0>({2.0});
+    EXPECT_NEAR(x.coeff<0>(), 2.0, kTol);
+    EXPECT_NEAR(x.coeff<1>(), 1.0, kTol);
+    EXPECT_NEAR(x.coeff<2>(), 0.0, kTol);
+}
+
+TEST(DAAccess, Coeff_TemplateBivariate) {
+    auto [x, y] = DAn<2,2>::variables({0.0, 0.0});
+    DAn<2,2> f = x*x + x*y + y*y;
+    EXPECT_NEAR((f.coeff<2,0>()), 1.0, kTol);
+    EXPECT_NEAR((f.coeff<1,1>()), 1.0, kTol);
+    EXPECT_NEAR((f.coeff<0,2>()), 1.0, kTol);
+}
+
 TEST(DAAccess, Derivative_FactorialFactor) {
     // (1+x)^2 = 1 + 2x + x^2: derivative at x=0:
     //   d/dx = 2 → derivative({1}) = c[1]*1! = 2
@@ -116,6 +131,14 @@ TEST(DAAccess, Derivative_FactorialFactor) {
     EXPECT_NEAR(a.derivative({2}), 2.0, kTol);
 }
 
+TEST(DAAccess, Derivative_TemplateUnivariate) {
+    DA<3> a{};
+    a[0]=1; a[1]=2; a[2]=1;
+    EXPECT_NEAR(a.derivative<0>(), 1.0, kTol);
+    EXPECT_NEAR(a.derivative<1>(), 2.0, kTol);
+    EXPECT_NEAR(a.derivative<2>(), 2.0, kTol);
+}
+
 TEST(DAAccess, Derivative_Bivariate) {
     // f(x,y) = x^2 + x*y + y^2 at (0,0): coefficients are exact
     // d^2f/dx^2 = 2 → coeff({2,0}) = 1, derivative({2,0}) = 1*2! = 2
@@ -124,6 +147,14 @@ TEST(DAAccess, Derivative_Bivariate) {
     EXPECT_NEAR(f.derivative({2,0}), 2.0, kTol);
     EXPECT_NEAR(f.derivative({0,2}), 2.0, kTol);
     EXPECT_NEAR(f.derivative({1,1}), 1.0, kTol);
+}
+
+TEST(DAAccess, Derivative_TemplateBivariate) {
+    auto [x, y] = DAn<2,2>::variables({0.0, 0.0});
+    DAn<2,2> f = x*x + x*y + y*y;
+    EXPECT_NEAR((f.derivative<2,0>()), 2.0, kTol);
+    EXPECT_NEAR((f.derivative<0,2>()), 2.0, kTol);
+    EXPECT_NEAR((f.derivative<1,1>()), 1.0, kTol);
 }
 
 TEST(DAAccess, Coeffs_ReturnsArray) {

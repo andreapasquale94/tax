@@ -54,8 +54,10 @@ class ParamFuncExpr
     static constexpr int N = E::order, M = E::nvars;
     using coeff_array = std::array< T, numMonomials( N, M ) >;
 
+    /// @brief Construct from operand and parameter.
     constexpr ParamFuncExpr( const E& e, P p ) noexcept : e_( e ), p_( p ) {}
 
+    /// @brief Evaluate parameterized function result into `out`.
     constexpr void evalTo( coeff_array& out ) const noexcept
     {
         if constexpr ( is_leaf_v< E > )
@@ -90,8 +92,10 @@ class BinFuncExpr
     static constexpr int N = L::order, M = L::nvars;
     using coeff_array = std::array< T, numMonomials( N, M ) >;
 
+    /// @brief Construct from left/right operands.
     constexpr BinFuncExpr( const L& l, const R& r ) noexcept : l_( l ), r_( r ) {}
 
+    /// @brief Evaluate binary function result into `out`.
     constexpr void evalTo( coeff_array& out ) const noexcept
     {
         if constexpr ( is_leaf_v< L > && is_leaf_v< R > )
@@ -122,6 +126,7 @@ class BinFuncExpr
 
 /**
  * @brief Expression node applying a ternary function kernel `Op` to three operands.
+ * @details Materializes operands as needed, then calls `Op::apply(out, a, b, c)`.
  */
 template < typename A, typename B, typename C, typename Op >
 class TerFuncExpr
@@ -137,10 +142,12 @@ class TerFuncExpr
     static constexpr int N = A::order, M = A::nvars;
     using coeff_array = std::array< T, numMonomials( N, M ) >;
 
+    /// @brief Construct from three operands.
     constexpr TerFuncExpr( const A& a, const B& b, const C& c ) noexcept : a_( a ), b_( b ), c_( c )
     {
     }
 
+    /// @brief Evaluate ternary function result into `out`.
     constexpr void evalTo( coeff_array& out ) const noexcept
     {
         auto materialize = []( const auto& e, coeff_array& buf ) {

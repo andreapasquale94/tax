@@ -9,7 +9,7 @@ using namespace tax;
 
 static constexpr double kTol  = 1e-10;
 
-/// Check that every coefficient of two DA values is within tol of each other.
+/// @brief Check that every coefficient of two DA values is within `tol`.
 template <typename DA_>
 static void ExpectCoeffsNear(const DA_& a, const DA_& b,
                              double tol = kTol) {
@@ -17,7 +17,7 @@ static void ExpectCoeffsNear(const DA_& a, const DA_& b,
         EXPECT_NEAR(double(a[k]), double(b[k]), tol) << "  coeff k=" << k;
 }
 
-/// Check that every coefficient of a DA value matches the given array.
+/// @brief Check that every coefficient of a DA value matches `expected`.
 template <typename DA_, std::size_t S>
 static void ExpectCoeffsNear(const DA_& a,
                              const std::array<typename DA_::coeff_array::value_type, S>& expected,

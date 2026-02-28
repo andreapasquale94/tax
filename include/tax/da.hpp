@@ -58,11 +58,11 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
         return TDA{ c };
     }
 
-    template < int I >
     /**
      * @brief Create variable `x_I` expanded around point `x0`.
      * @details The constant term is `x0[I]` and the `e_I` coefficient is `1`.
      */
+    template < int I >
     [[nodiscard]] static constexpr TDA variable( const point_type& x0 ) noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
@@ -138,6 +138,23 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     }
 
     /**
+     * @brief Coefficient selected by compile-time multi-index.
+     * @tparam Alpha Monomial exponents for each variable (size must be `M`).
+     */
+    template < int... Alpha >
+    [[nodiscard]] constexpr T coeff() const noexcept
+    {
+        static_assert( sizeof...( Alpha ) == M,
+                       "Coefficient multi-index arity must match number of variables" );
+        static_assert( ( ( Alpha >= 0 ) && ... ), "Coefficient exponents must be non-negative" );
+        constexpr int total_order = ( Alpha + ... + 0 );
+        static_assert( total_order <= N,
+                       "Coefficient multi-index total order exceeds DA truncation order" );
+        constexpr MultiIndex< M > alpha{ Alpha... };
+        return coeff( alpha );
+    }
+
+    /**
      * @brief Partial derivative selected by `alpha` at expansion point.
      * @details Returns `coeff(alpha) * prod_i alpha[i]!`.
      */
@@ -146,6 +163,22 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
         const auto id = detail::flatIndex< M >( alpha );
         const auto factor = derivative_factors_[id];
         return c_[id] * T( factor );
+    }
+
+    /**
+     * @brief Partial derivative selected by compile-time multi-index.
+     * @tparam Alpha Derivative orders for each variable (size must be `M`).
+     */
+    template < int... Alpha >
+    [[nodiscard]] constexpr T derivative() const noexcept
+    {
+        static_assert( sizeof...( Alpha ) == M,
+                       "Derivative multi-index arity must match number of variables" );
+        static_assert( ( ( Alpha >= 0 ) && ... ), "Derivative orders must be non-negative" );
+        constexpr int total_order = ( Alpha + ... + 0 );
+        static_assert( total_order <= N, "Derivative total order exceeds DA truncation order" );
+        constexpr MultiIndex< M > alpha{ Alpha... };
+        return derivative( alpha );
     }
 
     /**
