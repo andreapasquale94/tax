@@ -141,6 +141,12 @@ jobs:
           gcovr --root . build-coverage --xml-pretty --output build-coverage/coverage.xml
           gcovr --root . build-coverage --html-details --output build-coverage/coverage.html
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: build-coverage/coverage.xml
+          fail_ci_if_error: false
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
