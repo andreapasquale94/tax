@@ -5,11 +5,7 @@
 
 namespace da::detail {
 
-// =============================================================================
-// §3  Low-level coefficient-array kernels  (no heap; all in-place)
-// =============================================================================
-
-// ── §3a  Element-wise arithmetic ─────────────────────────────────────────────
+// -- Element-wise arithmetic --------------------------------------------------
 
 template <typename T, std::size_t S>
 constexpr void addInPlace(std::array<T, S>& o, const std::array<T, S>& r) noexcept
@@ -27,11 +23,7 @@ template <typename T, std::size_t S>
 constexpr void scaleInPlace(std::array<T, S>& o, T s) noexcept
 { for (auto& v : o) v *= s; }
 
-// ── §3b  Multivariate Cauchy product ─────────────────────────────────────────
-//
-//   (f·g)[alpha] = sum_{beta <= alpha (componentwise)} f[beta] · g[alpha-beta]
-//
-// Precondition: out, f, g are pairwise distinct arrays.
+// -- Multivariate Cauchy product ----------------------------------------------
 
 template <typename T, int N, int M>
 constexpr void cauchyProduct(
@@ -62,15 +54,7 @@ constexpr void cauchyProduct(
     for (int d = 0; d <= N; ++d) fillAlpha(fillAlpha, 0, d);
 }
 
-// ── §3c  Multivariate Cauchy accumulate ──────────────────────────────────────
-//
-//   out[alpha] += sum_{beta <= alpha} f[beta] · g[alpha-beta]
-//
-// Like cauchyProduct but ACCUMULATES into out rather than overwriting it.
-// This is the key kernel that enables Mul::addTo with zero temporaries when
-// both operands are leaves: cauchyAccumulate(out, l.coeffs(), r.coeffs()).
-//
-// Precondition: out, f, g are pairwise distinct arrays.
+// -- Multivariate Cauchy accumulate (out += f*g) ------------------------------
 
 template <typename T, int N, int M>
 constexpr void cauchyAccumulate(
@@ -100,15 +84,7 @@ constexpr void cauchyAccumulate(
     for (int d = 0; d <= N; ++d) fillAlpha(fillAlpha, 0, d);
 }
 
-// ── §3d  Series reciprocal ───────────────────────────────────────────────────
-//
-// Solve:  a · out = 1  (as truncated series)
-//
-// Recurrence (grlex order, degree by degree):
-//   out[0]     = 1 / a[0]
-//   out[alpha] = -(sum_{0<|beta|<=|alpha|, beta<=alpha} a[beta]·out[alpha-beta]) / a[0]
-//
-// Precondition: a[0] != 0, out != a (distinct arrays).
+// -- Series reciprocal: solve a * out = 1 -------------------------------------
 
 template <typename T, int N, int M>
 constexpr void seriesReciprocal(
@@ -151,10 +127,7 @@ constexpr void seriesReciprocal(
     for (int d = 0; d <= N; ++d) fillAlpha(fillAlpha, 0, d, d);
 }
 
-// ── §3d  Series square: out = a² ─────────────────────────────────────────────
-//
-// Delegates to cauchyProduct(out, a, a).
-// Precondition: out != a.
+// -- Series square: out = a^2 -------------------------------------------------
 
 template <typename T, int N, int M>
 constexpr void seriesSquare(
@@ -164,18 +137,7 @@ constexpr void seriesSquare(
     cauchyProduct<T, N, M>(out, a, a);
 }
 
-// ── §3e  Series cube: out = a³ via direct triple convolution ─────────────────
-//
-// Instead of computing a² first and then a·a² (which needs 2 extra arrays
-// beyond the input), we enumerate ordered 3-partitions directly:
-//
-//   out[alpha] = sum_{beta+gamma+delta=alpha}  a[beta] · a[gamma] · a[delta]
-//
-// This touches the input array exactly once per (alpha, beta, gamma) triple
-// and writes the result straight into out — using only 1 extra array (the
-// input snapshot held by the caller).
-//
-// Precondition: out != a.
+// -- Series cube: out = a^3 via direct triple convolution ---------------------
 
 template <typename T, int N, int M>
 constexpr void seriesCube(
@@ -238,20 +200,7 @@ constexpr void seriesCube(
     for (int d = 0; d <= N; ++d) fillAlpha(fillAlpha, 0, d);
 }
 
-// ── §3f  Series square root: solve g·g = a ───────────────────────────────────
-//
-// Recurrence (grlex order, degree by degree):
-//
-//   (g·g)[alpha] = 2·g[0]·g[alpha]
-//                + sum_{beta: 0<|beta|<|alpha|, beta<=alpha} g[beta]·g[alpha-beta]
-//                = a[alpha]
-//
-//   => g[alpha] = (a[alpha] - sum) / (2·g[0])
-//
-// Every g[alpha-beta] with |beta|>=1 is already computed when we reach alpha,
-// because we process in increasing degree order.
-//
-// Precondition: a[0] > 0, out != a.
+// -- Series square root: solve g*g = a ----------------------------------------
 
 template <typename T, int N, int M>
 constexpr void seriesSqrt(

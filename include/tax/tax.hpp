@@ -35,6 +35,6 @@
 #include <tax/expr/func_expr.hpp>
 #include <tax/expr/sum_expr.hpp>
 #include <tax/expr/product_expr.hpp>
-#include <tax/da_type.hpp>
+#include <tax/da.hpp>
 #include <tax/operators.hpp>
 #include <tax/aliases.hpp>

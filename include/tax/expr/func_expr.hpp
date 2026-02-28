@@ -6,19 +6,12 @@
 namespace da::detail {
 
 // =============================================================================
-// §7d  FuncExpr<E, Op>  — generic series-function expression node
+// FuncExpr<E, Op> — series-function expression node
 // =============================================================================
 //
-// Evaluates the sub-expression E, then applies a series-level kernel defined
-// by Op.  This is the "math" counterpart of UnaryExpr (which applies in-place
-// fixups): FuncExpr materialises E into a separate buffer first because the
-// kernel reads from one array and writes to another (out != a).
-//
-// Leaf optimisation: when E is a DA leaf, its coefficient storage is passed
-// directly to the kernel — no temporary needed (0 temps vs 1 temp).
-//
-// Op tags: OpSquare, OpCube, OpSqrt, OpReciprocal (defined in math_ops.hpp).
-// Op signature: static void apply<T>(array& out, const array& a)
+// Materialises E into a separate buffer, then applies a series kernel (Op).
+// Leaf optimisation: when E is a DA leaf, its coefficients are passed directly
+// to the kernel — no temporary needed.
 
 template <typename E, typename Op>
 class FuncExpr
@@ -33,12 +26,11 @@ public:
 
     constexpr void evalTo(coeff_array& out) const noexcept {
         if constexpr (is_leaf_v<E>) {
-            // Leaf: pass e_'s storage directly — out != e_.coeffs(), so no aliasing.
-            Op::template apply<T>(out, e_.coeffs());   // 0 temps
+            Op::template apply<T>(out, e_.coeffs());
         } else {
             coeff_array a{};
-            e_.evalTo(a);                              // materialise E into a
-            Op::template apply<T>(out, a);             // 1 temp
+            e_.evalTo(a);
+            Op::template apply<T>(out, a);
         }
     }
 

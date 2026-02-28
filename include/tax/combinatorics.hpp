@@ -4,10 +4,6 @@
 
 namespace da::detail {
 
-// =============================================================================
-// §2  Compile-time combinatorics and grlex flat-index formula
-// =============================================================================
-
 constexpr std::size_t binom(int n, int k) noexcept {
     if (k < 0 || n < 0 || k > n) return 0;
     if (k == 0 || k == n)        return 1;
@@ -17,7 +13,6 @@ constexpr std::size_t binom(int n, int k) noexcept {
     return r;
 }
 
-/// Total number of monomials of degree <= N in M variables: C(N+M, M).
 constexpr std::size_t numMonomials(int N, int M) noexcept { return binom(N + M, M); }
 
 template <int M>
@@ -27,14 +22,6 @@ constexpr int totalDegree(const da::MultiIndex<M>& a) noexcept {
     return d;
 }
 
-/// Flat grlex index of multi-index alpha.
-///
-///   offset = C(d+M-1, M)   — monomials of total degree < d
-///
-///   Within degree d:
-///     pos = sum_{i=0}^{M-2}  C(rem_i - alpha[i] + M-2-i,  M-1-i)
-///   where rem_i = d - alpha[0] - ... - alpha[i-1].
-///   Each term counts monomials with the same prefix but strictly larger alpha[i].
 template <int M>
 constexpr std::size_t flatIndex(const da::MultiIndex<M>& alpha) noexcept {
     static_assert(M >= 1);

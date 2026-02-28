@@ -5,43 +5,25 @@
 namespace da::detail {
 
 // =============================================================================
-// §6a  Arithmetic operation tags for BinExpr / ScalarExpr / UnaryExpr
+// Arithmetic operation tags for BinExpr / ScalarExpr / UnaryExpr
 // =============================================================================
 
-// -- Left-in-place binary ops (additive) ──────────────────────────────────────
-//
-// is_additive   = true  → BinExpr uses addTo/subTo on the right operand
-// negate_right  = false → OpAdd adds right;  true → OpSub subtracts right
-// is_convolution = false (not used for additive ops)
+// -- Additive binary ops ------------------------------------------------------
 
 struct OpAdd {
-    static constexpr bool leftInPlace    = true;   // legacy alias
-    static constexpr bool is_additive    = true;
-    static constexpr bool negate_right   = false;
-    static constexpr bool is_convolution = false;
-    template <typename T, std::size_t S>
-    static constexpr void fuse(std::array<T, S>& o, const std::array<T, S>& r) noexcept
-    { addInPlace<T, S>(o, r); }
+    static constexpr bool is_additive  = true;
+    static constexpr bool negate_right = false;
 };
 
 struct OpSub {
-    static constexpr bool leftInPlace    = true;
-    static constexpr bool is_additive    = true;
-    static constexpr bool negate_right   = true;
-    static constexpr bool is_convolution = false;
-    template <typename T, std::size_t S>
-    static constexpr void fuse(std::array<T, S>& o, const std::array<T, S>& r) noexcept
-    { subInPlace<T, S>(o, r); }
+    static constexpr bool is_additive  = true;
+    static constexpr bool negate_right = true;
 };
 
-// -- Non-additive binary ops (Cauchy / division) ───────────────────────────────
-//
-// is_convolution = true  → BinExpr uses cauchyAccumulate in addTo
-// is_convolution = false → BinExpr falls back to evalTo+addInPlace in addTo
+// -- Non-additive binary ops (Cauchy / division) ------------------------------
 
 template <int N, int M>
 struct OpMul {
-    static constexpr bool leftInPlace    = false;
     static constexpr bool is_additive    = false;
     static constexpr bool is_convolution = true;
     template <typename T>
@@ -54,7 +36,6 @@ struct OpMul {
 
 template <int N, int M>
 struct OpDiv {
-    static constexpr bool leftInPlace    = false;
     static constexpr bool is_additive    = false;
     static constexpr bool is_convolution = false;
     template <typename T>
@@ -69,11 +50,9 @@ struct OpDiv {
     }
 };
 
-// -- Scalar ops (0 temps, all in-place on out) ─────────────────────────────────
+// -- Scalar ops (0 temps, all in-place on out) --------------------------------
 
-struct OpScalarAddR { template <typename T, std::size_t S>
-    static constexpr void apply(std::array<T,S>& o, T s) noexcept { o[0] += s; } };
-struct OpScalarAddL { template <typename T, std::size_t S>
+struct OpScalarAdd { template <typename T, std::size_t S>
     static constexpr void apply(std::array<T,S>& o, T s) noexcept { o[0] += s; } };
 struct OpScalarSubR { template <typename T, std::size_t S>
     static constexpr void apply(std::array<T,S>& o, T s) noexcept { o[0] -= s; } };

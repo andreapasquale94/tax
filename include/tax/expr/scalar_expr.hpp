@@ -6,10 +6,8 @@
 namespace da::detail {
 
 // =============================================================================
-// §7c  ScalarExpr<E, Op>
+// ScalarExpr<E, Op> — scalar in-place expression node
 // =============================================================================
-// Evaluates E into out, then applies scalar Op in-place (0 additional temps).
-// Op signature: static void apply<T, S>(array<T,S>& out, T scalar)
 
 template <typename E, typename Op>
 class ScalarExpr

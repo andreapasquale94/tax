@@ -5,13 +5,8 @@
 namespace da::detail {
 
 // =============================================================================
-// §6b  Math operation tags for FuncExpr
+// Math operation tags for FuncExpr
 // =============================================================================
-//
-// Each tag wraps a series-level kernel.
-// Signature: static void apply<T>(array& out, const array& a)
-//   - `a` is the materialised input (never aliases `out`).
-//   - `out` receives the result.
 
 template <int N, int M>
 struct OpSquare {

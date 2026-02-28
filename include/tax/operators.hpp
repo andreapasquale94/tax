@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tax/da_type.hpp>
+#include <tax/da.hpp>
 #include <tax/expr/bin_expr.hpp>
 #include <tax/expr/unary_expr.hpp>
 #include <tax/expr/scalar_expr.hpp>
@@ -11,7 +11,7 @@
 namespace da {
 
 // =============================================================================
-// §9  Operator overloads and power/root free functions
+// Operator overloads and math free functions
 // =============================================================================
 
 template <typename L, typename R>
@@ -21,89 +21,65 @@ concept CompatibleDA =
 
 #define DA_BASE(E) DAExpr<E, typename E::scalar_type, E::order, E::nvars>
 
-// ── DA + DA  — four overloads for complete associativity flattening ──────────
-//
-// Every combination of SumExpr and other DA expressions is handled so that
-// a+b+c+d always produces SumExpr<A,B,C,D> regardless of parenthesisation.
-//
-// Overload priority (most specific wins via partial ordering):
-//   (4) SumExpr<Ls...> + SumExpr<Rs...>  →  SumExpr<Ls...,Rs...>   concat
-//   (2) SumExpr<Ls...> + DAExpr<R>       →  SumExpr<Ls...,R>        append
-//   (3) DAExpr<L>      + SumExpr<Rs...>  →  SumExpr<L,Rs...>        prepend
-//   (1) DAExpr<L>      + DAExpr<R>       →  SumExpr<L,R>            generic
+// -- DA + DA (four overloads for SumExpr flattening) --------------------------
 
-// (1) generic
 template <typename L, typename R> requires CompatibleDA<L, R>
 [[nodiscard]] constexpr auto operator+(const DA_BASE(L)& l, const DA_BASE(R)& r) noexcept
 { return detail::SumExpr<L, R>{l.self(), r.self()}; }
 
-// (2) left-extend
 template <typename... Ls, typename R>
 requires CompatibleDA<detail::SumExpr<Ls...>, R>
 [[nodiscard]] constexpr auto operator+(const detail::SumExpr<Ls...>& l,
                                        const DA_BASE(R)& r) noexcept
 { return l.template append<R>(r.self()); }
 
-// (3) right-extend
 template <typename L, typename... Rs>
 requires CompatibleDA<L, detail::SumExpr<Rs...>>
 [[nodiscard]] constexpr auto operator+(const DA_BASE(L)& l,
                                        const detail::SumExpr<Rs...>& r) noexcept
 { return r.template prepend<L>(l.self()); }
 
-// (4) concat
 template <typename... Ls, typename... Rs>
 requires CompatibleDA<detail::SumExpr<Ls...>, detail::SumExpr<Rs...>>
 [[nodiscard]] constexpr auto operator+(const detail::SumExpr<Ls...>& l,
                                        const detail::SumExpr<Rs...>& r) noexcept
 { return l.concat(r); }
 
-// ── DA - DA  — subtraction stays as BinExpr<OpSub> ───────────────────────────
-// Subtraction doesn't chain as naturally as addition (signs matter) and the
-// existing BinExpr<OpSub> with addTo/subTo recursion is already correct.
-// Notably: -(BinExpr<Sub>) dispatches via subTo correctly through sign flips.
+// -- DA - DA ------------------------------------------------------------------
 
 template <typename L, typename R> requires CompatibleDA<L, R>
 [[nodiscard]] constexpr auto operator-(const DA_BASE(L)& l, const DA_BASE(R)& r) noexcept
 { return detail::BinExpr<L, R, detail::OpSub>{l.self(), r.self()}; }
 
-// ── DA * DA  — two overloads: generic + left-extend ──────────────────────────
-//
-// Right-extension (DA * ProductExpr) and concat (Product * Product) are
-// intentionally omitted: multiplication is not commutative in the series sense
-// for non-scalar expansions and the left-associative chain a*b*c*d is the
-// common idiom.  The two overloads handle all typical usage.
-//
-// (1) generic: produces ProductExpr<L,R>
-// (2) left-extend: ProductExpr<Ls...> * R → ProductExpr<Ls..., R>
+// -- DA * DA (two overloads for ProductExpr flattening) -----------------------
 
-// (1) generic
 template <typename L, typename R> requires CompatibleDA<L, R>
 [[nodiscard]] constexpr auto operator*(const DA_BASE(L)& l, const DA_BASE(R)& r) noexcept
 { return detail::ProductExpr<L, R>{l.self(), r.self()}; }
 
-// (2) left-extend: ProductExpr<Ls...> * DA expr → ProductExpr<Ls..., R>
 template <typename... Ls, typename R>
 requires CompatibleDA<detail::ProductExpr<Ls...>, R>
 [[nodiscard]] constexpr auto operator*(const detail::ProductExpr<Ls...>& l,
                                        const DA_BASE(R)& r) noexcept
 { return l.template append<R>(r.self()); }
 
+// -- DA / DA ------------------------------------------------------------------
+
 template <typename L, typename R> requires CompatibleDA<L, R>
 [[nodiscard]] constexpr auto operator/(const DA_BASE(L)& l, const DA_BASE(R)& r) noexcept
 { return detail::BinExpr<L, R, detail::OpDiv<L::order, L::nvars>>{l.self(), r.self()}; }
 
-// ── Unary negation ────────────────────────────────────────────────────────────
+// -- Unary negation -----------------------------------------------------------
 
 template <typename E>
 [[nodiscard]] constexpr auto operator-(const DA_BASE(E)& e) noexcept
 { return detail::UnaryExpr<E, detail::OpNeg>{e.self()}; }
 
-// ── DA op scalar ─────────────────────────────────────────────────────────────
+// -- DA op scalar -------------------------------------------------------------
 
 template <typename E>
 [[nodiscard]] constexpr auto operator+(const DA_BASE(E)& e, typename E::scalar_type s) noexcept
-{ return detail::ScalarExpr<E, detail::OpScalarAddR>{e.self(), s}; }
+{ return detail::ScalarExpr<E, detail::OpScalarAdd>{e.self(), s}; }
 template <typename E>
 [[nodiscard]] constexpr auto operator-(const DA_BASE(E)& e, typename E::scalar_type s) noexcept
 { return detail::ScalarExpr<E, detail::OpScalarSubR>{e.self(), s}; }
@@ -114,11 +90,11 @@ template <typename E>
 [[nodiscard]] constexpr auto operator/(const DA_BASE(E)& e, typename E::scalar_type s) noexcept
 { return detail::ScalarExpr<E, detail::OpScalarDivR>{e.self(), s}; }
 
-// ── scalar op DA ─────────────────────────────────────────────────────────────
+// -- scalar op DA -------------------------------------------------------------
 
 template <typename E>
 [[nodiscard]] constexpr auto operator+(typename E::scalar_type s, const DA_BASE(E)& e) noexcept
-{ return detail::ScalarExpr<E, detail::OpScalarAddL>{e.self(), s}; }
+{ return detail::ScalarExpr<E, detail::OpScalarAdd>{e.self(), s}; }
 template <typename E>
 [[nodiscard]] constexpr auto operator-(typename E::scalar_type s, const DA_BASE(E)& e) noexcept
 { return detail::ScalarExpr<E, detail::OpScalarSubL>{e.self(), s}; }
@@ -131,27 +107,16 @@ template <typename E>
     return detail::ScalarExpr<Recip, detail::OpScalarMul>{Recip{e.self()}, s};
 }
 
-// ── Math free functions ─────────────────────────────────────────────────────
-//
-// Each returns a lazy FuncExpr<E, Op> node.  Materialisation (evalTo into the
-// caller's buffer) happens only when the expression is assigned to DA<T,N,M>
-// or when .eval() / .value() is called.
-//
-// Leaf optimisation: when E is a DA leaf, the input coefficients are passed
-// directly to the kernel — no temporary needed (0 temps vs 1 temp).
+// -- Math free functions ------------------------------------------------------
 
-/// f^2 via Cauchy self-convolution.
 template <typename E>
 [[nodiscard]] constexpr auto square(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpSquare<E::order, E::nvars>>{e.self()}; }
 
-/// f^3 via direct triple convolution (no intermediate f^2 array).
 template <typename E>
 [[nodiscard]] constexpr auto cube(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpCube<E::order, E::nvars>>{e.self()}; }
 
-/// Taylor series of sqrt(f) via the g*g = f recurrence.
-/// Precondition: e.value() > 0.
 template <typename E>
 [[nodiscard]] constexpr auto sqrt(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpSqrt<E::order, E::nvars>>{e.self()}; }
