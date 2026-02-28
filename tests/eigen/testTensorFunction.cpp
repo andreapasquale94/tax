@@ -1,4 +1,4 @@
-#include "testUtils.hpp"
+#include "../testUtils.hpp"
 #include <tax/eigen/tensor_function.hpp>
 
 // =============================================================================

@@ -56,7 +56,11 @@ if(TAX_ENABLE_EIGEN)
     if(NOT TARGET Eigen3::Eigen)
         message(FATAL_ERROR "Eigen3::Eigen target is unavailable after dependency resolution")
     endif()
-    target_link_libraries(tax INTERFACE Eigen3::Eigen)
+    target_link_libraries(tax
+        INTERFACE
+            $<BUILD_INTERFACE:Eigen3::Eigen>
+            $<INSTALL_INTERFACE:Eigen3::Eigen>
+    )
 endif()
 
 # -------------------------------
