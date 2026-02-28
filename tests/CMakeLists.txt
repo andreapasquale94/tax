@@ -28,6 +28,7 @@ set(TEST_SOURCES
     testExprMul.cpp
     testExprUnary.cpp
     testExprPower.cpp
+    testExprTrig.cpp
     testCompose.cpp
 )
 

@@ -121,6 +121,36 @@ template <typename E>
 [[nodiscard]] constexpr auto sqrt(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpSqrt<E::order, E::nvars>>{e.self()}; }
 
+template <typename E>
+[[nodiscard]] constexpr auto sin(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpSin<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto cos(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpCos<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto tan(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpTan<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto sincos(const DA_BASE(E)& e) noexcept {
+    using T = typename E::scalar_type;
+    constexpr int N = E::order, M = E::nvars;
+    using DAType = DA<T, N, M>;
+    using coeff_array = std::array<T, detail::numMonomials(N, M)>;
+
+    coeff_array sa{}, ca{};
+    if constexpr (detail::is_leaf_v<E>) {
+        detail::seriesSinCos<T, N, M>(sa, ca, e.self().coeffs());
+    } else {
+        coeff_array a{};
+        e.self().evalTo(a);
+        detail::seriesSinCos<T, N, M>(sa, ca, a);
+    }
+    return std::pair<DAType, DAType>{DAType{sa}, DAType{ca}};
+}
+
 #undef DA_BASE
 
 } // namespace da

@@ -44,4 +44,31 @@ struct OpReciprocal {
     { seriesReciprocal<T, N, M>(out, a); }
 };
 
+template <int N, int M>
+struct OpSin {
+    template <typename T>
+    static constexpr void apply(
+        std::array<T, numMonomials(N, M)>&       out,
+        const std::array<T, numMonomials(N, M)>& a) noexcept
+    { seriesSin<T, N, M>(out, a); }
+};
+
+template <int N, int M>
+struct OpCos {
+    template <typename T>
+    static constexpr void apply(
+        std::array<T, numMonomials(N, M)>&       out,
+        const std::array<T, numMonomials(N, M)>& a) noexcept
+    { seriesCos<T, N, M>(out, a); }
+};
+
+template <int N, int M>
+struct OpTan {
+    template <typename T>
+    static constexpr void apply(
+        std::array<T, numMonomials(N, M)>&       out,
+        const std::array<T, numMonomials(N, M)>& a) noexcept
+    { seriesTan<T, N, M>(out, a); }
+};
+
 } // namespace da::detail

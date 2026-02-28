@@ -247,4 +247,130 @@ constexpr void seriesSqrt(
     for (int d = 1; d <= N; ++d) fillAlpha(fillAlpha, 0, d, d);
 }
 
+// -- Series sin & cos: coupled recurrence via Euler homogeneity ---------------
+//
+//   d·s[α] =  Σ_{β+γ=α, |γ|≥1} |γ|·f[γ]·c[β]
+//   d·c[α] = -Σ_{β+γ=α, |γ|≥1} |γ|·f[γ]·s[β]
+//
+// where d = |α|, processed in graded order so all lower-degree terms are ready.
+
+template <typename T, int N, int M>
+constexpr void seriesSinCos(
+    std::array<T, numMonomials(N, M)>& s,
+    std::array<T, numMonomials(N, M)>& c,
+    const std::array<T, numMonomials(N, M)>& a) noexcept
+{
+    using std::sin; using std::cos;
+    s = {}; c = {};
+    s[0] = sin(a[0]);
+    c[0] = cos(a[0]);
+
+    da::MultiIndex<M> alpha{};
+    da::MultiIndex<M> beta{};
+
+    auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
+        if (var == M - 1) {
+            alpha[var] = rem;
+            const std::size_t ai = flatIndex<M>(alpha);
+            T sin_rhs = T{0};
+            T cos_rhs = T{0};
+            for (int db = 0; db < d; ++db) {
+                const T dg = T(d - db);
+                auto fillBeta = [&](auto& bself, int bvar, int brem) -> void {
+                    if (bvar == M - 1) {
+                        beta[bvar] = brem;
+                        if (beta[bvar] > alpha[bvar]) return;
+                        da::MultiIndex<M> gamma{};
+                        for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
+                        const T fg = a[flatIndex<M>(gamma)];
+                        sin_rhs += dg * fg * c[flatIndex<M>(beta)];
+                        cos_rhs += dg * fg * s[flatIndex<M>(beta)];
+                        return;
+                    }
+                    for (int b = 0; b <= std::min(brem, alpha[bvar]); ++b) {
+                        beta[bvar] = b;
+                        bself(bself, bvar + 1, brem - b);
+                    }
+                };
+                fillBeta(fillBeta, 0, db);
+            }
+            const T inv_d = T{1} / T(d);
+            s[ai] =  sin_rhs * inv_d;
+            c[ai] = -cos_rhs * inv_d;
+            return;
+        }
+        for (int k = rem; k >= 0; --k) { alpha[var] = k; self(self, var + 1, rem - k, d); }
+    };
+
+    for (int d = 1; d <= N; ++d) fillAlpha(fillAlpha, 0, d, d);
+}
+
+// -- Standalone sin / cos wrappers --------------------------------------------
+
+template <typename T, int N, int M>
+constexpr void seriesSin(
+    std::array<T, numMonomials(N, M)>&       out,
+    const std::array<T, numMonomials(N, M)>& a) noexcept
+{
+    std::array<T, numMonomials(N, M)> c{};
+    seriesSinCos<T, N, M>(out, c, a);
+}
+
+template <typename T, int N, int M>
+constexpr void seriesCos(
+    std::array<T, numMonomials(N, M)>&       out,
+    const std::array<T, numMonomials(N, M)>& a) noexcept
+{
+    std::array<T, numMonomials(N, M)> s{};
+    seriesSinCos<T, N, M>(s, out, a);
+}
+
+// -- Series tan: compute sin & cos, then solve c·t = s -----------------------
+
+template <typename T, int N, int M>
+constexpr void seriesTan(
+    std::array<T, numMonomials(N, M)>&       out,
+    const std::array<T, numMonomials(N, M)>& a) noexcept
+{
+    constexpr auto S = numMonomials(N, M);
+    std::array<T, S> s{}, c{};
+    seriesSinCos<T, N, M>(s, c, a);
+
+    // Solve c · out = s  degree by degree (same structure as seriesReciprocal)
+    out = {};
+    const T inv_c0 = T{1} / c[0];
+    da::MultiIndex<M> alpha{};
+    da::MultiIndex<M> beta{};
+
+    auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
+        if (var == M - 1) {
+            alpha[var] = rem;
+            const std::size_t ai = flatIndex<M>(alpha);
+            T rhs = s[ai];
+            for (int db = 1; db <= d; ++db) {
+                auto fillBeta = [&](auto& bself, int bvar, int brem) -> void {
+                    if (bvar == M - 1) {
+                        beta[bvar] = brem;
+                        if (beta[bvar] > alpha[bvar]) return;
+                        da::MultiIndex<M> gamma{};
+                        for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
+                        rhs -= c[flatIndex<M>(beta)] * out[flatIndex<M>(gamma)];
+                        return;
+                    }
+                    for (int b = 0; b <= std::min(brem, alpha[bvar]); ++b) {
+                        beta[bvar] = b;
+                        bself(bself, bvar + 1, brem - b);
+                    }
+                };
+                fillBeta(fillBeta, 0, db);
+            }
+            out[ai] = rhs * inv_c0;
+            return;
+        }
+        for (int k = rem; k >= 0; --k) { alpha[var] = k; self(self, var + 1, rem - k, d); }
+    };
+
+    for (int d = 0; d <= N; ++d) fillAlpha(fillAlpha, 0, d, d);
+}
+
 } // namespace da::detail
