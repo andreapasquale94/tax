@@ -128,6 +128,10 @@ template <typename E>
 // -- Math free functions ------------------------------------------------------
 
 template <typename E>
+[[nodiscard]] constexpr auto abs(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpAbs<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
 /// @brief Build lazy `square(e)` expression.
 [[nodiscard]] constexpr auto square(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpSquare<E::order, E::nvars>>{e.self()}; }
@@ -158,6 +162,43 @@ template <typename E>
 { return detail::FuncExpr<E, detail::OpTan<E::order, E::nvars>>{e.self()}; }
 
 template <typename E>
+[[nodiscard]] constexpr auto asin(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpAsin<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto acos(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpAcos<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto atan(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpAtan<E::order, E::nvars>>{e.self()}; }
+
+template <typename L, typename R> requires CompatibleDA<L, R>
+[[nodiscard]] constexpr auto atan2(const DA_BASE(L)& y, const DA_BASE(R)& x) noexcept
+{ return detail::BinFuncExpr<L, R, detail::OpAtan2<L::order, L::nvars>>{y.self(), x.self()}; }
+
+template <typename L, typename R> requires CompatibleDA<L, R>
+[[nodiscard]] constexpr auto hypot(const DA_BASE(L)& x, const DA_BASE(R)& y) noexcept
+{ return detail::BinFuncExpr<L, R, detail::OpHypot<L::order, L::nvars>>{x.self(), y.self()}; }
+
+template <typename A, typename B, typename C>
+requires CompatibleDA<A, B> && CompatibleDA<B, C>
+[[nodiscard]] constexpr auto hypot(const DA_BASE(A)& x, const DA_BASE(B)& y, const DA_BASE(C)& z) noexcept
+{ return detail::TerFuncExpr<A, B, C, detail::OpHypot3<A::order, A::nvars>>{x.self(), y.self(), z.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto sinh(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpSinh<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto cosh(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpCosh<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+[[nodiscard]] constexpr auto tanh(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpTanh<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
 /// @brief Build lazy natural logarithm expression `log(e)`.
 [[nodiscard]] constexpr auto log(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpLog<E::order, E::nvars>>{e.self()}; }
@@ -166,6 +207,43 @@ template <typename E>
 /// @brief Build lazy base-10 logarithm expression `log10(e)`.
 [[nodiscard]] constexpr auto log10(const DA_BASE(E)& e) noexcept
 { return detail::FuncExpr<E, detail::OpLog10<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+/// @brief Build lazy `exp(e)` expression.
+[[nodiscard]] constexpr auto exp(const DA_BASE(E)& e) noexcept
+{ return detail::FuncExpr<E, detail::OpExp<E::order, E::nvars>>{e.self()}; }
+
+template <typename E>
+/// @brief Build lazy `ipow(e, n)` expression (integer exponent).
+[[nodiscard]] constexpr auto ipow(const DA_BASE(E)& e, int n) noexcept
+{ return detail::ParamFuncExpr<E, detail::OpIPow<E::order, E::nvars>, int>{e.self(), n}; }
+
+template <typename E>
+/// @brief Build lazy `dpow(e, c)` expression (real exponent).
+[[nodiscard]] constexpr auto dpow(const DA_BASE(E)& e, typename E::scalar_type c) noexcept
+{ return detail::ParamFuncExpr<E, detail::OpDPow<E::order, E::nvars>, typename E::scalar_type>{e.self(), c}; }
+
+template <typename L, typename R> requires CompatibleDA<L, R>
+/// @brief Build lazy `tpow(f, g) = f^g = exp(g * log(f))` expression.
+[[nodiscard]] constexpr auto tpow(const DA_BASE(L)& l, const DA_BASE(R)& r) noexcept
+{ return detail::BinFuncExpr<L, R, detail::OpTPow<L::order, L::nvars>>{l.self(), r.self()}; }
+
+// -- pow overloads dispatching to ipow / dpow / tpow -------------------------
+
+template <typename E>
+/// @brief `pow(e, n)` with integer exponent dispatches to `ipow`.
+[[nodiscard]] constexpr auto pow(const DA_BASE(E)& e, int n) noexcept
+{ return ipow(e, n); }
+
+template <typename E>
+/// @brief `pow(e, c)` with real exponent dispatches to `dpow`.
+[[nodiscard]] constexpr auto pow(const DA_BASE(E)& e, typename E::scalar_type c) noexcept
+{ return dpow(e, c); }
+
+template <typename L, typename R> requires CompatibleDA<L, R>
+/// @brief `pow(f, g)` with DA exponent dispatches to `tpow`.
+[[nodiscard]] constexpr auto pow(const DA_BASE(L)& l, const DA_BASE(R)& r) noexcept
+{ return tpow(l, r); }
 
 template <typename E>
 /**
@@ -187,6 +265,24 @@ template <typename E>
         detail::seriesSinCos<T, N, M>(sa, ca, a);
     }
     return std::pair<DAType, DAType>{DAType{sa}, DAType{ca}};
+}
+
+template <typename E>
+[[nodiscard]] constexpr auto sinhcosh(const DA_BASE(E)& e) noexcept {
+    using T = typename E::scalar_type;
+    constexpr int N = E::order, M = E::nvars;
+    using DAType = TDA<T, N, M>;
+    using coeff_array = std::array<T, detail::numMonomials(N, M)>;
+
+    coeff_array sha{}, cha{};
+    if constexpr (detail::is_leaf_v<E>) {
+        detail::seriesSinhCosh<T, N, M>(sha, cha, e.self().coeffs());
+    } else {
+        coeff_array a{};
+        e.self().evalTo(a);
+        detail::seriesSinhCosh<T, N, M>(sha, cha, a);
+    }
+    return std::pair<DAType, DAType>{DAType{sha}, DAType{cha}};
 }
 
 #undef DA_BASE

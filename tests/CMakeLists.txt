@@ -30,6 +30,9 @@ set(TEST_SOURCES
     testExprPower.cpp
     testExprTrig.cpp
     testExprLog.cpp
+    testExprPow.cpp
+    testExprHyp.cpp
+    testExprInvTrig.cpp
     testCompose.cpp
 )
 
