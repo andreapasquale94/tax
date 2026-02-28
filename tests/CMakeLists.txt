@@ -34,6 +34,7 @@ set(TEST_SOURCES
     testExprHyp.cpp
     testExprInvTrig.cpp
     testCompose.cpp
+    testEigenTensors.cpp
 )
 
 include(GoogleTest)

@@ -68,6 +68,12 @@ Supported operations include:
 - Unary math: `abs`, `square`, `cube`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`, `log`, `log10`, `exp`
 - Binary math: `pow`, `atan2`, `hypot`
 
+When built with `-DTAX_ENABLE_EIGEN=ON`, you can also include:
+
+```cpp
+#include <tax/eigen/tensors.hpp>
+```
+
 ## Quick Start (Univariate)
 
 ```cpp

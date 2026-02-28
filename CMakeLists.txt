@@ -7,6 +7,7 @@ project(tax VERSION 0.1.0 LANGUAGES CXX)
 # -------------------------------
 option(TAX_BUILD_TEST "Build and enable unittests" ON)
 option(TAX_BUILD_BENCH "Build benchmarks" ON)
+option(TAX_ENABLE_EIGEN "Enable Eigen tensor adapters" OFF)
 
 # -------------------------------
 # Compiler settings
@@ -39,13 +40,24 @@ target_include_directories(tax
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(tax INTERFACE)
 
-target_include_directories(tax
-    INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
+if(TAX_ENABLE_EIGEN)
+    include(FetchContent)
+    find_package(Eigen3 5 QUIET)
+    if(NOT Eigen3_FOUND)
+        message(STATUS "Eigen3 not found, fetching via FetchContent...")
+        FetchContent_Declare(
+            eigen
+            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+            GIT_TAG 5.0.0
+        )
+        FetchContent_MakeAvailable(eigen)
+    endif()
+    if(NOT TARGET Eigen3::Eigen)
+        message(FATAL_ERROR "Eigen3::Eigen target is unavailable after dependency resolution")
+    endif()
+    target_link_libraries(tax INTERFACE Eigen3::Eigen)
+endif()
 
 # -------------------------------
 # Benchmarks
