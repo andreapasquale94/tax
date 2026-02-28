@@ -34,11 +34,14 @@ set(TEST_SOURCES
     testExprHyp.cpp
     testExprInvTrig.cpp
     testExprErf.cpp
-    testTensorFunction.cpp
     testCompose.cpp
-    testEigenTypes.cpp
-    testEigenTensors.cpp
 )
+
+if(TAX_ENABLE_EIGEN)
+    file(GLOB EIGEN_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/eigen/*.cpp")
+    list(APPEND TEST_SOURCES ${EIGEN_TEST_SOURCES})
+endif()
+
 
 include(GoogleTest)
 

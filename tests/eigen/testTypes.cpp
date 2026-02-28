@@ -1,7 +1,5 @@
 #include "testUtils.hpp"
 
-#if __has_include(<Eigen/Core>)
-
 #include <tax/eigen/types.hpp>
 
 TEST(EigenTypes, VectorCommaInitializerFromVariables) {
@@ -44,9 +42,3 @@ TEST(EigenTypes, VariablesFromEigenDynamicVector) {
     EXPECT_NEAR(y.value(), 5.0, kTol);
     EXPECT_NEAR(z.value(), 6.0, kTol);
 }
-
-#else
-
-TEST(EigenTypes, HeaderUnavailable) { GTEST_SKIP() << "Eigen core headers not available"; }
-
-#endif

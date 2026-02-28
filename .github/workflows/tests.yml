@@ -76,6 +76,7 @@ jobs:
           cmake -S . -B build
           -DCMAKE_BUILD_TYPE=Release
           -DTAX_BUILD_BENCH=OFF
+          -DTAX_ENABLE_EIGEN=ON
 
       - name: Build
         run: cmake --build build -j 2
