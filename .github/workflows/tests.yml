@@ -7,11 +7,14 @@ on:
 
 jobs:
   build-and-test:
-    name: ${{ matrix.os }} / ${{ matrix.compiler }}
+    name: ${{ matrix.os }} / ${{ matrix.compiler }} / eigen-${{ matrix.eigen_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        eigen_version: ["3.4.0", "5.0.0"]
         include:
           - os: ubuntu-latest
             compiler: gcc
@@ -48,18 +51,14 @@ jobs:
         run: |
           sudo apt-get update
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y g++ libeigen3-dev
+            sudo apt-get install -y g++
           else
-            sudo apt-get install -y clang libeigen3-dev
+            sudo apt-get install -y clang
           fi
 
       - name: Install Homebrew GCC
         if: runner.os == 'macOS' && matrix.compiler == 'gcc'
         run: brew install gcc
-
-      - name: Install Homebrew Eigen
-        if: runner.os == 'macOS'
-        run: brew install eigen
 
       - name: Select Homebrew GCC binaries
         if: runner.os == 'macOS' && matrix.compiler == 'gcc'
@@ -74,6 +73,9 @@ jobs:
           cmake --version
           "$CC" --version
           "$CXX" --version
+
+      - name: Install Eigen ${{ matrix.eigen_version }}
+        run: bash tools/install_eigen.sh ${{ matrix.eigen_version }}
 
       - name: Configure
         run: >
