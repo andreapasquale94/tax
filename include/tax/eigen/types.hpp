@@ -1,7 +1,7 @@
 #pragma once
 
-#include <tax/da.hpp>
 #include <Eigen/Core>
+#include <tax/da.hpp>
 #include <tuple>
 #include <utility>
 

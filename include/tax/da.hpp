@@ -254,8 +254,7 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     {
         // Horner's method: c[N]*dx + c[N-1] ... *dx + c[0]
         T result = c_[N];
-        for ( int i = N - 1; i >= 0; --i )
-            result = result * dx + c_[i];
+        for ( int i = N - 1; i >= 0; --i ) result = result * dx + c_[i];
         return result;
     }
 

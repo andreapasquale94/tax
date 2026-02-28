@@ -14,8 +14,7 @@ template < typename T, int N, int M, int Rank >
 [[nodiscard]] auto value( const Eigen::Tensor< TDA< T, N, M >, Rank >& t )
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );
-    for ( Eigen::Index i = 0; i < t.size(); ++i )
-        out.data()[i] = t.data()[i].value();
+    for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].value();
     return out;
 }
 
@@ -29,8 +28,7 @@ template < typename T, int N, int M, int Rank >
                                const std::array< int, std::size_t( M ) >& alpha )
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );
-    for ( Eigen::Index i = 0; i < t.size(); ++i )
-        out.data()[i] = t.data()[i].derivative( alpha );
+    for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].derivative( alpha );
     return out;
 }
 

@@ -4,304 +4,345 @@
 // Constructors
 // =============================================================================
 
-TEST(DAConstruct, DefaultIsZero) {
-    DA<4> a;
-    for (std::size_t k = 0; k < DA<4>::ncoef; ++k)
-        EXPECT_EQ(a[k], 0.0) << "k=" << k;
+TEST( DAConstruct, DefaultIsZero )
+{
+    DA< 4 > a;
+    for ( std::size_t k = 0; k < DA< 4 >::ncoef; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
 }
 
-TEST(DAConstruct, ValueCtorSetsConstant) {
-    DA<4> a{3.14};
-    EXPECT_NEAR(a[0], 3.14, kTol);
-    for (std::size_t k = 1; k < DA<4>::ncoef; ++k)
-        EXPECT_EQ(a[k], 0.0) << "k=" << k;
+TEST( DAConstruct, ValueCtorSetsConstant )
+{
+    DA< 4 > a{ 3.14 };
+    EXPECT_NEAR( a[0], 3.14, kTol );
+    for ( std::size_t k = 1; k < DA< 4 >::ncoef; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
 }
 
-TEST(DAConstruct, CoeffArrayCtor) {
-    DA<3>::coeff_array c{1, 2, 3, 4};
-    DA<3> a{c};
-    for (std::size_t k = 0; k < DA<3>::ncoef; ++k)
-        EXPECT_NEAR(a[k], double(k + 1), kTol) << "k=" << k;
+TEST( DAConstruct, CoeffArrayCtor )
+{
+    DA< 3 >::coeff_array c{ 1, 2, 3, 4 };
+    DA< 3 > a{ c };
+    for ( std::size_t k = 0; k < DA< 3 >::ncoef; ++k )
+        EXPECT_NEAR( a[k], double( k + 1 ), kTol ) << "k=" << k;
 }
 
-TEST(DAConstruct, FromExpression) {
-    auto x = DA<4>::variable<0>({1.0});
-    DA<4> r = x + x;   // construct from expression
-    EXPECT_NEAR(r[0], 2.0, kTol);
-    EXPECT_NEAR(r[1], 2.0, kTol);
-    for (std::size_t k = 2; k < DA<4>::ncoef; ++k)
-        EXPECT_EQ(r[k], 0.0);
+TEST( DAConstruct, FromExpression )
+{
+    auto x = DA< 4 >::variable< 0 >( { 1.0 } );
+    DA< 4 > r = x + x;  // construct from expression
+    EXPECT_NEAR( r[0], 2.0, kTol );
+    EXPECT_NEAR( r[1], 2.0, kTol );
+    for ( std::size_t k = 2; k < DA< 4 >::ncoef; ++k ) EXPECT_EQ( r[k], 0.0 );
 }
 
 // =============================================================================
 // Variable factories
 // =============================================================================
 
-TEST(DAVariable, Univariate_Variable0) {
+TEST( DAVariable, Univariate_Variable0 )
+{
     // variable<0>({x0}) = x0 + 1*delta
-    auto x = DA<4>::variable<0>({3.0});
-    EXPECT_NEAR(x[0], 3.0, kTol);   // expansion point
-    EXPECT_NEAR(x[1], 1.0, kTol);   // linear coefficient = 1
-    for (std::size_t k = 2; k < DA<4>::ncoef; ++k)
-        EXPECT_EQ(x[k], 0.0) << "k=" << k;
+    auto x = DA< 4 >::variable< 0 >( { 3.0 } );
+    EXPECT_NEAR( x[0], 3.0, kTol );  // expansion point
+    EXPECT_NEAR( x[1], 1.0, kTol );  // linear coefficient = 1
+    for ( std::size_t k = 2; k < DA< 4 >::ncoef; ++k ) EXPECT_EQ( x[k], 0.0 ) << "k=" << k;
 }
 
-TEST(DAVariable, Bivariate_Variable0) {
-    auto x = DAn<3,2>::variable<0>({2.0, 5.0});
-    EXPECT_NEAR(x.coeff({0,0}), 2.0, kTol);   // expansion point for x
-    EXPECT_NEAR(x.coeff({1,0}), 1.0, kTol);   // dx/dx = 1
-    EXPECT_NEAR(x.coeff({0,1}), 0.0, kTol);   // dx/dy = 0
+TEST( DAVariable, Bivariate_Variable0 )
+{
+    auto x = DAn< 3, 2 >::variable< 0 >( { 2.0, 5.0 } );
+    EXPECT_NEAR( x.coeff( { 0, 0 } ), 2.0, kTol );  // expansion point for x
+    EXPECT_NEAR( x.coeff( { 1, 0 } ), 1.0, kTol );  // dx/dx = 1
+    EXPECT_NEAR( x.coeff( { 0, 1 } ), 0.0, kTol );  // dx/dy = 0
 }
 
-TEST(DAVariable, Bivariate_Variable1) {
-    auto y = DAn<3,2>::variable<1>({2.0, 5.0});
-    EXPECT_NEAR(y.coeff({0,0}), 5.0, kTol);   // expansion point for y
-    EXPECT_NEAR(y.coeff({1,0}), 0.0, kTol);   // dy/dx = 0
-    EXPECT_NEAR(y.coeff({0,1}), 1.0, kTol);   // dy/dy = 1
+TEST( DAVariable, Bivariate_Variable1 )
+{
+    auto y = DAn< 3, 2 >::variable< 1 >( { 2.0, 5.0 } );
+    EXPECT_NEAR( y.coeff( { 0, 0 } ), 5.0, kTol );  // expansion point for y
+    EXPECT_NEAR( y.coeff( { 1, 0 } ), 0.0, kTol );  // dy/dx = 0
+    EXPECT_NEAR( y.coeff( { 0, 1 } ), 1.0, kTol );  // dy/dy = 1
 }
 
-TEST(DAVariable, Variables_StructuredBinding) {
-    auto [x, y, z] = DAn<2,3>::variables({1.0, 2.0, 3.0});
-    EXPECT_NEAR(x.value(), 1.0, kTol);
-    EXPECT_NEAR(y.value(), 2.0, kTol);
-    EXPECT_NEAR(z.value(), 3.0, kTol);
+TEST( DAVariable, Variables_StructuredBinding )
+{
+    auto [x, y, z] = DAn< 2, 3 >::variables( { 1.0, 2.0, 3.0 } );
+    EXPECT_NEAR( x.value(), 1.0, kTol );
+    EXPECT_NEAR( y.value(), 2.0, kTol );
+    EXPECT_NEAR( z.value(), 3.0, kTol );
     // Each variable has coefficient 1 for its own direction only
-    EXPECT_NEAR(x.coeff({1,0,0}), 1.0, kTol);
-    EXPECT_NEAR(x.coeff({0,1,0}), 0.0, kTol);
-    EXPECT_NEAR(y.coeff({1,0,0}), 0.0, kTol);
-    EXPECT_NEAR(y.coeff({0,1,0}), 1.0, kTol);
-    EXPECT_NEAR(z.coeff({0,0,1}), 1.0, kTol);
+    EXPECT_NEAR( x.coeff( { 1, 0, 0 } ), 1.0, kTol );
+    EXPECT_NEAR( x.coeff( { 0, 1, 0 } ), 0.0, kTol );
+    EXPECT_NEAR( y.coeff( { 1, 0, 0 } ), 0.0, kTol );
+    EXPECT_NEAR( y.coeff( { 0, 1, 0 } ), 1.0, kTol );
+    EXPECT_NEAR( z.coeff( { 0, 0, 1 } ), 1.0, kTol );
 }
 
-TEST(DAVariable, Constant) {
-    auto c = DA<5>::constant(7.0);
-    EXPECT_NEAR(c.value(), 7.0, kTol);
-    for (std::size_t k = 1; k < DA<5>::ncoef; ++k)
-        EXPECT_EQ(c[k], 0.0);
+TEST( DAVariable, Constant )
+{
+    auto c = DA< 5 >::constant( 7.0 );
+    EXPECT_NEAR( c.value(), 7.0, kTol );
+    for ( std::size_t k = 1; k < DA< 5 >::ncoef; ++k ) EXPECT_EQ( c[k], 0.0 );
 }
 
 // =============================================================================
 // Element access
 // =============================================================================
 
-TEST(DAAccess, ReadWrite) {
-    DA<3> a;
-    a[0] = 1.0; a[1] = 2.0; a[2] = -1.0; a[3] = 0.5;
-    EXPECT_NEAR(a[0],  1.0, kTol);
-    EXPECT_NEAR(a[1],  2.0, kTol);
-    EXPECT_NEAR(a[2], -1.0, kTol);
-    EXPECT_NEAR(a[3],  0.5, kTol);
+TEST( DAAccess, ReadWrite )
+{
+    DA< 3 > a;
+    a[0] = 1.0;
+    a[1] = 2.0;
+    a[2] = -1.0;
+    a[3] = 0.5;
+    EXPECT_NEAR( a[0], 1.0, kTol );
+    EXPECT_NEAR( a[1], 2.0, kTol );
+    EXPECT_NEAR( a[2], -1.0, kTol );
+    EXPECT_NEAR( a[3], 0.5, kTol );
 }
 
-TEST(DAAccess, Value) {
-    DA<3> a{5.0};
-    EXPECT_NEAR(a.value(), 5.0, kTol);
+TEST( DAAccess, Value )
+{
+    DA< 3 > a{ 5.0 };
+    EXPECT_NEAR( a.value(), 5.0, kTol );
 }
 
-TEST(DAAccess, Coeff_Alpha) {
-    auto x = DA<4>::variable<0>({2.0});
-    EXPECT_NEAR(x.coeff({0}), 2.0, kTol);
-    EXPECT_NEAR(x.coeff({1}), 1.0, kTol);
-    EXPECT_NEAR(x.coeff({2}), 0.0, kTol);
+TEST( DAAccess, Coeff_Alpha )
+{
+    auto x = DA< 4 >::variable< 0 >( { 2.0 } );
+    EXPECT_NEAR( x.coeff( { 0 } ), 2.0, kTol );
+    EXPECT_NEAR( x.coeff( { 1 } ), 1.0, kTol );
+    EXPECT_NEAR( x.coeff( { 2 } ), 0.0, kTol );
 }
 
-TEST(DAAccess, Coeff_TemplateUnivariate) {
-    auto x = DA<4>::variable<0>({2.0});
-    EXPECT_NEAR(x.coeff<0>(), 2.0, kTol);
-    EXPECT_NEAR(x.coeff<1>(), 1.0, kTol);
-    EXPECT_NEAR(x.coeff<2>(), 0.0, kTol);
+TEST( DAAccess, Coeff_TemplateUnivariate )
+{
+    auto x = DA< 4 >::variable< 0 >( { 2.0 } );
+    EXPECT_NEAR( x.coeff< 0 >(), 2.0, kTol );
+    EXPECT_NEAR( x.coeff< 1 >(), 1.0, kTol );
+    EXPECT_NEAR( x.coeff< 2 >(), 0.0, kTol );
 }
 
-TEST(DAAccess, Coeff_TemplateBivariate) {
-    auto [x, y] = DAn<2,2>::variables({0.0, 0.0});
-    DAn<2,2> f = x*x + x*y + y*y;
-    EXPECT_NEAR((f.coeff<2,0>()), 1.0, kTol);
-    EXPECT_NEAR((f.coeff<1,1>()), 1.0, kTol);
-    EXPECT_NEAR((f.coeff<0,2>()), 1.0, kTol);
+TEST( DAAccess, Coeff_TemplateBivariate )
+{
+    auto [x, y] = DAn< 2, 2 >::variables( { 0.0, 0.0 } );
+    DAn< 2, 2 > f = x * x + x * y + y * y;
+    EXPECT_NEAR( ( f.coeff< 2, 0 >() ), 1.0, kTol );
+    EXPECT_NEAR( ( f.coeff< 1, 1 >() ), 1.0, kTol );
+    EXPECT_NEAR( ( f.coeff< 0, 2 >() ), 1.0, kTol );
 }
 
-TEST(DAAccess, Derivative_FactorialFactor) {
+TEST( DAAccess, Derivative_FactorialFactor )
+{
     // (1+x)^2 = 1 + 2x + x^2: derivative at x=0:
     //   d/dx = 2 → derivative({1}) = c[1]*1! = 2
     //   d^2/dx^2 = 2 → derivative({2}) = c[2]*2! = 1*2 = 2
-    DA<3> a{};
-    a[0]=1; a[1]=2; a[2]=1;    // coefficients of (1+x)^2
-    EXPECT_NEAR(a.derivative({0}), 1.0, kTol);
-    EXPECT_NEAR(a.derivative({1}), 2.0, kTol);
-    EXPECT_NEAR(a.derivative({2}), 2.0, kTol);
+    DA< 3 > a{};
+    a[0] = 1;
+    a[1] = 2;
+    a[2] = 1;  // coefficients of (1+x)^2
+    EXPECT_NEAR( a.derivative( { 0 } ), 1.0, kTol );
+    EXPECT_NEAR( a.derivative( { 1 } ), 2.0, kTol );
+    EXPECT_NEAR( a.derivative( { 2 } ), 2.0, kTol );
 }
 
-TEST(DAAccess, Derivative_TemplateUnivariate) {
-    DA<3> a{};
-    a[0]=1; a[1]=2; a[2]=1;
-    EXPECT_NEAR(a.derivative<0>(), 1.0, kTol);
-    EXPECT_NEAR(a.derivative<1>(), 2.0, kTol);
-    EXPECT_NEAR(a.derivative<2>(), 2.0, kTol);
+TEST( DAAccess, Derivative_TemplateUnivariate )
+{
+    DA< 3 > a{};
+    a[0] = 1;
+    a[1] = 2;
+    a[2] = 1;
+    EXPECT_NEAR( a.derivative< 0 >(), 1.0, kTol );
+    EXPECT_NEAR( a.derivative< 1 >(), 2.0, kTol );
+    EXPECT_NEAR( a.derivative< 2 >(), 2.0, kTol );
 }
 
-TEST(DAAccess, Derivative_Bivariate) {
+TEST( DAAccess, Derivative_Bivariate )
+{
     // f(x,y) = x^2 + x*y + y^2 at (0,0): coefficients are exact
     // d^2f/dx^2 = 2 → coeff({2,0}) = 1, derivative({2,0}) = 1*2! = 2
-    auto [x, y] = DAn<2,2>::variables({0.0, 0.0});
-    DAn<2,2> f = x*x + x*y + y*y;
-    EXPECT_NEAR(f.derivative({2,0}), 2.0, kTol);
-    EXPECT_NEAR(f.derivative({0,2}), 2.0, kTol);
-    EXPECT_NEAR(f.derivative({1,1}), 1.0, kTol);
+    auto [x, y] = DAn< 2, 2 >::variables( { 0.0, 0.0 } );
+    DAn< 2, 2 > f = x * x + x * y + y * y;
+    EXPECT_NEAR( f.derivative( { 2, 0 } ), 2.0, kTol );
+    EXPECT_NEAR( f.derivative( { 0, 2 } ), 2.0, kTol );
+    EXPECT_NEAR( f.derivative( { 1, 1 } ), 1.0, kTol );
 }
 
-TEST(DAAccess, Derivative_TemplateBivariate) {
-    auto [x, y] = DAn<2,2>::variables({0.0, 0.0});
-    DAn<2,2> f = x*x + x*y + y*y;
-    EXPECT_NEAR((f.derivative<2,0>()), 2.0, kTol);
-    EXPECT_NEAR((f.derivative<0,2>()), 2.0, kTol);
-    EXPECT_NEAR((f.derivative<1,1>()), 1.0, kTol);
+TEST( DAAccess, Derivative_TemplateBivariate )
+{
+    auto [x, y] = DAn< 2, 2 >::variables( { 0.0, 0.0 } );
+    DAn< 2, 2 > f = x * x + x * y + y * y;
+    EXPECT_NEAR( ( f.derivative< 2, 0 >() ), 2.0, kTol );
+    EXPECT_NEAR( ( f.derivative< 0, 2 >() ), 2.0, kTol );
+    EXPECT_NEAR( ( f.derivative< 1, 1 >() ), 1.0, kTol );
 }
 
-TEST(DAAccess, Coeffs_ReturnsArray) {
-    DA<2> a{};
-    a[0]=1; a[1]=2; a[2]=3;
+TEST( DAAccess, Coeffs_ReturnsArray )
+{
+    DA< 2 > a{};
+    a[0] = 1;
+    a[1] = 2;
+    a[2] = 3;
     const auto& c = a.coeffs();
-    EXPECT_NEAR(c[0], 1.0, kTol);
-    EXPECT_NEAR(c[1], 2.0, kTol);
-    EXPECT_NEAR(c[2], 3.0, kTol);
+    EXPECT_NEAR( c[0], 1.0, kTol );
+    EXPECT_NEAR( c[1], 2.0, kTol );
+    EXPECT_NEAR( c[2], 3.0, kTol );
 }
 
 // =============================================================================
 // In-place operators
 // =============================================================================
 
-TEST(DAInPlace, PlusEqDA) {
-    DA<3> a{2.0}, b{3.0};
+TEST( DAInPlace, PlusEqDA )
+{
+    DA< 3 > a{ 2.0 }, b{ 3.0 };
     a += b;
-    EXPECT_NEAR(a.value(), 5.0, kTol);
+    EXPECT_NEAR( a.value(), 5.0, kTol );
 }
 
-TEST(DAInPlace, MinusEqDA) {
-    DA<3> a{5.0}, b{3.0};
+TEST( DAInPlace, MinusEqDA )
+{
+    DA< 3 > a{ 5.0 }, b{ 3.0 };
     a -= b;
-    EXPECT_NEAR(a.value(), 2.0, kTol);
+    EXPECT_NEAR( a.value(), 2.0, kTol );
 }
 
-TEST(DAInPlace, PlusEqExpression) {
-    auto x = DA<4>::variable<0>({1.0});
-    DA<4> r{2.0};
-    r += x;   // 2 + (1+δ)
-    EXPECT_NEAR(r[0], 3.0, kTol);
-    EXPECT_NEAR(r[1], 1.0, kTol);
+TEST( DAInPlace, PlusEqExpression )
+{
+    auto x = DA< 4 >::variable< 0 >( { 1.0 } );
+    DA< 4 > r{ 2.0 };
+    r += x;  // 2 + (1+δ)
+    EXPECT_NEAR( r[0], 3.0, kTol );
+    EXPECT_NEAR( r[1], 1.0, kTol );
 }
 
-TEST(DAInPlace, MinusEqExpression) {
-    auto x = DA<4>::variable<0>({1.0});
-    DA<4> r{2.0};
-    r -= x;   // 2 - (1+δ) = 1 - δ
-    EXPECT_NEAR(r[0], 1.0, kTol);
-    EXPECT_NEAR(r[1],-1.0, kTol);
+TEST( DAInPlace, MinusEqExpression )
+{
+    auto x = DA< 4 >::variable< 0 >( { 1.0 } );
+    DA< 4 > r{ 2.0 };
+    r -= x;  // 2 - (1+δ) = 1 - δ
+    EXPECT_NEAR( r[0], 1.0, kTol );
+    EXPECT_NEAR( r[1], -1.0, kTol );
 }
 
-TEST(DAInPlace, TimesEqScalar) {
-    auto x = DA<3>::variable<0>({2.0});
-    DA<3> r = x;
-    r *= 3.0;   // 3*(2+δ) = 6 + 3δ
-    EXPECT_NEAR(r[0], 6.0, kTol);
-    EXPECT_NEAR(r[1], 3.0, kTol);
+TEST( DAInPlace, TimesEqScalar )
+{
+    auto x = DA< 3 >::variable< 0 >( { 2.0 } );
+    DA< 3 > r = x;
+    r *= 3.0;  // 3*(2+δ) = 6 + 3δ
+    EXPECT_NEAR( r[0], 6.0, kTol );
+    EXPECT_NEAR( r[1], 3.0, kTol );
 }
 
-TEST(DAInPlace, DivEqScalar) {
-    auto x = DA<3>::variable<0>({4.0});
-    DA<3> r = x;
-    r /= 2.0;   // (4+δ)/2 = 2 + 0.5δ
-    EXPECT_NEAR(r[0], 2.0, kTol);
-    EXPECT_NEAR(r[1], 0.5, kTol);
+TEST( DAInPlace, DivEqScalar )
+{
+    auto x = DA< 3 >::variable< 0 >( { 4.0 } );
+    DA< 3 > r = x;
+    r /= 2.0;  // (4+δ)/2 = 2 + 0.5δ
+    EXPECT_NEAR( r[0], 2.0, kTol );
+    EXPECT_NEAR( r[1], 0.5, kTol );
 }
 
-TEST(DAInPlace, ChainedPlusEq) {
-    DA<2> a{1.0}, b{2.0}, c{3.0};
+TEST( DAInPlace, ChainedPlusEq )
+{
+    DA< 2 > a{ 1.0 }, b{ 2.0 }, c{ 3.0 };
     a += b;
     a += c;
-    EXPECT_NEAR(a.value(), 6.0, kTol);
+    EXPECT_NEAR( a.value(), 6.0, kTol );
 }
 
 // =============================================================================
 // eval — polynomial evaluation
 // =============================================================================
 
-TEST(DAEval, UnivariateConstant) {
-    DA<3> a{5.0};
-    EXPECT_NEAR(a.eval(0.1), 5.0, kTol);
-    EXPECT_NEAR(a.eval(0.0), 5.0, kTol);
+TEST( DAEval, UnivariateConstant )
+{
+    DA< 3 > a{ 5.0 };
+    EXPECT_NEAR( a.eval( 0.1 ), 5.0, kTol );
+    EXPECT_NEAR( a.eval( 0.0 ), 5.0, kTol );
 }
 
-TEST(DAEval, UnivariateLinear) {
+TEST( DAEval, UnivariateLinear )
+{
     // f = 2 + 3*dx  (at x0=2, slope 3)
-    auto x = DA<3>::variable(2.0);
-    DA<3> f = 3.0 * x;  // 6 + 3*dx
-    EXPECT_NEAR(f.eval(0.0), 6.0, kTol);
-    EXPECT_NEAR(f.eval(1.0), 9.0, kTol);
-    EXPECT_NEAR(f.eval(-0.5), 4.5, kTol);
+    auto x = DA< 3 >::variable( 2.0 );
+    DA< 3 > f = 3.0 * x;  // 6 + 3*dx
+    EXPECT_NEAR( f.eval( 0.0 ), 6.0, kTol );
+    EXPECT_NEAR( f.eval( 1.0 ), 9.0, kTol );
+    EXPECT_NEAR( f.eval( -0.5 ), 4.5, kTol );
 }
 
-TEST(DAEval, UnivariateSinAtZero) {
+TEST( DAEval, UnivariateSinAtZero )
+{
     // sin(x) expanded at x0=0, evaluate at dx to get sin(dx)
-    auto x = DA<9>::variable(0.0);
-    DA<9> f = sin(x);
-    EXPECT_NEAR(f.eval(0.3), std::sin(0.3), 1e-12);
-    EXPECT_NEAR(f.eval(0.5), std::sin(0.5), 1e-10);
+    auto x = DA< 9 >::variable( 0.0 );
+    DA< 9 > f = sin( x );
+    EXPECT_NEAR( f.eval( 0.3 ), std::sin( 0.3 ), 1e-12 );
+    EXPECT_NEAR( f.eval( 0.5 ), std::sin( 0.5 ), 1e-10 );
 }
 
-TEST(DAEval, UnivariateExpAtOne) {
+TEST( DAEval, UnivariateExpAtOne )
+{
     // exp(x) expanded at x0=1, evaluate at dx=0.5 to get exp(1.5)
-    auto x = DA<12>::variable(1.0);
-    DA<12> f = exp(x);
-    EXPECT_NEAR(f.eval(0.5), std::exp(1.5), 1e-12);
+    auto x = DA< 12 >::variable( 1.0 );
+    DA< 12 > f = exp( x );
+    EXPECT_NEAR( f.eval( 0.5 ), std::exp( 1.5 ), 1e-12 );
 }
 
-TEST(DAEval, UnivariateAtZeroDisplacement) {
-    auto x = DA<5>::variable(1.0);
-    DA<5> f = sin(x);
-    EXPECT_NEAR(f.eval(0.0), std::sin(1.0), kTol);
+TEST( DAEval, UnivariateAtZeroDisplacement )
+{
+    auto x = DA< 5 >::variable( 1.0 );
+    DA< 5 > f = sin( x );
+    EXPECT_NEAR( f.eval( 0.0 ), std::sin( 1.0 ), kTol );
 }
 
-TEST(DAEval, UnivariateViaPointType) {
+TEST( DAEval, UnivariateViaPointType )
+{
     // eval(point_type) delegates to eval(T) for M=1
-    auto x = DA<9>::variable(0.0);
-    DA<9> f = cos(x);
-    DA<9>::point_type dx{0.3};
-    EXPECT_NEAR(f.eval(dx), std::cos(0.3), 1e-11);
+    auto x = DA< 9 >::variable( 0.0 );
+    DA< 9 > f = cos( x );
+    DA< 9 >::point_type dx{ 0.3 };
+    EXPECT_NEAR( f.eval( dx ), std::cos( 0.3 ), 1e-11 );
 }
 
-TEST(DAEval, MultivariateConstant) {
-    DAn<3, 2> a{5.0};
-    EXPECT_NEAR(a.eval({0.1, 0.2}), 5.0, kTol);
+TEST( DAEval, MultivariateConstant )
+{
+    DAn< 3, 2 > a{ 5.0 };
+    EXPECT_NEAR( a.eval( { 0.1, 0.2 } ), 5.0, kTol );
 }
 
-TEST(DAEval, MultivariateLinear) {
-    auto [x, y] = DAn<3, 2>::variables({1.0, 2.0});
-    DAn<3, 2> f = x + 2.0 * y;  // (1+dx) + 2*(2+dy) = 5 + dx + 2*dy
-    EXPECT_NEAR(f.eval({0.0, 0.0}), 5.0, kTol);
-    EXPECT_NEAR(f.eval({1.0, 0.0}), 6.0, kTol);
-    EXPECT_NEAR(f.eval({0.0, 1.0}), 7.0, kTol);
-    EXPECT_NEAR(f.eval({0.5, 0.3}), 5.0 + 0.5 + 0.6, kTol);
+TEST( DAEval, MultivariateLinear )
+{
+    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
+    DAn< 3, 2 > f = x + 2.0 * y;  // (1+dx) + 2*(2+dy) = 5 + dx + 2*dy
+    EXPECT_NEAR( f.eval( { 0.0, 0.0 } ), 5.0, kTol );
+    EXPECT_NEAR( f.eval( { 1.0, 0.0 } ), 6.0, kTol );
+    EXPECT_NEAR( f.eval( { 0.0, 1.0 } ), 7.0, kTol );
+    EXPECT_NEAR( f.eval( { 0.5, 0.3 } ), 5.0 + 0.5 + 0.6, kTol );
 }
 
-TEST(DAEval, MultivariateQuadratic) {
-    auto [x, y] = DAn<3, 2>::variables({0.0, 0.0});
-    DAn<3, 2> f = x * y;  // dx*dy
-    EXPECT_NEAR(f.eval({2.0, 3.0}), 6.0, kTol);
-    EXPECT_NEAR(f.eval({0.0, 5.0}), 0.0, kTol);
+TEST( DAEval, MultivariateQuadratic )
+{
+    auto [x, y] = DAn< 3, 2 >::variables( { 0.0, 0.0 } );
+    DAn< 3, 2 > f = x * y;  // dx*dy
+    EXPECT_NEAR( f.eval( { 2.0, 3.0 } ), 6.0, kTol );
+    EXPECT_NEAR( f.eval( { 0.0, 5.0 } ), 0.0, kTol );
 }
 
-TEST(DAEval, MultivariateSin) {
-    auto [x, y] = DAn<8, 2>::variables({0.0, 0.0});
-    DAn<8, 2> f = sin(x + y);
+TEST( DAEval, MultivariateSin )
+{
+    auto [x, y] = DAn< 8, 2 >::variables( { 0.0, 0.0 } );
+    DAn< 8, 2 > f = sin( x + y );
     // sin(dx + dy) at small displacements
-    EXPECT_NEAR(f.eval({0.1, 0.2}), std::sin(0.3), 1e-10);
+    EXPECT_NEAR( f.eval( { 0.1, 0.2 } ), std::sin( 0.3 ), 1e-10 );
 }
 
-#if __has_include(<Eigen/Core>)
-TEST(DAEval, MultivariateEigenVector) {
-    auto [x, y] = DAn<3, 2>::variables({1.0, 2.0});
-    DAn<3, 2> f = x + 2.0 * y;  // 5 + dx + 2*dy
-    Eigen::Vector2d dx(0.5, 0.3);
-    EXPECT_NEAR(f.eval(dx), 5.0 + 0.5 + 0.6, kTol);
+#if __has_include( <Eigen/Core>)
+TEST( DAEval, MultivariateEigenVector )
+{
+    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
+    DAn< 3, 2 > f = x + 2.0 * y;  // 5 + dx + 2*dy
+    Eigen::Vector2d dx( 0.5, 0.3 );
+    EXPECT_NEAR( f.eval( dx ), 5.0 + 0.5 + 0.6, kTol );
 }
 #endif
