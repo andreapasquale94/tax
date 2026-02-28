@@ -48,14 +48,18 @@ jobs:
         run: |
           sudo apt-get update
           if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            sudo apt-get install -y g++
+            sudo apt-get install -y g++ libeigen3-dev
           else
-            sudo apt-get install -y clang
+            sudo apt-get install -y clang libeigen3-dev
           fi
 
       - name: Install Homebrew GCC
         if: runner.os == 'macOS' && matrix.compiler == 'gcc'
         run: brew install gcc
+
+      - name: Install Homebrew Eigen
+        if: runner.os == 'macOS'
+        run: brew install eigen
 
       - name: Select Homebrew GCC binaries
         if: runner.os == 'macOS' && matrix.compiler == 'gcc'
