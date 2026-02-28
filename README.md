@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/andreapasquale94/tax/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/andreapasquale94/tax/actions/workflows/tests.yml)
 [![Sanitizers](https://github.com/andreapasquale94/tax/actions/workflows/sanitizers.yml/badge.svg?branch=main)](https://github.com/andreapasquale94/tax/actions/workflows/sanitizers.yml)
-[![codecov](https://codecov.io/gh/andreapasquale94/tax/graph/badge.svg?branch=main)](https://codecov.io/gh/andreapasquale94/tax)
+[![codecov](https://codecov.io/gh/andreapasquale94/tax/graph/badge.svg?token=XwO5JOoaz6)](https://codecov.io/gh/andreapasquale94/tax)
 
 `tax` is a header-only C++23 Differential Algebra (DA) library for truncated univariate and multivariate Taylor expansions.
 
