@@ -1,9 +1,9 @@
 #pragma once
 
-#include <tax/fwd.hpp>
-#include <tax/combinatorics.hpp>
+#include <tax/utils/fwd.hpp>
+#include <tax/utils/combinatorics.hpp>
 #include <tax/kernels.hpp>
-#include <tax/leaf.hpp>
+#include <tax/utils/leaf.hpp>
 
 namespace tax {
 

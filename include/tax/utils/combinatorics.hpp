@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tax/fwd.hpp>
+#include <tax/utils/fwd.hpp>
 
 namespace tax::detail {
 
