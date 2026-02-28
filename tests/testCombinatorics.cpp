@@ -1,7 +1,7 @@
 #include "testUtils.hpp"
 
 // Access detail internals directly for unit-testing the combinatorics layer.
-using namespace da::detail;
+using namespace tax::detail;
 
 // =============================================================================
 // binom

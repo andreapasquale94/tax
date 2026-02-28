@@ -3,29 +3,37 @@
 #include <cmath>
 #include <tax/combinatorics.hpp>
 
-namespace da::detail {
+namespace tax::detail {
 
 // -- Element-wise arithmetic --------------------------------------------------
 
 template <typename T, std::size_t S>
+/// @brief In-place element-wise addition: `o += r`.
 constexpr void addInPlace(std::array<T, S>& o, const std::array<T, S>& r) noexcept
 { for (std::size_t i = 0; i < S; ++i) o[i] += r[i]; }
 
 template <typename T, std::size_t S>
+/// @brief In-place element-wise subtraction: `o -= r`.
 constexpr void subInPlace(std::array<T, S>& o, const std::array<T, S>& r) noexcept
 { for (std::size_t i = 0; i < S; ++i) o[i] -= r[i]; }
 
 template <typename T, std::size_t S>
+/// @brief In-place sign flip.
 constexpr void negateInPlace(std::array<T, S>& o) noexcept
 { for (auto& v : o) v = -v; }
 
 template <typename T, std::size_t S>
+/// @brief In-place scalar multiply.
 constexpr void scaleInPlace(std::array<T, S>& o, T s) noexcept
 { for (auto& v : o) v *= s; }
 
 // -- Cauchy product -----------------------------------------------------------
 
 template <typename T, int N, int M>
+/**
+ * @brief Truncated multivariate Cauchy product `out = f * g`.
+ * @details Output is truncated to total degree `N`.
+ */
 constexpr void cauchyProduct(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& f,
@@ -38,12 +46,12 @@ constexpr void cauchyProduct(
             for (int k = 0; k <= d; ++k)
                 out[d] += f[k] * g[d - k];
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillBeta = [&](auto& self, int bvar) -> void {
             if (bvar == M) {
-                da::MultiIndex<M> gamma{};
+                tax::MultiIndex<M> gamma{};
                 for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                 out[flatIndex<M>(alpha)] +=
                     f[flatIndex<M>(beta)] * g[flatIndex<M>(gamma)];
@@ -64,6 +72,10 @@ constexpr void cauchyProduct(
 // -- Cauchy accumulate (out += f*g) -------------------------------------------
 
 template <typename T, int N, int M>
+/**
+ * @brief Truncated multivariate Cauchy accumulate `out += f * g`.
+ * @details Contribution is truncated to total degree `N`.
+ */
 constexpr void cauchyAccumulate(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& f,
@@ -74,12 +86,12 @@ constexpr void cauchyAccumulate(
             for (int k = 0; k <= d; ++k)
                 out[d] += f[k] * g[d - k];
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillBeta = [&](auto& self, int bvar) -> void {
             if (bvar == M) {
-                da::MultiIndex<M> gamma{};
+                tax::MultiIndex<M> gamma{};
                 for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                 out[flatIndex<M>(alpha)] +=
                     f[flatIndex<M>(beta)] * g[flatIndex<M>(gamma)];
@@ -100,6 +112,10 @@ constexpr void cauchyAccumulate(
 // -- Series reciprocal: solve a * out = 1 -------------------------------------
 
 template <typename T, int N, int M>
+/**
+ * @brief Reciprocal series solve `a * out = 1`.
+ * @details Requires `a[0] != 0`.
+ */
 constexpr void seriesReciprocal(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -116,8 +132,8 @@ constexpr void seriesReciprocal(
             out[d] = rhs * inv_a0;
         }
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
             if (var == M - 1) {
@@ -129,7 +145,7 @@ constexpr void seriesReciprocal(
                         if (bvar == M - 1) {
                             beta[bvar] = brem;
                             if (beta[bvar] > alpha[bvar]) return;
-                            da::MultiIndex<M> gamma{};
+                            tax::MultiIndex<M> gamma{};
                             for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                             rhs -= a[flatIndex<M>(beta)] * out[flatIndex<M>(gamma)];
                             return;
@@ -154,6 +170,7 @@ constexpr void seriesReciprocal(
 // -- Series square: out = a^2 -------------------------------------------------
 
 template <typename T, int N, int M>
+/// @brief Square series `out = a^2`.
 constexpr void seriesSquare(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -164,6 +181,7 @@ constexpr void seriesSquare(
 // -- Series cube: out = a^3 via direct triple convolution ---------------------
 
 template <typename T, int N, int M>
+/// @brief Cube series `out = a^3`.
 constexpr void seriesCube(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -176,15 +194,15 @@ constexpr void seriesCube(
                 for (int k = 0; k <= d - j; ++k)
                     out[d] += a[j] * a[k] * a[d - j - k];
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
-        da::MultiIndex<M> gamma{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
+        tax::MultiIndex<M> gamma{};
 
         auto fillGamma = [&](auto& gself, int gvar, int grem) -> void {
             if (gvar == M - 1) {
                 gamma[gvar] = grem;
                 if (gamma[gvar] > alpha[gvar] - beta[gvar]) return;
-                da::MultiIndex<M> delta{};
+                tax::MultiIndex<M> delta{};
                 for (int i = 0; i < M; ++i) delta[i] = alpha[i] - beta[i] - gamma[i];
                 out[flatIndex<M>(alpha)] +=
                     a[flatIndex<M>(beta)] * a[flatIndex<M>(gamma)] * a[flatIndex<M>(delta)];
@@ -231,6 +249,10 @@ constexpr void seriesCube(
 // -- Series square root: solve g*g = a ----------------------------------------
 
 template <typename T, int N, int M>
+/**
+ * @brief Square-root series solve `out * out = a`.
+ * @details Uses the principal branch from `sqrt(a[0])`.
+ */
 constexpr void seriesSqrt(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -248,8 +270,8 @@ constexpr void seriesSqrt(
             out[d] = rhs * inv2g0;
         }
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
             if (var == M - 1) {
@@ -261,7 +283,7 @@ constexpr void seriesSqrt(
                         if (bvar == M - 1) {
                             beta[bvar] = brem;
                             if (beta[bvar] > alpha[bvar]) return;
-                            da::MultiIndex<M> gamma{};
+                            tax::MultiIndex<M> gamma{};
                             for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                             rhs -= out[flatIndex<M>(beta)] * out[flatIndex<M>(gamma)];
                             return;
@@ -291,6 +313,10 @@ constexpr void seriesSqrt(
 // where d = |α|, processed in graded order so all lower-degree terms are ready.
 
 template <typename T, int N, int M>
+/**
+ * @brief Coupled trigonometric series expansion of `sin(a)` and `cos(a)`.
+ * @details Computes both outputs together to share recurrence work.
+ */
 constexpr void seriesSinCos(
     std::array<T, numMonomials(N, M)>& s,
     std::array<T, numMonomials(N, M)>& c,
@@ -316,8 +342,8 @@ constexpr void seriesSinCos(
             c[d] = -cr * inv_d;
         }
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
             if (var == M - 1) {
@@ -331,7 +357,7 @@ constexpr void seriesSinCos(
                         if (bvar == M - 1) {
                             beta[bvar] = brem;
                             if (beta[bvar] > alpha[bvar]) return;
-                            da::MultiIndex<M> gamma{};
+                            tax::MultiIndex<M> gamma{};
                             for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                             const T fg = a[flatIndex<M>(gamma)];
                             sin_rhs += dg * fg * c[flatIndex<M>(beta)];
@@ -360,6 +386,7 @@ constexpr void seriesSinCos(
 // -- Standalone sin / cos wrappers --------------------------------------------
 
 template <typename T, int N, int M>
+/// @brief Sine series wrapper around `seriesSinCos`.
 constexpr void seriesSin(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -369,6 +396,7 @@ constexpr void seriesSin(
 }
 
 template <typename T, int N, int M>
+/// @brief Cosine series wrapper around `seriesSinCos`.
 constexpr void seriesCos(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -380,6 +408,10 @@ constexpr void seriesCos(
 // -- Series tan: compute sin & cos, then solve c·t = s -----------------------
 
 template <typename T, int N, int M>
+/**
+ * @brief Tangent series solve from `sin(a)` and `cos(a)`.
+ * @details Solves `cos(a) * out = sin(a)` degree by degree.
+ */
 constexpr void seriesTan(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -400,8 +432,8 @@ constexpr void seriesTan(
             out[d] = rhs * inv_c0;
         }
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
             if (var == M - 1) {
@@ -413,7 +445,7 @@ constexpr void seriesTan(
                         if (bvar == M - 1) {
                             beta[bvar] = brem;
                             if (beta[bvar] > alpha[bvar]) return;
-                            da::MultiIndex<M> gamma{};
+                            tax::MultiIndex<M> gamma{};
                             for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                             rhs -= c[flatIndex<M>(beta)] * out[flatIndex<M>(gamma)];
                             return;
@@ -443,6 +475,10 @@ constexpr void seriesTan(
 // where d = |α|.
 
 template <typename T, int N, int M>
+/**
+ * @brief Natural logarithm series `out = log(a)`.
+ * @details Requires `a[0] > 0` for real-valued output.
+ */
 constexpr void seriesLog(
     std::array<T, numMonomials(N, M)>&       out,
     const std::array<T, numMonomials(N, M)>& a) noexcept
@@ -460,8 +496,8 @@ constexpr void seriesLog(
             out[d] = (a[d] - rhs / T(d)) * inv_a0;
         }
     } else {
-        da::MultiIndex<M> alpha{};
-        da::MultiIndex<M> beta{};
+        tax::MultiIndex<M> alpha{};
+        tax::MultiIndex<M> beta{};
 
         auto fillAlpha = [&](auto& self, int var, int rem, int d) -> void {
             if (var == M - 1) {
@@ -474,7 +510,7 @@ constexpr void seriesLog(
                         if (bvar == M - 1) {
                             beta[bvar] = brem;
                             if (beta[bvar] > alpha[bvar]) return;
-                            da::MultiIndex<M> gamma{};
+                            tax::MultiIndex<M> gamma{};
                             for (int i = 0; i < M; ++i) gamma[i] = alpha[i] - beta[i];
                             rhs += T(dg) * a[flatIndex<M>(beta)] * out[flatIndex<M>(gamma)];
                             return;
@@ -496,4 +532,4 @@ constexpr void seriesLog(
     }
 }
 
-} // namespace da::detail
+} // namespace tax::detail

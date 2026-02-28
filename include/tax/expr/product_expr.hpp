@@ -2,22 +2,15 @@
 
 #include <tax/expr/base.hpp>
 
-namespace da::detail {
+namespace tax::detail {
 
-// =============================================================================
-// ProductExpr<Es...> — variadic multiplication via rolling Cauchy product
-// =============================================================================
-//
-// evalTo uses a single scratch array `a` as rolling accumulator.
-// Each non-leaf factor materialises into a local `b` (reused by the compiler
-// since steps are sequential).  Leaf factors pass coeffs() directly.
-//
-// addTo: 2-factor case uses cauchyAccumulate with leaf detection; N>2 falls
-// back to evalTo into a temp.
-
+/**
+ * @brief Flattened variadic product expression node.
+ * @details Evaluates products using a rolling accumulator to limit temporaries.
+ */
 template <typename... Es>
 class ProductExpr
-    : public da::DAExpr<ProductExpr<Es...>,
+    : public tax::DAExpr<ProductExpr<Es...>,
                     typename std::tuple_element_t<0, std::tuple<Es...>>::scalar_type,
                     std::tuple_element_t<0, std::tuple<Es...>>::order,
                     std::tuple_element_t<0, std::tuple<Es...>>::nvars>
@@ -31,21 +24,25 @@ public:
     static constexpr int M = std::tuple_element_t<0, std::tuple<Es...>>::nvars;
     using coeff_array = std::array<T, numMonomials(N, M)>;
 
+    /// @brief Construct from operand pack.
     explicit constexpr ProductExpr(stored_t<Es>... es) noexcept : ops_(es...) {}
 
     template <typename E>
+    /// @brief Return a new `ProductExpr` with `e` appended.
     [[nodiscard]] constexpr auto append(stored_t<E> e) const noexcept {
         return std::apply([&](auto const&... x) noexcept {
             return ProductExpr<Es..., E>(x..., e);
         }, ops_);
     }
 
+    /// @brief Evaluate the full product into `out`.
     constexpr void evalTo(coeff_array& out) const noexcept {
         coeff_array a{};
         seedAccumulator(a);
         rollProduct<1>(out, a);
     }
 
+    /// @brief Accumulate this product into `out`.
     constexpr void addTo(coeff_array& out) const noexcept {
         if constexpr (sizeof...(Es) == 2) {
             using L = std::tuple_element_t<0, std::tuple<Es...>>;
@@ -75,6 +72,7 @@ public:
         }
     }
 
+    /// @brief Subtract this product from `out`.
     constexpr void subTo(coeff_array& out) const noexcept {
         coeff_array tmp{};
         evalTo(tmp);
@@ -111,4 +109,4 @@ private:
     }
 };
 
-} // namespace da::detail
+} // namespace tax::detail

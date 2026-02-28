@@ -2,8 +2,12 @@
 
 #include <tax/fwd.hpp>
 
-namespace da::detail {
+namespace tax::detail {
 
+/**
+ * @brief Compute the binomial coefficient `n choose k`.
+ * @return `0` when arguments are out of range.
+ */
 constexpr std::size_t binom(int n, int k) noexcept {
     if (k < 0 || n < 0 || k > n) return 0;
     if (k == 0 || k == n)        return 1;
@@ -13,17 +17,23 @@ constexpr std::size_t binom(int n, int k) noexcept {
     return r;
 }
 
+/// @brief Number of monomials with total degree `<= N` in `M` variables.
 constexpr std::size_t numMonomials(int N, int M) noexcept { return binom(N + M, M); }
 
 template <int M>
-constexpr int totalDegree(const da::MultiIndex<M>& a) noexcept {
+/// @brief Total degree `|a| = sum_i a[i]` of a multi-index.
+constexpr int totalDegree(const tax::MultiIndex<M>& a) noexcept {
     int d = 0;
     for (int i = 0; i < M; ++i) d += a[i];
     return d;
 }
 
 template <int M>
-constexpr std::size_t flatIndex(const da::MultiIndex<M>& alpha) noexcept {
+/**
+ * @brief Map a multi-index to the internal flat storage index.
+ * @details The ordering matches the graded-lex convention used by the kernels.
+ */
+constexpr std::size_t flatIndex(const tax::MultiIndex<M>& alpha) noexcept {
     static_assert(M >= 1);
     const int d = totalDegree<M>(alpha);
     std::size_t idx = binom(d + M - 1, M);
@@ -35,4 +45,4 @@ constexpr std::size_t flatIndex(const da::MultiIndex<M>& alpha) noexcept {
     return idx;
 }
 
-} // namespace da::detail
+} // namespace tax::detail

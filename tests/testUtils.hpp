@@ -5,7 +5,7 @@
 #include <cmath>
 #include <algorithm>
 
-using namespace da;
+using namespace tax;
 
 static constexpr double kTol  = 1e-12;
 static constexpr double kTolF = 1e-5f;   // looser tolerance for float

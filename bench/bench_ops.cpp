@@ -9,7 +9,7 @@
 namespace {
 
 template <int Order>
-using DA1 = da::DA<Order>;
+using DA1 = tax::DA<Order>;
 
 template <int Order>
 static DA1<Order> make_x()

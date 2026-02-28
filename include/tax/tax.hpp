@@ -1,26 +1,11 @@
 #pragma once
 
-// Umbrella header — includes every layer of the DA library in dependency order.
-//
-// Lay-out of include/tax/:
-//
-//   fwd.hpp              — Scalar concept, MultiIndex
-//   combinatorics.hpp    — binom, numMonomials, totalDegree, flatIndex
-//   kernels.hpp          — array arithmetic, Cauchy product/accumulate, series kernels
-//   leaf.hpp             — DALeaf tag, stored_t, is_leaf_v
-//   expr/
-//     base.hpp           — DAExpr<Derived,T,N,M> CRTP base
-//     arithmetic_ops.hpp — OpAdd, OpSub, OpMul, OpDiv, OpScalar*, OpNeg
-//     math_ops.hpp       — OpSquare, OpCube, OpSqrt, OpReciprocal
-//     bin_expr.hpp       — BinExpr<L,R,Op>
-//     unary_expr.hpp     — UnaryExpr<E,Op>
-//     scalar_expr.hpp    — ScalarExpr<E,Op>
-//     func_expr.hpp      — FuncExpr<E,Op>
-//     sum_expr.hpp       — SumExpr<Es...>
-//     product_expr.hpp   — ProductExpr<Es...>
-//   da.hpp               — TDA<T,N,M> leaf / materialised type
-//   operators.hpp        — operator overloads, square/cube/sqrt free functions
-//   aliases.hpp          — DA<N>, DAn<N,M>
+/**
+ * @file
+ * @brief Umbrella include for the full tax differential algebra API.
+ * @details Includes forward declarations, combinatorics, kernels, expression
+ * nodes, the materialized `TDA` type, operator overloads, and aliases.
+ */
 
 #include <tax/fwd.hpp>
 #include <tax/combinatorics.hpp>

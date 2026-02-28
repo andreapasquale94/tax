@@ -3,15 +3,15 @@
 #include <tax/expr/base.hpp>
 #include <tax/expr/arithmetic_ops.hpp>
 
-namespace da::detail {
+namespace tax::detail {
 
-// =============================================================================
-// BinExpr<L, R, Op> — binary expression node
-// =============================================================================
-
+/**
+ * @brief Binary expression node parameterized by operation tag `Op`.
+ * @details Stores leaf operands by reference and composite operands by value.
+ */
 template <typename L, typename R, typename Op>
 class BinExpr
-    : public da::DAExpr<BinExpr<L, R, Op>, typename L::scalar_type, L::order, L::nvars>
+    : public tax::DAExpr<BinExpr<L, R, Op>, typename L::scalar_type, L::order, L::nvars>
 {
     static_assert(L::order  == R::order  && L::nvars == R::nvars &&
                   std::is_same_v<typename L::scalar_type, typename R::scalar_type>);
@@ -20,8 +20,13 @@ public:
     static constexpr int N = L::order, M = L::nvars;
     using coeff_array = std::array<T, numMonomials(N, M)>;
 
+    /// @brief Construct from left/right operands.
     constexpr BinExpr(const L& l, const R& r) noexcept : l_(l), r_(r) {}
 
+    /**
+     * @brief Evaluate operation result into `out`.
+     * @details Uses leaf fast paths to avoid materializing both operands.
+     */
     constexpr void evalTo(coeff_array& out) const noexcept {
         if constexpr (Op::is_additive) {
             l_.evalTo(out);
@@ -47,6 +52,10 @@ public:
         }
     }
 
+    /**
+     * @brief Accumulate operation result into `out`.
+     * @details Additive and convolution ops have specialized accumulation paths.
+     */
     constexpr void addTo(coeff_array& out) const noexcept {
         if constexpr (Op::is_additive) {
             l_.addTo(out);
@@ -76,6 +85,7 @@ public:
         }
     }
 
+    /// @brief Subtract operation result from `out`.
     constexpr void subTo(coeff_array& out) const noexcept {
         if constexpr (Op::is_additive) {
             l_.subTo(out);
@@ -93,4 +103,4 @@ private:
     stored_t<R> r_;
 };
 
-} // namespace da::detail
+} // namespace tax::detail

@@ -2,12 +2,12 @@
 
 #include <tax/kernels.hpp>
 
-namespace da::detail {
+namespace tax::detail {
 
-// =============================================================================
-// Math operation tags for FuncExpr
-// =============================================================================
-
+/**
+ * @brief Tag for `square(expr)`.
+ * @details Delegates to `seriesSquare`.
+ */
 template <int N, int M>
 struct OpSquare {
     template <typename T>
@@ -17,6 +17,10 @@ struct OpSquare {
     { seriesSquare<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for `cube(expr)`.
+ * @details Delegates to `seriesCube`.
+ */
 template <int N, int M>
 struct OpCube {
     template <typename T>
@@ -26,6 +30,10 @@ struct OpCube {
     { seriesCube<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for `sqrt(expr)`.
+ * @details Delegates to `seriesSqrt`.
+ */
 template <int N, int M>
 struct OpSqrt {
     template <typename T>
@@ -35,6 +43,10 @@ struct OpSqrt {
     { seriesSqrt<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for reciprocal series `1/expr`.
+ * @details Delegates to `seriesReciprocal`.
+ */
 template <int N, int M>
 struct OpReciprocal {
     template <typename T>
@@ -44,6 +56,10 @@ struct OpReciprocal {
     { seriesReciprocal<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for `sin(expr)`.
+ * @details Delegates to `seriesSin`.
+ */
 template <int N, int M>
 struct OpSin {
     template <typename T>
@@ -53,6 +69,10 @@ struct OpSin {
     { seriesSin<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for `cos(expr)`.
+ * @details Delegates to `seriesCos`.
+ */
 template <int N, int M>
 struct OpCos {
     template <typename T>
@@ -62,6 +82,10 @@ struct OpCos {
     { seriesCos<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for `tan(expr)`.
+ * @details Delegates to `seriesTan`.
+ */
 template <int N, int M>
 struct OpTan {
     template <typename T>
@@ -71,6 +95,10 @@ struct OpTan {
     { seriesTan<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for natural logarithm `log(expr)`.
+ * @details Delegates to `seriesLog`.
+ */
 template <int N, int M>
 struct OpLog {
     template <typename T>
@@ -80,6 +108,10 @@ struct OpLog {
     { seriesLog<T, N, M>(out, a); }
 };
 
+/**
+ * @brief Tag for base-10 logarithm `log10(expr)`.
+ * @details Uses `seriesLog` then scales by `1/log(10)`.
+ */
 template <int N, int M>
 struct OpLog10 {
     template <typename T>
@@ -93,4 +125,4 @@ struct OpLog10 {
     }
 };
 
-} // namespace da::detail
+} // namespace tax::detail

@@ -1,6 +1,6 @@
 #include "testUtils.hpp"
 
-using namespace da::detail;
+using namespace tax::detail;
 
 // Helper: make a univariate coefficient array for 1 + x (order N).
 template <int N>
