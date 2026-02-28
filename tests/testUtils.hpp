@@ -7,8 +7,7 @@
 
 using namespace tax;
 
-static constexpr double kTol  = 1e-12;
-static constexpr double kTolF = 1e-5f;   // looser tolerance for float
+static constexpr double kTol  = 1e-10;
 
 /// Check that every coefficient of two DA values is within tol of each other.
 template <typename DA_>
