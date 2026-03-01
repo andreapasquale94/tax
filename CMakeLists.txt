@@ -6,7 +6,6 @@ project(tax VERSION 0.1.0 LANGUAGES CXX)
 # Options
 # -------------------------------
 option(TAX_BUILD_TEST "Build and enable unittests" ON)
-option(TAX_BUILD_BENCH "Build benchmarks" ON)
 option(TAX_ENABLE_EIGEN "Enable Eigen tensor adapters" OFF)
 
 # -------------------------------
@@ -49,13 +48,6 @@ if(TAX_ENABLE_EIGEN)
         message(STATUS "Eigen3 not found, disabling TAX_ENABLE_EIGEN")
         set(TAX_ENABLE_EIGEN OFF)
     endif()
-endif()
-
-# -------------------------------
-# Benchmarks
-# -------------------------------
-if(TAX_BUILD_BENCH)
-    add_subdirectory(bench)
 endif()
 
 # -------------------------------
