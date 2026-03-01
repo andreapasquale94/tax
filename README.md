@@ -4,7 +4,7 @@
 [![Sanitizers](https://github.com/andreapasquale94/tax/actions/workflows/sanitizers.yml/badge.svg?branch=main)](https://github.com/andreapasquale94/tax/actions/workflows/sanitizers.yml)
 [![codecov](https://codecov.io/gh/andreapasquale94/tax/graph/badge.svg?token=XwO5JOoaz6)](https://codecov.io/gh/andreapasquale94/tax)
 
-**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions** --- a Differential Algebra (DA) framework for computing with truncated multivariate Taylor polynomials.
+**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions** -- a Differential Algebra (DA) framework for computing truncated multivariate Taylor polynomials.
 
 Write natural mathematical expressions and tax automatically propagates the full Taylor series, giving you the function value and all partial derivatives up to order $N$ in a single evaluation pass.
 
