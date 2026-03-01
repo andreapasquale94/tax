@@ -8,3 +8,4 @@
 #include <tax/utils/combinatorics.hpp>
 #include <tax/utils/fwd.hpp>
 #include <tax/utils/leaf.hpp>
+#include <tax/utils/streaming.hpp>

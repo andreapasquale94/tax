@@ -2,6 +2,10 @@
 
 #include <tax/expr/base.hpp>
 #include <tax/kernels.hpp>
+#include <tax/utils/enumeration.hpp>
+#include <tax/utils/streaming.hpp>
+#include <ostream>
+#include <type_traits>
 
 #if __has_include( <Eigen/Core>)
 #include <Eigen/Core>
@@ -97,6 +101,49 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     }
 
 #if TAX_HAS_EIGEN_CORE
+    /**
+     * @brief Create a DA tensor from a compile-time-sized Eigen vector/matrix expansion point.
+     * @details Supports:
+     * - vectors (`Rows == 1 || Cols == 1`) -> vector/matrix of same shape
+     * - static matrices -> matrix of same shape
+     * Variable mapping is row-major flattening (`(r,c) -> i = r*Cols + c`).
+     */
+    template < typename Derived >
+    [[nodiscard]] static auto tensor( const Eigen::DenseBase< Derived >& x0 ) noexcept
+        requires( M > 1 && std::convertible_to< typename Derived::Scalar, T > )
+    {
+        constexpr int Rows = Derived::RowsAtCompileTime;
+        constexpr int Cols = Derived::ColsAtCompileTime;
+        static_assert( Rows != Eigen::Dynamic && Cols != Eigen::Dynamic,
+                       "tensor(x0) requires compile-time-sized Eigen inputs" );
+        static_assert( Rows >= 1 && Cols >= 1, "tensor(x0) requires non-empty Eigen inputs" );
+        static_assert( Rows * Cols == M, "tensor(x0) size must match number of variables M" );
+
+        using Out = Eigen::Matrix< TDA, Rows, Cols, Derived::Options, Derived::MaxRowsAtCompileTime,
+                                   Derived::MaxColsAtCompileTime >;
+        point_type p{};
+        [&]< std::size_t... I >( std::index_sequence< I... > ) {
+            ( [&] {
+                if constexpr ( Rows == 1 )
+                    p[I] = static_cast< T >( x0( Eigen::Index( 0 ), Eigen::Index( I ) ) );
+                else if constexpr ( Cols == 1 )
+                    p[I] = static_cast< T >( x0( Eigen::Index( I ), Eigen::Index( 0 ) ) );
+                else
+                    p[I] = static_cast< T >(
+                        x0( Eigen::Index( int( I ) / Cols ), Eigen::Index( int( I ) % Cols ) ) );
+            }(),
+              ... );
+        }( std::make_index_sequence< std::size_t( M ) >{} );
+
+        Out out{};
+        [&]< std::size_t... I >( std::index_sequence< I... > ) {
+            ( ( out( Eigen::Index( int( I ) / Cols ), Eigen::Index( int( I ) % Cols ) ) =
+                    variable< int( I ) >( p ) ),
+              ... );
+        }( std::make_index_sequence< std::size_t( M ) >{} );
+        return out;
+    }
+
     /**
      * @brief Create all coordinate variables from an Eigen vector expansion point.
      * @param x0 Eigen vector with `M` entries holding the expansion point.
@@ -455,7 +502,59 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
         return s >= a.value();
     }
 
-   private:
+    /// @brief Stream as polynomial in `dx`, using superscripts for powers and subscripts for variable indices.
+    friend std::ostream& operator<<( std::ostream& os, const TDA& a )
+    {
+        bool write = false;
+        for ( int d = 0; d <= N; ++d )
+        {
+            detail::forEachMonomial< M >( d, [&]( const MultiIndex< M >& alpha, std::size_t ai ) {
+                const T coeff = a.c_[ai];
+                if ( coeff == T{} ) return;
+
+                const bool has_monomial = ( d > 0 );
+                if constexpr ( std::is_arithmetic_v< T > )
+                {
+                    const bool neg = coeff < T{};
+                    const T abs_coeff = neg ? -coeff : coeff;
+                    const bool print_coeff = !has_monomial || abs_coeff != T{ 1 };
+
+                    if ( write )
+                    {
+                        os << ( neg ? " - " : " + " );
+                    } else if ( neg )
+                    {
+                        os << '-';
+                    }
+
+                    if ( print_coeff ) os << abs_coeff;
+                    if ( has_monomial )
+                    {
+                        if ( print_coeff ) os << "·";
+                        detail::writeMonomial< M >( os, alpha );
+                    }
+                } else
+                {
+                    if ( write ) os << " + ";
+                    os << coeff;
+                    if ( has_monomial )
+                    {
+                        os << '*';
+                        detail::writeMonomial< M >( os, alpha );
+                    }
+                }
+
+                write = true;
+            } );
+        }
+
+        if ( !write ) os << T{};
+        os << " + ";
+        detail::writeTruncationRemainder< M >( os, N + 1 );
+        return os;
+    }
+
+  private:
     [[nodiscard]] static constexpr coeff_array makeDerivativeFactors() noexcept
     {
         coeff_array factors{};
@@ -495,5 +594,32 @@ template < int N, int M >
 using DAn = TDA< double, N, M >;
 
 }  // namespace tax
+
+#if TAX_HAS_EIGEN_CORE
+namespace Eigen
+{
+
+template < typename T, int N, int M >
+struct NumTraits< tax::TDA< T, N, M > > : NumTraits< T >
+{
+    using Real = tax::TDA< T, N, M >;
+    using NonInteger = tax::TDA< T, N, M >;
+    using Literal = tax::TDA< T, N, M >;
+    using Nested = tax::TDA< T, N, M >;
+
+    enum
+    {
+        IsComplex = 0,
+        IsInteger = 0,
+        IsSigned = 1,
+        RequireInitialization = 1,
+        ReadCost = NumTraits< T >::ReadCost,
+        AddCost = NumTraits< T >::AddCost,
+        MulCost = NumTraits< T >::MulCost
+    };
+};
+
+}  // namespace Eigen
+#endif
 
 #undef TAX_HAS_EIGEN_CORE
