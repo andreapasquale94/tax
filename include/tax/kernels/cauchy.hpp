@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tax/utils/combinatorics.hpp>
+#include <tax/utils/enumeration.hpp>
 
 namespace tax::detail
 {
@@ -22,40 +22,14 @@ constexpr void cauchyProduct( std::array< T, numMonomials( N, M ) >& out,
             for ( int k = 0; k <= d; ++k ) out[d] += f[k] * g[d - k];
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillBeta = [&]( auto& self, int bvar ) -> void {
-            if ( bvar == M )
-            {
-                tax::MultiIndex< M > gamma{};
-                for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                out[flatIndex< M >( alpha )] +=
-                    f[flatIndex< M >( beta )] * g[flatIndex< M >( gamma )];
-                return;
-            }
-            for ( int b = 0; b <= alpha[bvar]; ++b )
-            {
-                beta[bvar] = b;
-                self( self, bvar + 1 );
-            }
-        };
-
-        auto fillAlpha = [&]( auto& self, int var, int rem ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                fillBeta( fillBeta, 0 );
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k );
-            }
-        };
-
-        for ( int d = 0; d <= N; ++d ) fillAlpha( fillAlpha, 0, d );
+        for ( int d = 0; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
+                forEachSubIndex< M >( alpha, [&]( auto bi, auto gi ) {
+                    out[ai] += f[bi] * g[gi];
+                } );
+            } );
+        }
     }
 }
 
@@ -74,40 +48,14 @@ constexpr void cauchyAccumulate( std::array< T, numMonomials( N, M ) >& out,
             for ( int k = 0; k <= d; ++k ) out[d] += f[k] * g[d - k];
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillBeta = [&]( auto& self, int bvar ) -> void {
-            if ( bvar == M )
-            {
-                tax::MultiIndex< M > gamma{};
-                for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                out[flatIndex< M >( alpha )] +=
-                    f[flatIndex< M >( beta )] * g[flatIndex< M >( gamma )];
-                return;
-            }
-            for ( int b = 0; b <= alpha[bvar]; ++b )
-            {
-                beta[bvar] = b;
-                self( self, bvar + 1 );
-            }
-        };
-
-        auto fillAlpha = [&]( auto& self, int var, int rem ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                fillBeta( fillBeta, 0 );
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k );
-            }
-        };
-
-        for ( int d = 0; d <= N; ++d ) fillAlpha( fillAlpha, 0, d );
+        for ( int d = 0; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
+                forEachSubIndex< M >( alpha, [&]( auto bi, auto gi ) {
+                    out[ai] += f[bi] * g[gi];
+                } );
+            } );
+        }
     }
 }
 

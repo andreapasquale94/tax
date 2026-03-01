@@ -4,6 +4,7 @@
 #include <tax/kernels/algebra.hpp>
 #include <tax/kernels/cauchy.hpp>
 #include <tax/kernels/ops.hpp>
+#include <tax/utils/enumeration.hpp>
 
 namespace tax::detail
 {
@@ -31,48 +32,16 @@ constexpr void seriesLog( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db < d; ++db )
-                {
-                    const int dg = d - db;
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            rhs +=
-                                T( dg ) * a[flatIndex< M >( beta )] * out[flatIndex< M >( gamma )];
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d - 1, [&]( auto bi, auto gi, int db ) {
+                    rhs += T( d - db ) * a[bi] * out[gi];
+                } );
                 out[ai] = ( a[ai] - rhs / T( d ) ) * inv_a0;
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
@@ -94,47 +63,16 @@ constexpr void seriesExp( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db <= d; ++db )
-                {
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            rhs +=
-                                T( db ) * a[flatIndex< M >( beta )] * out[flatIndex< M >( gamma )];
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d, [&]( auto bi, auto gi, int db ) {
+                    rhs += T( db ) * a[bi] * out[gi];
+                } );
                 out[ai] = rhs / T( d );
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
@@ -157,48 +95,16 @@ constexpr void seriesPow( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db <= d; ++db )
-                {
-                    const int dg = d - db;
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            rhs += ( c * T( db ) - T( dg ) ) * a[flatIndex< M >( beta )] *
-                                   out[flatIndex< M >( gamma )];
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d, [&]( auto bi, auto gi, int db ) {
+                    rhs += ( c * T( db ) - T( d - db ) ) * a[bi] * out[gi];
+                } );
                 out[ai] = rhs * inv_a0 / T( d );
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
@@ -287,46 +193,16 @@ constexpr void seriesErf( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db <= d; ++db )
-                {
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            rhs += T( db ) * a[flatIndex< M >( beta )] * h[flatIndex< M >( gamma )];
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d, [&]( auto bi, auto gi, int db ) {
+                    rhs += T( db ) * a[bi] * h[gi];
+                } );
                 out[ai] = rhs / T( d );
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
@@ -359,48 +235,16 @@ constexpr void seriesAsin( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db < d; ++db )
-                {
-                    const int dg = d - db;
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            rhs +=
-                                T( dg ) * h[flatIndex< M >( beta )] * out[flatIndex< M >( gamma )];
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d - 1, [&]( auto bi, auto gi, int db ) {
+                    rhs += T( d - db ) * h[bi] * out[gi];
+                } );
                 out[ai] = ( a[ai] - rhs / T( d ) ) * inv_h0;
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
@@ -440,48 +284,16 @@ constexpr void seriesAtan( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db < d; ++db )
-                {
-                    const int dg = d - db;
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            rhs +=
-                                T( dg ) * h[flatIndex< M >( beta )] * out[flatIndex< M >( gamma )];
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d - 1, [&]( auto bi, auto gi, int db ) {
+                    rhs += T( d - db ) * h[bi] * out[gi];
+                } );
                 out[ai] = ( a[ai] - rhs / T( d ) ) * inv_h0;
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
@@ -515,49 +327,16 @@ constexpr void seriesAtan2( std::array< T, numMonomials( N, M ) >& out,
         }
     } else
     {
-        tax::MultiIndex< M > alpha{};
-        tax::MultiIndex< M > beta{};
-
-        auto fillAlpha = [&]( auto& self, int var, int rem, int d ) -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                const std::size_t ai = flatIndex< M >( alpha );
+        for ( int d = 1; d <= N; ++d )
+        {
+            forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = T{ 0 };
-                for ( int db = 1; db < d; ++db )
-                {
-                    const int dg = d - db;
-                    auto fillBeta = [&]( auto& bself, int bvar, int brem ) -> void {
-                        if ( bvar == M - 1 )
-                        {
-                            beta[bvar] = brem;
-                            if ( beta[bvar] > alpha[bvar] ) return;
-                            tax::MultiIndex< M > gamma{};
-                            for ( int i = 0; i < M; ++i ) gamma[i] = alpha[i] - beta[i];
-                            const auto bi = flatIndex< M >( beta );
-                            const auto gi = flatIndex< M >( gamma );
-                            rhs += T( dg ) * ( x[bi] * y[gi] - y[bi] * x[gi] - h[bi] * out[gi] );
-                            return;
-                        }
-                        for ( int b = 0; b <= std::min( brem, alpha[bvar] ); ++b )
-                        {
-                            beta[bvar] = b;
-                            bself( bself, bvar + 1, brem - b );
-                        }
-                    };
-                    fillBeta( fillBeta, 0, db );
-                }
+                forEachSubIndex< M >( alpha, 1, d - 1, [&]( auto bi, auto gi, int db ) {
+                    rhs += T( d - db ) * ( x[bi] * y[gi] - y[bi] * x[gi] - h[bi] * out[gi] );
+                } );
                 out[ai] = ( ( x[0] * y[ai] - y[0] * x[ai] ) + rhs / T( d ) ) * inv_h0;
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k, d );
-            }
-        };
-
-        for ( int d = 1; d <= N; ++d ) fillAlpha( fillAlpha, 0, d, d );
+            } );
+        }
     }
 }
 
