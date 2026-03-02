@@ -200,3 +200,98 @@ TEST( TaylorIntegrate, InitialConditionIncluded )
     EXPECT_NEAR( result.t.front(), 0.5, 1e-14 );
     EXPECT_NEAR( result.y.front()( 0 ), 3.14, 1e-14 );
 }
+
+// =============================================================================
+// Two-body (Kepler) problem
+//
+// State: [x, y, vx, vy]
+// RHS:   x'=vx,  y'=vy,  vx'=-x/r³,  vy'=-y/r³   (μ = 1)
+//
+// Circular orbit with r₀ = 1, period T = 2π:
+//   x(t) = cos(t),   y(t) = sin(t)
+//  vx(t) = -sin(t), vy(t) = cos(t)
+//
+// Conserved quantities:
+//   Energy: E = (vx²+vy²)/2 - 1/r = -0.5
+//   Angular momentum: L = x*vy - y*vx = 1.0
+// =============================================================================
+
+namespace
+{
+// RHS of the two-body problem (μ = 1). Works with any DA<N> or double.
+auto kepler_rhs = []( auto t, auto y ) -> decltype( y )
+{
+    auto r2 = y( 0 ) * y( 0 ) + y( 1 ) * y( 1 );  // r²
+    auto r3 = r2 * sqrt( r2 );                       // r³
+    decltype( y ) out( 4 );
+    out( 0 ) =  y( 2 );
+    out( 1 ) =  y( 3 );
+    out( 2 ) = -y( 0 ) / r3;
+    out( 3 ) = -y( 1 ) / r3;
+    return out;
+};
+}  // namespace
+
+// Single Taylor step for the circular orbit
+TEST( TwoBody, SingleStep )
+{
+    constexpr int N = 14;
+
+    // Circular orbit: x=1, y=0, vx=0, vy=1
+    Eigen::Vector4d y0{ 1.0, 0.0, 0.0, 1.0 };
+
+    const double h  = 0.3;
+    auto         y1 = taylorStep< N >( kepler_rhs, 0.0, y0, h );
+
+    EXPECT_NEAR( y1( 0 ),  std::cos( h ), 1e-9 );   // x
+    EXPECT_NEAR( y1( 1 ),  std::sin( h ), 1e-9 );   // y
+    EXPECT_NEAR( y1( 2 ), -std::sin( h ), 1e-9 );   // vx
+    EXPECT_NEAR( y1( 3 ),  std::cos( h ), 1e-9 );   // vy
+}
+
+// Integrate for one full period and verify return to initial state
+TEST( TwoBody, FullPeriod )
+{
+    constexpr int N = 16;
+
+    Eigen::Vector4d y0{ 1.0, 0.0, 0.0, 1.0 };
+    const double    T  = 2.0 * M_PI;
+
+    auto result = taylorIntegrate< N >( kepler_rhs, 0.0, T, y0, 0.5, 1e-10, 1e-10 );
+
+    ASSERT_FALSE( result.t.empty() );
+    EXPECT_NEAR( result.t.back(), T, 1e-12 );
+
+    const auto& yf = result.y.back();
+    EXPECT_NEAR( yf( 0 ),  1.0, 1e-8 );   // x → 1
+    EXPECT_NEAR( yf( 1 ),  0.0, 1e-8 );   // y → 0
+    EXPECT_NEAR( yf( 2 ),  0.0, 1e-8 );   // vx → 0
+    EXPECT_NEAR( yf( 3 ),  1.0, 1e-8 );   // vy → 1
+}
+
+// Energy and angular momentum are conserved at every reported step
+TEST( TwoBody, ConservedQuantities )
+{
+    constexpr int N = 16;
+
+    Eigen::Vector4d y0{ 1.0, 0.0, 0.0, 1.0 };
+    const double    T  = 2.0 * M_PI;
+
+    // Reference conserved values for the circular orbit
+    const double E0 = 0.5 * ( y0( 2 ) * y0( 2 ) + y0( 3 ) * y0( 3 ) )
+                      - 1.0 / std::sqrt( y0( 0 ) * y0( 0 ) + y0( 1 ) * y0( 1 ) );
+    const double L0 = y0( 0 ) * y0( 3 ) - y0( 1 ) * y0( 2 );
+
+    auto result = taylorIntegrate< N >( kepler_rhs, 0.0, T, y0, 0.5, 1e-10, 1e-10 );
+
+    for ( std::size_t k = 0; k < result.t.size(); ++k )
+    {
+        const auto& y   = result.y[k];
+        const double r   = std::sqrt( y( 0 ) * y( 0 ) + y( 1 ) * y( 1 ) );
+        const double E   = 0.5 * ( y( 2 ) * y( 2 ) + y( 3 ) * y( 3 ) ) - 1.0 / r;
+        const double L   = y( 0 ) * y( 3 ) - y( 1 ) * y( 2 );
+
+        EXPECT_NEAR( E, E0, 1e-7 ) << "  energy drift at step " << k;
+        EXPECT_NEAR( L, L0, 1e-7 ) << "  angular momentum drift at step " << k;
+    }
+}

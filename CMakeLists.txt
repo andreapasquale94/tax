@@ -7,6 +7,7 @@ project(tax VERSION 0.1.0 LANGUAGES CXX)
 # -------------------------------
 option(TAX_BUILD_TEST "Build and enable unittests" ON)
 option(TAX_ENABLE_EIGEN "Enable Eigen tensor adapters" OFF)
+option(TAX_BUILD_EXAMPLES "Build example programs" OFF)
 
 # -------------------------------
 # Compiler settings
@@ -57,6 +58,13 @@ endif()
 if(TAX_BUILD_TEST)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+# -------------------------------
+# Examples
+# -------------------------------
+if(TAX_BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()
 
 # -------------------------------
