@@ -86,16 +86,28 @@ class TaylorStepper
 
     /**
      * @brief Perform one step y(t0+h) from (t0, y0).
+     *
+     * The polynomial evaluation is vectorised: all component polynomials are
+     * evaluated simultaneously via a single Eigen matrix–vector product
+     * `C * [1, h, …, hᴺ]ᵀ` (see `tax::evalSeries`).  Scalar type, Taylor
+     * order, and state dimension are passed as explicit template arguments so
+     * Eigen can select fully-specialised, SIMD-accelerated kernels.
      */
     template < typename Vec >
     [[nodiscard]] Vec step( double t0, const Vec& y0, double h )
     {
-        auto y_da = series< Vec >( t0, y0 );
+        using DVec = ::tax::detail::eigen::rebind_matrix_t< Vec, da_type >;
+        auto y_da  = series< Vec >( t0, y0 );
+
+        // Vectorised evaluation with compile-time T, N, and Dim.
+        auto y_result =
+            ::tax::evalSeries< scalar_type, order, DVec::RowsAtCompileTime >( y_da,
+                                                                               scalar_type( h ) );
 
         const Eigen::Index dim = y0.size();
         Vec y_new( dim );
         for ( Eigen::Index i = 0; i < dim; ++i )
-            y_new( i ) = y_da( i ).eval( h );
+            y_new( i ) = y_result( i );
         return y_new;
     }
 

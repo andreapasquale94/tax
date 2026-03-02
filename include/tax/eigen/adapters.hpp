@@ -149,4 +149,60 @@ template < typename T, int N, int M, typename Derived >
     return f.eval( p );
 }
 
+/**
+ * @brief Vectorised evaluation of a univariate DA column-vector at scalar @p h.
+ *
+ * All @p Dim polynomial evaluations are performed simultaneously via a single
+ * matrix–vector product:
+ * @code
+ *   result = C * [1, h, h², …, hᴺ]ᵀ
+ * @endcode
+ * where `C(i, k) = y_da(i)[k]`.
+ *
+ * Exposing @p T, @p N, and @p Dim as explicit template parameters (rather than
+ * deducing them from a generic vector type) lets Eigen select fully-specialised,
+ * SIMD-accelerated kernels whenever the state dimension and polynomial order are
+ * known at compile time.  In particular:
+ *   - `C` has compile-time column count `N+1`, so the inner accumulation loop is
+ *     always unrolled.
+ *   - When @p Dim is a fixed positive integer the whole product is unrolled
+ *     into register-level SIMD operations with no heap allocation.
+ *   - When @p Dim is `Eigen::Dynamic` the kernel still has a fixed-width inner
+ *     loop (`N+1` iterations) that the compiler can auto-vectorise.
+ *
+ * @tparam T    Scalar (coefficient) type (e.g. `double`).
+ * @tparam N    Taylor order of the DA elements.
+ * @tparam Dim  Static row count of the state vector; use `Eigen::Dynamic` for
+ *              runtime-sized vectors.
+ * @param  y_da Eigen column-vector of `TDA<T,N,1>` elements (length @p Dim).
+ * @param  h    Scalar step size (displacement from the Taylor expansion point).
+ * @return      `Eigen::Matrix<T, Dim, 1>` with the evaluated polynomial values.
+ */
+template < typename T, int N, int Dim >
+[[nodiscard]] Eigen::Matrix< T, Dim, 1 >
+evalSeries( const Eigen::Matrix< TDA< T, N, 1 >, Dim, 1 >& y_da, T h ) noexcept
+{
+    constexpr int N1       = N + 1;
+    const Eigen::Index dim = y_da.size();
+
+    // Coefficient matrix: row i holds the N+1 Taylor coefficients of y_da(i).
+    // Fixed column count N+1 lets Eigen fully unroll the inner GEMV loop.
+    Eigen::Matrix< T, Dim, N1 > C( dim, N1 );
+    for ( Eigen::Index i = 0; i < dim; ++i )
+    {
+        const auto sp = y_da( i ).coeffSpan();
+        for ( int k = 0; k < N1; ++k )
+            C( i, k ) = sp[std::size_t( k )];
+    }
+
+    // h-powers vector (fixed size N+1): hp[k] = hᵏ.
+    Eigen::Matrix< T, N1, 1 > hp;
+    hp[0] = T( 1 );
+    for ( int k = 1; k < N1; ++k )
+        hp[k] = hp[k - 1] * h;
+
+    // Matrix–vector product with full compile-time dimension knowledge.
+    return C * hp;
+}
+
 }  // namespace tax
