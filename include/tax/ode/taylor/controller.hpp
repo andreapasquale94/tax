@@ -61,17 +61,15 @@ class JorbaZouStepSizeController
             y_norm = std::max( y_norm, std::abs( double( y( i ) ) ) );
         const double tol = options_.atol + options_.rtol * y_norm;
 
-        double cn = 0.0;
-        double cn1 = 0.0;
-        for ( Eigen::Index i = 0; i < dim; ++i )
-        {
-            cn = std::max( cn, std::abs( yDA( i )[order] ) );
-            cn1 = std::max( cn1, std::abs( yDA( i )[order - 1] ) );
-        }
-
         double h_opt = h * options_.maxGrowth;
-        if ( cn > 0.0 ) h_opt = std::min( h_opt, std::pow( tol / cn, 1.0 / order ) );
-        if ( cn1 > 0.0 ) h_opt = std::min( h_opt, std::pow( tol / cn1, 1.0 / ( order - 1 ) ) );
+        constexpr int k_min = ( order / 2 > 1 ) ? ( order / 2 ) : 2;
+        for ( int k = k_min; k <= order; ++k )
+        {
+            double ck = 0.0;
+            for ( Eigen::Index i = 0; i < dim; ++i )
+                ck = std::max( ck, std::abs( yDA( i )[k] ) );
+            if ( ck > 0.0 ) h_opt = std::min( h_opt, std::pow( tol / ck, 1.0 / k ) );
+        }
         h_opt *= options_.safetyFactor;
         return h_opt;
     }
