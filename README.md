@@ -8,7 +8,7 @@
 
 Write natural mathematical expressions and tax automatically propagates the full Taylor series, giving you the function value and all partial derivatives up to order $N$ in a single evaluation pass.
 
-    DISCAIMER: this repository is under active development. APIs and behavior may change; use with care.
+    DISCLAIMER: this repository is under active development. APIs and behavior may change; use with care.
 
 ## Features
 
