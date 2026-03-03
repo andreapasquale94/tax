@@ -21,24 +21,24 @@ endif()
 
 # Collect all tests
 set(TEST_SOURCES
-    testCombinatorics.cpp
-    testKernels.cpp
-    testDA.cpp
-    testExprAdd.cpp
-    testExprMul.cpp
-    testExprUnary.cpp
-    testExprPower.cpp
-    testExprTrig.cpp
-    testExprLog.cpp
-    testExprPow.cpp
-    testExprHyp.cpp
-    testExprInvHyp.cpp
-    testExprInvTrig.cpp
-    testExprErf.cpp
-    testExprFMA.cpp
-    testEnumeration.cpp
-    testNested.cpp
-    testCompose.cpp
+    foundation/testCombinatorics.cpp
+    foundation/testEnumeration.cpp
+    kernels/testKernels.cpp
+    core/testDA.cpp
+    core/testNested.cpp
+    core/testCompose.cpp
+    expr/testExprAdd.cpp
+    expr/testExprMul.cpp
+    expr/testExprUnary.cpp
+    expr/testExprPower.cpp
+    expr/testExprTrig.cpp
+    expr/testExprLog.cpp
+    expr/testExprPow.cpp
+    expr/testExprHyp.cpp
+    expr/testExprInvHyp.cpp
+    expr/testExprInvTrig.cpp
+    expr/testExprErf.cpp
+    expr/testExprFMA.cpp
 )
 
 if(TAX_ENABLE_EIGEN)
@@ -62,6 +62,7 @@ foreach(test_file IN LISTS TEST_SOURCES)
             tax
             GTest::gtest_main
     )
+    target_include_directories(${test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
     # Register with CTest
     gtest_discover_tests(${test_name})
