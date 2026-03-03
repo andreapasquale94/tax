@@ -5,6 +5,7 @@
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/streaming.hpp>
 #include <ostream>
+#include <span>
 #include <type_traits>
 
 namespace tax
@@ -135,6 +136,13 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     [[nodiscard]] constexpr T& operator[]( std::size_t i ) noexcept { return c_[i]; }
     /// @brief Access full coefficient array.
     [[nodiscard]] constexpr const coeff_array& coeffs() const noexcept { return c_; }
+    /// @brief Read-only span over the coefficient storage.
+    [[nodiscard]] constexpr std::span< const T > coeffSpan() const noexcept
+    {
+        return { c_.data(), ncoef };
+    }
+    /// @brief Mutable span over the coefficient storage.
+    [[nodiscard]] constexpr std::span< T > coeffSpan() noexcept { return { c_.data(), ncoef }; }
     /// @brief Value at the expansion point.
     [[nodiscard]] constexpr T value() const noexcept { return c_[0]; }
 

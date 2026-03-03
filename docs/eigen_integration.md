@@ -8,11 +8,23 @@ TAX provides adapters for working with Eigen vectors, matrices, and tensors of D
 template <typename T, int N, int M, int Rows, int Cols>
 using Mat = Eigen::Matrix<TDA<T, N, M>, Rows, Cols>;
 
-template <int N, int M>
-using Vec = Eigen::Matrix<DAn<N, M>, M, 1>;
+template <typename Scalar, int Size>
+using VecT = Eigen::Matrix<Scalar, Size, 1>;
+
+template <typename Scalar, int Size>
+using RowVecT = Eigen::Matrix<Scalar, 1, Size>;
+
+template <int N, int Size>
+using DAVec = VecT<DA<N>, Size>;
+
+template <int N, int Size>
+using DARowVec = RowVecT<DA<N>, Size>;
 
 template <int N, int M>
-using RowVec = Eigen::Matrix<DAn<N, M>, 1, M>;
+using DAnVec = VecT<DAn<N, M>, M>;
+
+template <int N, int M>
+using DAnRowVec = RowVecT<DAn<N, M>, M>;
 ```
 
 ## Creating DA Variables from Eigen Vectors
