@@ -108,4 +108,16 @@ template < typename E >
     return detail::FuncExpr< E, detail::OpErf< E::order, E::nvars > >{ e.self() };
 }
 
+/**
+ * @brief Compositional inverse (series reversion).
+ * @details Given `f` with `f(0) == 0` and `f'(0) != 0`, returns `g` such that `f(g(y)) = y`.
+ *          Univariate only (`M == 1`).
+ */
+template < typename E >
+[[nodiscard]] constexpr auto inv( const ExprBase< E >& e ) noexcept
+{
+    static_assert( E::nvars == 1, "inv requires univariate DA (M==1)" );
+    return detail::FuncExpr< E, detail::OpInv< E::order, E::nvars > >{ e.self() };
+}
+
 }  // namespace tax

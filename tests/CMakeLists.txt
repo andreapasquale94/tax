@@ -38,6 +38,7 @@ set(TEST_SOURCES
     testEnumeration.cpp
     testNested.cpp
     testCompose.cpp
+    testCompInverse.cpp
 )
 
 if(TAX_ENABLE_EIGEN)

@@ -364,4 +364,19 @@ struct OpHypot3
     }
 };
 
+/**
+ * @brief Tag for `inv(expr)` — compositional inverse (series reversion).
+ * @details Delegates to `seriesInv`. Univariate only.
+ */
+template < int N, int M >
+struct OpInv
+{
+    template < typename T >
+    static constexpr void apply( std::array< T, numMonomials( N, M ) >& out,
+                                 const std::array< T, numMonomials( N, M ) >& a ) noexcept
+    {
+        seriesInv< T, N, M >( out, a );
+    }
+};
+
 }  // namespace tax::detail

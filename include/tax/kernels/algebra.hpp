@@ -105,4 +105,53 @@ constexpr void seriesSqrt( std::array< T, numMonomials( N, M ) >& out,
     }
 }
 
+template < typename T, int N, int M >
+/**
+ * @brief Compositional inverse (series reversion).
+ * @details Given `f(x) = a[1]*x + a[2]*x^2 + ...` with `a[0] == 0` and `a[1] != 0`,
+ *          computes `g(y)` such that `f(g(y)) = y`, truncated to order `N`.
+ *          Univariate only (`M == 1`).
+ */
+constexpr void seriesInv( std::array< T, numMonomials( N, M ) >& out,
+                          const std::array< T, numMonomials( N, M ) >& a ) noexcept
+{
+    static_assert( M == 1, "Compositional inverse is only supported for univariate series (M==1)" );
+
+    out = {};
+    if constexpr ( N == 0 ) return;
+
+    const T inv_a1 = T{ 1 } / a[1];
+    out[1] = inv_a1;
+
+    if constexpr ( N >= 2 )
+    {
+        // gp[k][d] = coefficient of y^d in g(y)^k
+        // We build these degree-by-degree.
+        // gp[0] = [1, 0, ...], gp[1] = g (= out), gp[k] = g^k
+        std::array< std::array< T, N + 1 >, N + 1 > gp{};
+        gp[0][0] = T{ 1 };
+        gp[1][1] = inv_a1;
+
+        for ( int d = 2; d <= N; ++d )
+        {
+            // Update gp[k][d] for k = 2..d using: gp[k][d] = sum_{j=1}^{d-1} gp[k-1][d-j] * out[j]
+            // (j=0 skipped since out[0]=0; j=d skipped since gp[k-1][0]=0 for k>=2)
+            for ( int k = 2; k <= d; ++k )
+            {
+                T s = T{ 0 };
+                for ( int j = 1; j <= d - 1; ++j ) s += gp[k - 1][d - j] * out[j];
+                gp[k][d] = s;
+            }
+
+            // S = sum_{k=2}^{min(d,N)} a[k] * gp[k][d]
+            T S = T{ 0 };
+            const int kmax = d < N ? d : N;
+            for ( int k = 2; k <= kmax; ++k ) S += a[k] * gp[k][d];
+
+            out[d] = -S * inv_a1;
+            gp[1][d] = out[d];
+        }
+    }
+}
+
 }  // namespace tax::detail
