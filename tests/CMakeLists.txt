@@ -66,6 +66,6 @@ foreach(test_file IN LISTS TEST_SOURCES)
     gtest_discover_tests(${test_name})
 endforeach()
 
-if(TAX_DACE_TEST)
+if(TAX_USE_DACE)
     add_subdirectory(dace)
 endif()

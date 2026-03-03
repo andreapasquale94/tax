@@ -83,6 +83,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DTAX_BUILD_BENCH=OFF
           -DTAX_ENABLE_EIGEN=ON
+          -DTAX_USE_DACE=ON
 
       - name: Build
         run: cmake --build build -j 2

@@ -82,6 +82,25 @@ cmake --build build
 |--------------------|---------|-----------------------------------|
 | `TAX_BUILD_TEST`   | `ON`    | Build the test suite              |
 | `TAX_ENABLE_EIGEN` | `OFF`   | Enable Eigen adapters and tensors |
+| `TAX_BUILD_BENCHMARK` | `OFF` | Build Google Benchmark suite      |
+| `TAX_USE_DACE` | `OFF`  | Fetch/enable DACE for tests and benchmarks |
+
+### Benchmarks (TAX vs DACE)
+
+```bash
+cmake -S . -B build-bench \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DTAX_BUILD_TEST=OFF \
+  -DTAX_BUILD_BENCHMARK=ON \
+  -DTAX_USE_DACE=ON
+cmake --build build-bench --target univariate -j
+
+# Run all univariate benchmarks
+./build-bench/benchmarks/nivariat
+
+# Example: compare only sin and exp
+./build-bench/benchmarks/nivariat --benchmark_filter='(Tax|Dace)/(Sin|Exp)/.*'
+```
 
 ## Install
 
