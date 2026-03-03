@@ -32,6 +32,7 @@
 
 #if TAX_ENABLE_EIGEN
 #include <tax/eigen/adapters.hpp>
+#include <tax/eigen/map_inv.hpp>
 #include <tax/eigen/tensor_function.hpp>
 #include <tax/eigen/tensors.hpp>
 #include <tax/eigen/types.hpp>

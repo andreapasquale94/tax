@@ -20,10 +20,10 @@ using DAVec = VecT< DA< N >, Size >;
 template < int N, int Size >
 using DARowVec = RowVecT< DA< N >, Size >;
 
-template < int N, int M >
-using DAnVec = VecT< DAn< N, M >, M >;
+template < int N, int M, int Size = M >
+using DAnVec = VecT< DAn< N, M >, Size >;
 
-template < int N, int M >
-using DAnRowVec = RowVecT< DAn< N, M >, M >;
+template < int N, int M, int Size = M >
+using DAnRowVec = RowVecT< DAn< N, M >, Size >;
 
 }  // namespace tax

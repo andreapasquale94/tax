@@ -56,6 +56,10 @@ TEST( EigenTypes, ExplicitVectorAliases )
     static_assert( DAnVec< 2, 3 >::ColsAtCompileTime == 1 );
     static_assert( DAnRowVec< 2, 3 >::RowsAtCompileTime == 1 );
     static_assert( DAnRowVec< 2, 3 >::ColsAtCompileTime == 3 );
+    static_assert( DAnVec< 2, 3, 4 >::RowsAtCompileTime == 4 );
+    static_assert( DAnVec< 2, 3, 4 >::ColsAtCompileTime == 1 );
+    static_assert( DAnRowVec< 2, 3, 4 >::RowsAtCompileTime == 1 );
+    static_assert( DAnRowVec< 2, 3, 4 >::ColsAtCompileTime == 4 );
 
     DAVec< 3, 4 > v;
     v << DA< 3 >::variable( 1.0 ), DA< 3 >{ 2.0 }, DA< 3 >{ 3.0 }, DA< 3 >{ 4.0 };
@@ -73,4 +77,8 @@ TEST( EigenTypes, ExplicitVectorAliases )
     DAnVec< 2, 3 > w;
     w << x, y, z;
     EXPECT_NEAR( w( 2 ).value(), 30.0, kTol );
+
+    DAnVec< 2, 3, 4 > w4;
+    w4 << x, y, z, DAn< 2, 3 >{ 40.0 };
+    EXPECT_NEAR( w4( 3 ).value(), 40.0, kTol );
 }
