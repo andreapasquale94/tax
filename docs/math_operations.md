@@ -116,6 +116,44 @@ $$|f|_\alpha = \operatorname{sgn}(f_0) \cdot f_\alpha$$
 
 If $f_0 > 0$ the series is unchanged; if $f_0 < 0$ all coefficients are negated. Requires $f_0 \neq 0$.
 
+### Compositional Inverse (`inv`)
+
+Given a univariate polynomial $f(x) = \sum_{d=1}^{N} f_d\,x^d$ with $f_0 = 0$ and $f_1 \neq 0$, the compositional inverse $g = \operatorname{inv}(f)$ is the unique series $g(y) = \sum_{d=1}^{N} g_d\,y^d$ satisfying:
+
+$$f(g(y)) = y$$
+
+The algorithm builds $g$ degree by degree, tracking the powers $g^k$ incrementally.
+
+**Initialisation:**
+
+$$g_1 = \frac{1}{f_1}$$
+
+**Power tracking:**
+
+Let $P_d^{(k)}$ denote the coefficient of $y^d$ in $g(y)^k$. These are built by the Cauchy recurrence:
+
+$$P_d^{(1)} = g_d, \qquad P_d^{(k)} = \sum_{j=1}^{d-1} P_{d-j}^{(k-1)}\,g_j, \qquad k \ge 2$$
+
+Note that $P_d^{(k)}$ for $k \ge 2$ depends only on $g_1, \ldots, g_{d-1}$ (since $g_0 = 0$ eliminates the $j = d$ and $j = 0$ boundary terms).
+
+**Degree-by-degree solve ($d \ge 2$):**
+
+Expanding $f(g(y)) = \sum_{k=1}^{N} f_k\,g(y)^k$ and equating the coefficient of $y^d$ to zero (for $d \ge 2$):
+
+$$\sum_{k=1}^{d} f_k\,P_d^{(k)} = 0$$
+
+Separating the $k = 1$ term (which contributes $f_1\,g_d$):
+
+$$f_1\,g_d + \underbrace{\sum_{k=2}^{\min(d,\,N)} f_k\,P_d^{(k)}}_{S_d} = 0$$
+
+Since $P_d^{(k)}$ for $k \ge 2$ uses only previously computed coefficients, we solve:
+
+$$g_d = -\frac{S_d}{f_1}$$
+
+**Complexity:** $O(N^3)$ — at each degree $d$, updating the power table costs $O(d^2)$ work, summed over $d = 2, \ldots, N$.
+
+Requires $f_0 = 0$ and $f_1 \neq 0$. Currently univariate only ($M = 1$).
+
 ---
 
 ## Trigonometric Functions
