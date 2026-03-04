@@ -12,24 +12,24 @@ namespace tax
 namespace detail::eigen
 {
 
-/// @brief Traits for extracting scalar type, order, and number of variables from a TDA type.
+/// @brief Traits for extracting scalar type, order, and number of variables from a TruncatedTaylorExpansionT type.
 template < typename >
 struct da_traits;
 
 template < typename T, int N, int M >
-struct da_traits< TDA< T, N, M > >
+struct da_traits< TruncatedTaylorExpansionT< T, N, M > >
 {
     using scalar_type = T;
     static constexpr int order = N;
     static constexpr int vars = M;
 };
 
-/// @brief True if `DA` is a `TDA<T, N, M>` specialization.
+/// @brief True if `DA` is a `TruncatedTaylorExpansionT<T, N, M>` specialization.
 template < typename >
 inline constexpr bool is_da_v = false;
 
 template < typename T, int N, int M >
-inline constexpr bool is_da_v< TDA< T, N, M > > = true;
+inline constexpr bool is_da_v< TruncatedTaylorExpansionT< T, N, M > > = true;
 
 /// @brief Rebind an Eigen matrix type to use a different scalar.
 template < typename Derived, typename Scalar >
@@ -49,7 +49,7 @@ concept EigenDenseExpr = requires( const T& t ) {
 
 /**
  * @brief Create a DA tensor from a compile-time-sized Eigen vector/matrix expansion point.
- * @tparam DA The TDA type (e.g., `DAn<2, 4>`). `M` must equal the input size.
+ * @tparam DA The TruncatedTaylorExpansionT type (e.g., `TEn<2, 4>`). `M` must equal the input size.
  * @param x0 Eigen matrix/vector with `M` entries.
  * @return Eigen matrix of same shape with DA variable entries.
  */
@@ -95,7 +95,7 @@ template < typename DA, typename Derived >
 
 /**
  * @brief Create all coordinate variables from an Eigen vector expansion point.
- * @tparam DA The TDA type (e.g., `DAn<2, 3>`). `M` must match the vector size.
+ * @tparam DA The TruncatedTaylorExpansionT type (e.g., `TEn<2, 3>`). `M` must match the vector size.
  * @param x0 Eigen vector with `M` entries.
  * @return Tuple `(x_0, ..., x_{M-1})` of DA variables.
  */
@@ -140,10 +140,10 @@ template < typename DA, typename Derived >
  * @return `f(x0 + dx)` truncated to order `N`.
  */
 template < typename T, int N, int M, typename Derived >
-[[nodiscard]] T eval( const TDA< T, N, M >& f, const Eigen::DenseBase< Derived >& dx ) noexcept
+[[nodiscard]] T eval( const TruncatedTaylorExpansionT< T, N, M >& f, const Eigen::DenseBase< Derived >& dx ) noexcept
     requires( M > 1 && std::convertible_to< typename Derived::Scalar, T > )
 {
-    typename TDA< T, N, M >::point_type p{};
+    typename TruncatedTaylorExpansionT< T, N, M >::point_type p{};
     for ( int i = 0; i < M; ++i )
         p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
     return f.eval( p );
@@ -164,7 +164,7 @@ template < typename T, int N, int M, typename Derived >
  */
 template < typename T, int N, int Dim >
 [[nodiscard]] Eigen::Matrix< T, Dim, 1 >
-coeffRow( const Eigen::Matrix< TDA< T, N, 1 >, Dim, 1 >& v, int k ) noexcept
+coeffRow( const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& v, int k ) noexcept
 {
     const Eigen::Index dim = v.size();
     Eigen::Matrix< T, Dim, 1 > out( dim );
@@ -190,7 +190,7 @@ coeffRow( const Eigen::Matrix< TDA< T, N, 1 >, Dim, 1 >& v, int k ) noexcept
  * @param  vals    Source expression; must have the same runtime size as `v`.
  */
 template < typename T, int N, int Dim, typename ValsDer >
-void setCoeffRow( Eigen::Matrix< TDA< T, N, 1 >, Dim, 1 >& v, int k,
+void setCoeffRow( Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& v, int k,
                   const Eigen::MatrixBase< ValsDer >& vals ) noexcept
 {
     assert( v.size() == vals.size() );
@@ -223,13 +223,13 @@ void setCoeffRow( Eigen::Matrix< TDA< T, N, 1 >, Dim, 1 >& v, int k,
  * @tparam N    Taylor order of the DA elements.
  * @tparam Dim  Static row count of the state vector; use `Eigen::Dynamic` for
  *              runtime-sized vectors.
- * @param  y_da Eigen column-vector of `TDA<T,N,1>` elements (length @p Dim).
+ * @param  y_da Eigen column-vector of `TruncatedTaylorExpansionT<T,N,1>` elements (length @p Dim).
  * @param  h    Scalar step size (displacement from the Taylor expansion point).
  * @return      `Eigen::Matrix<T, Dim, 1>` with the evaluated polynomial values.
  */
 template < typename T, int N, int Dim >
 [[nodiscard]] Eigen::Matrix< T, Dim, 1 >
-evalSeries( const Eigen::Matrix< TDA< T, N, 1 >, Dim, 1 >& y_da, T h ) noexcept
+evalSeries( const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& y_da, T h ) noexcept
 {
     constexpr int N1       = N + 1;
     const Eigen::Index dim = y_da.size();

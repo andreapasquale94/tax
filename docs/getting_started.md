@@ -59,7 +59,7 @@ If Eigen headers are available on the include path, the Eigen integration is aut
 
 ## Core Type
 
-The central type is `TDA<T, N, M>`:
+The central type is `TruncatedTaylorExpansionT<T, N, M>`:
 
 | Parameter | Meaning                                      |
 |-----------|----------------------------------------------|
@@ -70,18 +70,18 @@ The central type is `TDA<T, N, M>`:
 Two convenience aliases are provided:
 
 ```cpp
-template <int N>    using DA  = TDA<double, N, 1>;   // univariate
-template <int N, int M> using DAn = TDA<double, N, M>;   // multivariate
+template <int N>    using TE  = TruncatedTaylorExpansionT<double, N, 1>;   // univariate
+template <int N, int M> using TEn = TruncatedTaylorExpansionT<double, N, M>;   // multivariate
 ```
 
-A `TDA` stores $\binom{N+M}{M}$ coefficients in graded lexicographic (grlex) order.
+A `TruncatedTaylorExpansionT` stores $\binom{N+M}{M}$ coefficients in graded lexicographic (grlex) order.
 
 ## Creating Variables
 
 **Univariate** --- expand around $x_0$:
 
 ```cpp
-auto x = DA<5>::variable(1.0);   // x = 1 + δx
+auto x = TE<5>::variable(1.0);   // x = 1 + δx
 ```
 
 The constant term is $x_0 = 1$ and the first-order coefficient is $1$ (the identity perturbation). All higher coefficients are zero.
@@ -89,7 +89,7 @@ The constant term is $x_0 = 1$ and the first-order coefficient is $1$ (the ident
 **Multivariate** --- structured bindings:
 
 ```cpp
-auto [x, y] = DAn<3, 2>::variables({1.0, 2.0});   // expand at (1, 2)
+auto [x, y] = TEn<3, 2>::variables({1.0, 2.0});   // expand at (1, 2)
 ```
 
 Each variable carries a unit perturbation in its own direction.
@@ -97,7 +97,7 @@ Each variable carries a unit perturbation in its own direction.
 **Single indexed variable:**
 
 ```cpp
-auto z = DAn<2, 3>::variable<2>({1.0, 2.0, 3.0});   // only variable 2
+auto z = TEn<2, 3>::variable<2>({1.0, 2.0, 3.0});   // only variable 2
 ```
 
 ## Building Expressions
@@ -105,11 +105,11 @@ auto z = DAn<2, 3>::variable<2>({1.0, 2.0, 3.0});   // only variable 2
 Arithmetic and math functions work naturally:
 
 ```cpp
-auto x = DA<6>::variable(0.0);
-DA<6> f = tax::sin(x) + tax::square(x) / 2.0;
+auto x = TE<6>::variable(0.0);
+TE<6> f = tax::sin(x) + tax::square(x) / 2.0;
 ```
 
-The right-hand side builds a lazy expression tree. Evaluation happens only on assignment to a `TDA` object.
+The right-hand side builds a lazy expression tree. Evaluation happens only on assignment to a `TruncatedTaylorExpansionT` object.
 
 ## Extracting Results
 
@@ -123,8 +123,8 @@ f.eval(0.3);            // evaluate the polynomial at x₀ + 0.3
 For multivariate DA objects, multi-indices are passed as initializer lists:
 
 ```cpp
-auto [x, y] = DAn<3, 2>::variables({0.0, 0.0});
-DAn<3, 2> g = x*x + x*y + y*y;
+auto [x, y] = TEn<3, 2>::variables({0.0, 0.0});
+TEn<3, 2> g = x*x + x*y + y*y;
 
 g.derivative({2, 0});   // ∂²g/∂x²   = 2
 g.derivative({1, 1});   // ∂²g/∂x∂y  = 1
@@ -155,8 +155,8 @@ where $\alpha! = \alpha_1! \cdots \alpha_M!$. The `derivative()` method returns 
 Use `eval()` to evaluate the stored polynomial at a displacement from the expansion point:
 
 ```cpp
-auto x = DA<9>::variable(0.0);
-DA<9> f = tax::sin(x);
+auto x = TE<9>::variable(0.0);
+TE<9> f = tax::sin(x);
 
 // Taylor polynomial of sin(x) around x₀ = 0, evaluated at δx = 0.3
 double result = f.eval(0.3);   // ≈ sin(0.3)
@@ -165,8 +165,8 @@ double result = f.eval(0.3);   // ≈ sin(0.3)
 For multivariate:
 
 ```cpp
-auto [x, y] = DAn<4, 2>::variables({1.0, 2.0});
-DAn<4, 2> f = tax::exp(x + y);
+auto [x, y] = TEn<4, 2>::variables({1.0, 2.0});
+TEn<4, 2> f = tax::exp(x + y);
 
 double result = f.eval({0.1, -0.1});   // ≈ exp(1.1 + 1.9)
 ```
@@ -176,9 +176,9 @@ double result = f.eval({0.1, -0.1});   // ≈ exp(1.1 + 1.9)
 All compound assignment operators are supported:
 
 ```cpp
-DA<4> f = DA<4>::variable(1.0);
-f += DA<4>{2.0};
-f -= DA<4>{1.0};
+TE<4> f = TE<4>::variable(1.0);
+f += TE<4>{2.0};
+f -= TE<4>{1.0};
 f *= 3.0;           // scalar multiply
 f /= 2.0;           // scalar divide
 f *= other_da;      // Cauchy product
@@ -190,8 +190,8 @@ f /= other_da;      // division via reciprocal
 Comparisons act on the **constant term** (value at expansion point):
 
 ```cpp
-DA<3> a = DA<3>::variable(2.0);
-DA<3> b = DA<3>::variable(3.0);
+TE<3> a = TE<3>::variable(2.0);
+TE<3> b = TE<3>::variable(3.0);
 a < b;    // true, because 2.0 < 3.0
 a == 2.0; // true
 ```
@@ -201,8 +201,8 @@ a == 2.0; // true
 DA objects can be printed directly:
 
 ```cpp
-auto x = DA<3>::variable(1.0);
-DA<3> f = x * x + 2.0 * x;
+auto x = TE<3>::variable(1.0);
+TE<3> f = x * x + 2.0 * x;
 std::cout << f << "\n";
 // Output: 3 + 4·δx + δx² + O(δx⁴)
 ```
@@ -216,10 +216,10 @@ Compute $\sin(x)$ and its first nine derivatives at $x = 0$, then evaluate the r
 #include <iostream>
 
 int main() {
-    using tax::DA;
+    using tax::TE;
 
-    auto x = DA<9>::variable(0.0);
-    DA<9> f = tax::sin(x);
+    auto x = TE<9>::variable(0.0);
+    TE<9> f = tax::sin(x);
 
     for (int k = 0; k <= 9; ++k)
         std::cout << "d^" << k << " sin/dx^" << k << " (0) = "
@@ -236,7 +236,7 @@ TAX automatically optimises expression trees behind the scenes:
 
 - **Sum flattening**: `(a + b) + c` becomes a single flat `SumExpr<A, B, C>` --- one accumulation pass instead of nested binary nodes.
 - **Product flattening**: `a * b * c` becomes `ProductExpr<A, B, C>` --- computed with a rolling accumulator using a single intermediate buffer.
-- **Leaf fast-paths**: when both operands of a binary operation are already materialised `TDA` objects, the kernel is called directly without wrapping in an expression node.
+- **Leaf fast-paths**: when both operands of a binary operation are already materialised `TruncatedTaylorExpansionT` objects, the kernel is called directly without wrapping in an expression node.
 
 These optimisations are transparent --- write natural mathematical expressions and the compiler handles the rest.
 

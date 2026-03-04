@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tax/da.hpp>
+#include <tax/tte.hpp>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <utility>
 
@@ -93,7 +93,7 @@ template < int... Alpha >
  * `d^K f / (dx_{i_1} ... dx_{i_K})` evaluated at the expansion point.
  */
 template < int K, typename T, int N, int M >
-[[nodiscard]] auto derivative( const TDA< T, N, M >& f )
+[[nodiscard]] auto derivative( const TruncatedTaylorExpansionT< T, N, M >& f )
 {
     static_assert( M > 1, "Eigen tensors are only provided for multivariate DA (M > 1)" );
     static_assert( K >= 1, "Tensor order K must be at least 1" );
@@ -117,7 +117,7 @@ template < int K, typename T, int N, int M >
  * `C(i_1,...,i_K) * dx_{i_1}...dx_{i_K}` reproduces the order-`K` polynomial part.
  */
 template < int K, typename T, int N, int M >
-[[nodiscard]] auto coeff( const TDA< T, N, M >& f )
+[[nodiscard]] auto coeff( const TruncatedTaylorExpansionT< T, N, M >& f )
 {
     static_assert( M > 1, "Eigen tensors are only provided for multivariate DA (M > 1)" );
     static_assert( K >= 1, "Tensor order K must be at least 1" );

@@ -12,7 +12,7 @@ namespace tax::detail
  */
 template < typename E, typename Op >
 class ScalarExpr
-    : public tax::DAExpr< ScalarExpr< E, Op >, typename E::scalar_type, E::order, E::nvars >
+    : public tax::Expr< ScalarExpr< E, Op >, typename E::scalar_type, E::order, E::nvars >
 {
    public:
     using T = typename E::scalar_type;

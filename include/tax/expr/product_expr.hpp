@@ -11,7 +11,7 @@ namespace tax::detail
  */
 template < typename... Es >
 class ProductExpr
-    : public tax::DAExpr< ProductExpr< Es... >,
+    : public tax::Expr< ProductExpr< Es... >,
                           typename std::tuple_element_t< 0, std::tuple< Es... > >::scalar_type,
                           std::tuple_element_t< 0, std::tuple< Es... > >::order,
                           std::tuple_element_t< 0, std::tuple< Es... > >::nvars >

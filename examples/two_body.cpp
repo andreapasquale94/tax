@@ -43,7 +43,7 @@ using namespace tax;
 using namespace tax::ode;
 
 // ---------------------------------------------------------------------------
-// Kepler RHS — works with DA<N> (auto t/y) as well as plain doubles
+// Kepler RHS — works with TE<N> (auto t/y) as well as plain doubles
 // ---------------------------------------------------------------------------
 static auto kepler_rhs = []( auto /*t*/, auto y ) -> decltype( y ) {
     auto r2 = y( 0 ) * y( 0 ) + y( 1 ) * y( 1 );

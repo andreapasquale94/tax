@@ -8,8 +8,8 @@
 
 TEST( TensorFunction, ValueRank1 )
 {
-    auto t = DA< 3 >::variable( 2.0 );
-    Eigen::Matrix< DA< 3 >, 3, 1 > vec;
+    auto t = TE< 3 >::variable( 2.0 );
+    Eigen::Matrix< TE< 3 >, 3, 1 > vec;
     vec( 0 ) = sin( t );
     vec( 1 ) = cos( t );
     vec( 2 ) = t * t;
@@ -26,8 +26,8 @@ TEST( TensorFunction, ValueRank1 )
 
 TEST( TensorFunction, DerivativeRank1Order1 )
 {
-    auto t = DA< 3 >::variable( 2.0 );
-    Eigen::Matrix< DA< 3 >, 3, 1 > vec;
+    auto t = TE< 3 >::variable( 2.0 );
+    Eigen::Matrix< TE< 3 >, 3, 1 > vec;
     vec( 0 ) = sin( t );
     vec( 1 ) = cos( t );
     vec( 2 ) = t * t;
@@ -40,8 +40,8 @@ TEST( TensorFunction, DerivativeRank1Order1 )
 
 TEST( TensorFunction, DerivativeRank1Order2 )
 {
-    auto t = DA< 3 >::variable( 2.0 );
-    Eigen::Matrix< DA< 3 >, 3, 1 > vec;
+    auto t = TE< 3 >::variable( 2.0 );
+    Eigen::Matrix< TE< 3 >, 3, 1 > vec;
     vec( 0 ) = sin( t );
     vec( 1 ) = cos( t );
     vec( 2 ) = t * t;
@@ -58,8 +58,8 @@ TEST( TensorFunction, DerivativeRank1Order2 )
 
 TEST( TensorFunction, DerivativeCompileTimeUnivariate )
 {
-    auto t = DA< 3 >::variable( 1.0 );
-    Eigen::Matrix< DA< 3 >, 2, 1 > vec;
+    auto t = TE< 3 >::variable( 1.0 );
+    Eigen::Matrix< TE< 3 >, 2, 1 > vec;
     vec( 0 ) = exp( t );
     vec( 1 ) = sin( t );
 
@@ -78,8 +78,8 @@ TEST( TensorFunction, DerivativeCompileTimeUnivariate )
 
 TEST( TensorFunction, ValueRank2 )
 {
-    auto t = DA< 3 >::variable( 1.0 );
-    Eigen::Matrix< DA< 3 >, 2, 2 > mat;
+    auto t = TE< 3 >::variable( 1.0 );
+    Eigen::Matrix< TE< 3 >, 2, 2 > mat;
     mat( 0, 0 ) = exp( t );
     mat( 0, 1 ) = sin( t );
     mat( 1, 0 ) = cos( t );
@@ -98,8 +98,8 @@ TEST( TensorFunction, ValueRank2 )
 
 TEST( TensorFunction, DerivativeRank2Order1 )
 {
-    auto t = DA< 3 >::variable( 1.0 );
-    Eigen::Matrix< DA< 3 >, 2, 2 > mat;
+    auto t = TE< 3 >::variable( 1.0 );
+    Eigen::Matrix< TE< 3 >, 2, 2 > mat;
     mat( 0, 0 ) = exp( t );
     mat( 0, 1 ) = sin( t );
     mat( 1, 0 ) = cos( t );
@@ -118,8 +118,8 @@ TEST( TensorFunction, DerivativeRank2Order1 )
 
 TEST( TensorFunction, DerivativeOrder0IsValue )
 {
-    auto t = DA< 3 >::variable( 0.5 );
-    Eigen::Matrix< DA< 3 >, 2, 1 > vec;
+    auto t = TE< 3 >::variable( 0.5 );
+    Eigen::Matrix< TE< 3 >, 2, 1 > vec;
     vec( 0 ) = sin( t );
     vec( 1 ) = exp( t );
 
@@ -135,8 +135,8 @@ TEST( TensorFunction, DerivativeOrder0IsValue )
 
 TEST( TensorFunction, MultivariateValue )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
-    Eigen::Matrix< DAn< 3, 2 >, 2, 1 > vec;
+    auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
+    Eigen::Matrix< TEn< 3, 2 >, 2, 1 > vec;
     vec( 0 ) = x * y;
     vec( 1 ) = sin( x ) + cos( y );
 
@@ -147,8 +147,8 @@ TEST( TensorFunction, MultivariateValue )
 
 TEST( TensorFunction, MultivariateDerivativeRuntime )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
-    Eigen::Matrix< DAn< 3, 2 >, 2, 1 > vec;
+    auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
+    Eigen::Matrix< TEn< 3, 2 >, 2, 1 > vec;
     vec( 0 ) = x * y;
     vec( 1 ) = sin( x ) + cos( y );
 
@@ -169,8 +169,8 @@ TEST( TensorFunction, MultivariateDerivativeRuntime )
 
 TEST( TensorFunction, MultivariateDerivativeCompileTime )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
-    Eigen::Matrix< DAn< 3, 2 >, 2, 1 > vec;
+    auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
+    Eigen::Matrix< TEn< 3, 2 >, 2, 1 > vec;
     vec( 0 ) = x * y;
     vec( 1 ) = sin( x ) + cos( y );
 
@@ -195,7 +195,7 @@ TEST( TensorFunction, TensorFromStaticVectorMatrix )
     Eigen::Matrix< double, 3, 1 > x0;
     x0 << 1.0, 2.0, 3.0;
 
-    auto tx = tensor< DAn< 2, 3 > >( x0 );
+    auto tx = tensor< TEn< 2, 3 > >( x0 );
     static_assert( decltype( tx )::RowsAtCompileTime == 3 );
     static_assert( decltype( tx )::ColsAtCompileTime == 1 );
 
@@ -214,7 +214,7 @@ TEST( TensorFunction, TensorFromStaticMatrix )
     Eigen::Matrix< double, 2, 2 > x0;
     x0 << 1.0, 2.0, 3.0, 4.0;
 
-    auto tx = tensor< DAn< 2, 4 > >( x0 );
+    auto tx = tensor< TEn< 2, 4 > >( x0 );
     static_assert( decltype( tx )::RowsAtCompileTime == 2 );
     static_assert( decltype( tx )::ColsAtCompileTime == 2 );
 
@@ -232,8 +232,8 @@ TEST( TensorFunction, TensorFromStaticMatrix )
 
 TEST( TensorFunction, TensorRank3Univariate )
 {
-    auto t = DA< 3 >::variable( 2.0 );
-    Eigen::Tensor< DA< 3 >, 3 > ten( 2, 1, 1 );
+    auto t = TE< 3 >::variable( 2.0 );
+    Eigen::Tensor< TE< 3 >, 3 > ten( 2, 1, 1 );
     ten( 0, 0, 0 ) = sin( t );
     ten( 1, 0, 0 ) = t * t;
 
@@ -252,8 +252,8 @@ TEST( TensorFunction, TensorRank3Univariate )
 
 TEST( TensorFunction, GradientUnivariate )
 {
-    auto t = DA< 3 >::variable( 2.0 );
-    DA< 3 > f = sin( t );
+    auto t = TE< 3 >::variable( 2.0 );
+    TE< 3 > f = sin( t );
 
     auto g = tax::gradient( f );
     static_assert( decltype( g )::RowsAtCompileTime == 1 );
@@ -262,8 +262,8 @@ TEST( TensorFunction, GradientUnivariate )
 
 TEST( TensorFunction, GradientMultivariate )
 {
-    auto [x, y] = DAn< 2, 2 >::variables( { 1.0, 2.0 } );
-    DAn< 2, 2 > f = x * x + x * y + y * y;
+    auto [x, y] = TEn< 2, 2 >::variables( { 1.0, 2.0 } );
+    TEn< 2, 2 > f = x * x + x * y + y * y;
 
     auto g = tax::gradient( f );
     static_assert( decltype( g )::RowsAtCompileTime == 2 );
@@ -278,8 +278,8 @@ TEST( TensorFunction, GradientMultivariate )
 
 TEST( TensorFunction, JacobianVector )
 {
-    auto [x, y] = DAn< 2, 2 >::variables( { 1.0, 2.0 } );
-    Eigen::Matrix< DAn< 2, 2 >, 3, 1 > vec;
+    auto [x, y] = TEn< 2, 2 >::variables( { 1.0, 2.0 } );
+    Eigen::Matrix< TEn< 2, 2 >, 3, 1 > vec;
     vec( 0 ) = x * y;
     vec( 1 ) = sin( x );
     vec( 2 ) = x + y * y;
@@ -305,8 +305,8 @@ TEST( TensorFunction, JacobianVector )
 
 TEST( TensorFunction, EvalContainerUnivariate )
 {
-    auto t = DA< 3 >::variable( 0.0 );
-    Eigen::Matrix< DA< 3 >, 2, 1 > vec;
+    auto t = TE< 3 >::variable( 0.0 );
+    Eigen::Matrix< TE< 3 >, 2, 1 > vec;
     vec( 0 ) = sin( t );
     vec( 1 ) = exp( t );
 
@@ -317,20 +317,20 @@ TEST( TensorFunction, EvalContainerUnivariate )
 
 TEST( TensorFunction, EvalContainerMultivariatePointType )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 0.0, 0.0 } );
-    Eigen::Matrix< DAn< 3, 2 >, 2, 1 > vec;
+    auto [x, y] = TEn< 3, 2 >::variables( { 0.0, 0.0 } );
+    Eigen::Matrix< TEn< 3, 2 >, 2, 1 > vec;
     vec( 0 ) = x + y;
     vec( 1 ) = x * y;
 
-    auto vals = tax::eval( vec, DAn< 3, 2 >::point_type{ 1.0, 2.0 } );
+    auto vals = tax::eval( vec, TEn< 3, 2 >::point_type{ 1.0, 2.0 } );
     EXPECT_NEAR( vals( 0 ), 3.0, kTol );
     EXPECT_NEAR( vals( 1 ), 2.0, kTol );
 }
 
 TEST( TensorFunction, EvalContainerEigenDisplacement )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 0.0, 0.0 } );
-    Eigen::Matrix< DAn< 3, 2 >, 2, 1 > vec;
+    auto [x, y] = TEn< 3, 2 >::variables( { 0.0, 0.0 } );
+    Eigen::Matrix< TEn< 3, 2 >, 2, 1 > vec;
     vec( 0 ) = x + y;
     vec( 1 ) = x * y;
 
@@ -343,8 +343,8 @@ TEST( TensorFunction, EvalContainerEigenDisplacement )
 
 TEST( TensorFunction, EvalSingleDAEigenDisplacement )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 0.0, 0.0 } );
-    DAn< 3, 2 > f = x * x + y * y;
+    auto [x, y] = TEn< 3, 2 >::variables( { 0.0, 0.0 } );
+    TEn< 3, 2 > f = x * x + y * y;
 
     Eigen::Vector2d dx;
     dx << 1.0, 2.0;

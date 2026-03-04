@@ -4,10 +4,10 @@
  * @file
  * @brief Umbrella include for the full tax differential algebra API.
  * @details Includes utilities, kernels, expression nodes, the materialized
- * `TDA` type, and operator overloads.
+ * `TruncatedTaylorExpansionT` type, and operator overloads.
  */
 
-#include <tax/da.hpp>
+#include <tax/tte.hpp>
 #include <tax/expr/arithmetic_ops.hpp>
 #include <tax/expr/base.hpp>
 #include <tax/expr/bin_expr.hpp>

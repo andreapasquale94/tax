@@ -91,7 +91,7 @@ template < int... Alpha, typename Derived >
  * @returns Eigen column vector `[df/dx_0, ..., df/dx_{M-1}]`.
  */
 template < typename T, int N, int M >
-[[nodiscard]] auto gradient( const TDA< T, N, M >& f )
+[[nodiscard]] auto gradient( const TruncatedTaylorExpansionT< T, N, M >& f )
 {
     static_assert( N >= 1, "gradient requires DA order >= 1" );
     Eigen::Matrix< T, M, 1 > g;
@@ -172,7 +172,7 @@ template < typename Derived, typename Dx >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank >
-[[nodiscard]] auto value( const Eigen::Tensor< TDA< T, N, M >, Rank >& t )
+[[nodiscard]] auto value( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
     requires( Rank >= 1 )
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );
@@ -186,7 +186,7 @@ template < typename T, int N, int M, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TDA< T, N, M >, Rank >& t,
+[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t,
                                const std::array< int, std::size_t( M ) >& alpha )
     requires( Rank >= 1 )
 {
@@ -201,7 +201,7 @@ template < typename T, int N, int M, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TDA< T, N, 1 >, Rank >& t, int k )
+[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, 1 >, Rank >& t, int k )
     requires( Rank >= 1 )
 {
     return derivative( t, MultiIndex< 1 >{ k } );
@@ -213,7 +213,7 @@ template < typename T, int N, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < int... Alpha, typename T, int N, int M, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TDA< T, N, M >, Rank >& t )
+[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
     requires( Rank >= 1 )
 {
     static_assert( sizeof...( Alpha ) == M,
@@ -236,14 +236,14 @@ template < int... Alpha, typename T, int N, int M, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank, typename Dx >
-[[nodiscard]] auto eval( const Eigen::Tensor< TDA< T, N, M >, Rank >& t, const Dx& dx )
+[[nodiscard]] auto eval( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t, const Dx& dx )
     requires( Rank >= 1 )
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );
 
     if constexpr ( detail::eigen::EigenDenseExpr< Dx > )
     {
-        typename TDA< T, N, M >::point_type p{};
+        typename TruncatedTaylorExpansionT< T, N, M >::point_type p{};
         for ( int i = 0; i < M; ++i )
             p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
         for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].eval( p );

@@ -4,9 +4,9 @@
 
 TEST( EigenTypes, VectorCommaInitializerFromVariables )
 {
-    auto [x, y, z] = DAn< 2, 3 >::variables( { 1.0, 2.0, 3.0 } );
+    auto [x, y, z] = TEn< 2, 3 >::variables( { 1.0, 2.0, 3.0 } );
 
-    Eigen::Matrix< DAn< 2, 3 >, 3, 1 > v;
+    Eigen::Matrix< TEn< 2, 3 >, 3, 1 > v;
     v << x, y, z;
 
     EXPECT_NEAR( v( 0 ).value(), 1.0, kTol );
@@ -23,7 +23,7 @@ TEST( EigenTypes, VariablesFromEigenFixedVector )
     Eigen::Vector3d x0;
     x0 << 1.0, 2.0, 3.0;
 
-    auto [x, y, z] = variables< DAn< 2, 3 > >( x0 );
+    auto [x, y, z] = variables< TEn< 2, 3 > >( x0 );
 
     EXPECT_NEAR( x.value(), 1.0, kTol );
     EXPECT_NEAR( y.value(), 2.0, kTol );
@@ -39,7 +39,7 @@ TEST( EigenTypes, VariablesFromEigenDynamicVector )
     Eigen::VectorXd x0( 3 );
     x0 << 4.0, 5.0, 6.0;
 
-    auto [x, y, z] = variables< DAn< 2, 3 > >( x0 );
+    auto [x, y, z] = variables< TEn< 2, 3 > >( x0 );
 
     EXPECT_NEAR( x.value(), 4.0, kTol );
     EXPECT_NEAR( y.value(), 5.0, kTol );
@@ -48,29 +48,29 @@ TEST( EigenTypes, VariablesFromEigenDynamicVector )
 
 TEST( EigenTypes, ExplicitVectorAliases )
 {
-    static_assert( DAVec< 3, 4 >::RowsAtCompileTime == 4 );
-    static_assert( DAVec< 3, 4 >::ColsAtCompileTime == 1 );
-    static_assert( DARowVec< 3, 4 >::RowsAtCompileTime == 1 );
-    static_assert( DARowVec< 3, 4 >::ColsAtCompileTime == 4 );
-    static_assert( DAnVec< 2, 3 >::RowsAtCompileTime == 3 );
-    static_assert( DAnVec< 2, 3 >::ColsAtCompileTime == 1 );
-    static_assert( DAnRowVec< 2, 3 >::RowsAtCompileTime == 1 );
-    static_assert( DAnRowVec< 2, 3 >::ColsAtCompileTime == 3 );
+    static_assert( TEVec< 3, 4 >::RowsAtCompileTime == 4 );
+    static_assert( TEVec< 3, 4 >::ColsAtCompileTime == 1 );
+    static_assert( TERowVec< 3, 4 >::RowsAtCompileTime == 1 );
+    static_assert( TERowVec< 3, 4 >::ColsAtCompileTime == 4 );
+    static_assert( TEnVec< 2, 3 >::RowsAtCompileTime == 3 );
+    static_assert( TEnVec< 2, 3 >::ColsAtCompileTime == 1 );
+    static_assert( TEnRowVec< 2, 3 >::RowsAtCompileTime == 1 );
+    static_assert( TEnRowVec< 2, 3 >::ColsAtCompileTime == 3 );
 
-    DAVec< 3, 4 > v;
-    v << DA< 3 >::variable( 1.0 ), DA< 3 >{ 2.0 }, DA< 3 >{ 3.0 }, DA< 3 >{ 4.0 };
+    TEVec< 3, 4 > v;
+    v << TE< 3 >::variable( 1.0 ), TE< 3 >{ 2.0 }, TE< 3 >{ 3.0 }, TE< 3 >{ 4.0 };
 
     EXPECT_NEAR( v( 0 ).value(), 1.0, kTol );
     EXPECT_NEAR( v( 1 ).value(), 2.0, kTol );
     EXPECT_NEAR( v( 0 )[1], 1.0, kTol );
     EXPECT_NEAR( v( 1 )[1], 0.0, kTol );
 
-    DARowVec< 3, 4 > r;
-    r << DA< 3 >{ 1.0 }, DA< 3 >{ 2.0 }, DA< 3 >{ 3.0 }, DA< 3 >{ 4.0 };
+    TERowVec< 3, 4 > r;
+    r << TE< 3 >{ 1.0 }, TE< 3 >{ 2.0 }, TE< 3 >{ 3.0 }, TE< 3 >{ 4.0 };
     EXPECT_NEAR( r( 0, 2 ).value(), 3.0, kTol );
 
-    auto [x, y, z] = DAn< 2, 3 >::variables( { 10.0, 20.0, 30.0 } );
-    DAnVec< 2, 3 > w;
+    auto [x, y, z] = TEn< 2, 3 >::variables( { 10.0, 20.0, 30.0 } );
+    TEnVec< 2, 3 > w;
     w << x, y, z;
     EXPECT_NEAR( w( 2 ).value(), 30.0, kTol );
 }

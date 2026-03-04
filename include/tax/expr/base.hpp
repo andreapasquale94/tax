@@ -20,7 +20,7 @@ namespace tax
  * @tparam M Number of variables.
  */
 template < typename Derived, typename T, int N, int M >
-struct DAExpr
+struct Expr
 {
     using scalar_type = T;
     static constexpr int order = N;

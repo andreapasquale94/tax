@@ -1,18 +1,18 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <tax/da.hpp>
+#include <tax/tte.hpp>
 
 namespace Eigen
 {
 
 template < typename T, int N, int M >
-struct NumTraits< tax::TDA< T, N, M > > : NumTraits< T >
+struct NumTraits< tax::TruncatedTaylorExpansionT< T, N, M > > : NumTraits< T >
 {
-    using Real = tax::TDA< T, N, M >;
-    using NonInteger = tax::TDA< T, N, M >;
-    using Literal = tax::TDA< T, N, M >;
-    using Nested = tax::TDA< T, N, M >;
+    using Real = tax::TruncatedTaylorExpansionT< T, N, M >;
+    using NonInteger = tax::TruncatedTaylorExpansionT< T, N, M >;
+    using Literal = tax::TruncatedTaylorExpansionT< T, N, M >;
+    using Nested = tax::TruncatedTaylorExpansionT< T, N, M >;
 
     enum
     {

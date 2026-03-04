@@ -7,7 +7,7 @@
 #include <tax/tax.hpp>
 
 template < int N >
-::testing::AssertionResult expectCoeffsMatch( const tax::DA< N >& tested, const DACE::DA& ref,
+::testing::AssertionResult expectCoeffsMatch( const tax::TE< N >& tested, const DACE::DA& ref,
                                               double tol = 1e-12 )
 {
     const auto& tax_coeffs = tested.coeffs();  // expected size N+1
@@ -46,8 +46,8 @@ TEST( DaceUnivariate, Div )
     DACE::DA xr( 1 );
     DACE::DA yr = 1 / ( 1 + xr );
 
-    auto x = tax::DA< N >::variable( 1.0 );
-    tax::DA< N > y = 1.0 / x;
+    auto x = tax::TE< N >::variable( 1.0 );
+    tax::TE< N > y = 1.0 / x;
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -60,8 +60,8 @@ TEST( DaceUnivariate, MulDiv )
     DACE::DA xr( 1 );
     DACE::DA yr = 1 / ( ( 1 + xr ) * ( 1 + xr ) );
 
-    auto x = tax::DA< N >::variable( 1.0 );
-    tax::DA< N > y = 1.0 / ( x * x );
+    auto x = tax::TE< N >::variable( 1.0 );
+    tax::TE< N > y = 1.0 / ( x * x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -76,8 +76,8 @@ TEST( DaceUnivariate, Cos )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.cos();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::cos( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::cos( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -90,8 +90,8 @@ TEST( DaceUnivariate, Sin )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.sin();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::sin( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::sin( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -104,8 +104,8 @@ TEST( DaceUnivariate, Tan )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.tan();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::tan( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::tan( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -118,8 +118,8 @@ TEST( DaceUnivariate, ASin )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.asin();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::asin( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::asin( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -132,8 +132,8 @@ TEST( DaceUnivariate, ACos )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.acos();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::acos( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::acos( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -146,8 +146,8 @@ TEST( DaceUnivariate, ATan )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.atan();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::atan( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::atan( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -160,8 +160,8 @@ TEST( DaceUnivariate, Cosh )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.cosh();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::cosh( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::cosh( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -174,8 +174,8 @@ TEST( DaceUnivariate, Sinh )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.sinh();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::sinh( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::sinh( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -188,8 +188,8 @@ TEST( DaceUnivariate, Tanh )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.tanh();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::tanh( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::tanh( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -202,8 +202,8 @@ TEST( DaceUnivariate, ASinh )
     DACE::DA xr( 1 );
     DACE::DA yr = ( xr + ( xr * xr + 1 ).sqrt() ).log();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::asinh( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::asinh( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -216,8 +216,8 @@ TEST( DaceUnivariate, ACosh )
     DACE::DA xr( 1 );
     DACE::DA yr = ( ( xr + 2 ) + ( ( xr + 2 ) * ( xr + 2 ) - 1 ).sqrt() ).log();
 
-    auto x = tax::DA< N >::variable( 2.0 );
-    tax::DA< N > y = tax::acosh( x );
+    auto x = tax::TE< N >::variable( 2.0 );
+    tax::TE< N > y = tax::acosh( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -230,8 +230,8 @@ TEST( DaceUnivariate, ATanh )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.atanh();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::atanh( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::atanh( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr, 1e-9 ) );
 }
@@ -244,8 +244,8 @@ TEST( DaceUnivariate, Exp )
     DACE::DA xr( 1 );
     DACE::DA yr = xr.exp();
 
-    auto x = tax::DA< N >::variable( 0.0 );
-    tax::DA< N > y = tax::exp( x );
+    auto x = tax::TE< N >::variable( 0.0 );
+    tax::TE< N > y = tax::exp( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -258,8 +258,8 @@ TEST( DaceUnivariate, Log )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 1 + xr ).log();
 
-    auto x = tax::DA< N >::variable( 1.0 );
-    tax::DA< N > y = tax::log( x );
+    auto x = tax::TE< N >::variable( 1.0 );
+    tax::TE< N > y = tax::log( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -272,8 +272,8 @@ TEST( DaceUnivariate, Log10 )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 1 + xr ).log10();
 
-    auto x = tax::DA< N >::variable( 1.0 );
-    tax::DA< N > y = tax::log10( x );
+    auto x = tax::TE< N >::variable( 1.0 );
+    tax::TE< N > y = tax::log10( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -286,8 +286,8 @@ TEST( DaceUnivariate, Sqrt )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 2 + xr ).sqrt();
 
-    auto x = tax::DA< N >::variable( 2.0 );
-    tax::DA< N > y = tax::sqrt( x );
+    auto x = tax::TE< N >::variable( 2.0 );
+    tax::TE< N > y = tax::sqrt( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -300,8 +300,8 @@ TEST( DaceUnivariate, Cbrt )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 8 + xr ).pow( 1.0 / 3.0 );
 
-    auto x = tax::DA< N >::variable( 8.0 );
-    tax::DA< N > y = tax::cbrt( x );
+    auto x = tax::TE< N >::variable( 8.0 );
+    tax::TE< N > y = tax::cbrt( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -314,8 +314,8 @@ TEST( DaceUnivariate, Erf )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 2 + xr ).erf();
 
-    auto x = tax::DA< N >::variable( 2.0 );
-    tax::DA< N > y = tax::erf( x );
+    auto x = tax::TE< N >::variable( 2.0 );
+    tax::TE< N > y = tax::erf( x );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -328,8 +328,8 @@ TEST( DaceUnivariate, IPow )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 2 + xr ).pow( 5 );
 
-    auto x = tax::DA< N >::variable( 2.0 );
-    tax::DA< N > y = tax::pow( x, 5 );
+    auto x = tax::TE< N >::variable( 2.0 );
+    tax::TE< N > y = tax::pow( x, 5 );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }
@@ -342,8 +342,8 @@ TEST( DaceUnivariate, Pow )
     DACE::DA xr( 1 );
     DACE::DA yr = ( 2 + xr ).pow( 0.5 );
 
-    auto x = tax::DA< N >::variable( 2.0 );
-    tax::DA< N > y = tax::pow( x, 0.5 );
+    auto x = tax::TE< N >::variable( 2.0 );
+    tax::TE< N > y = tax::pow( x, 0.5 );
 
     EXPECT_TRUE( expectCoeffsMatch( y, yr ) );
 }

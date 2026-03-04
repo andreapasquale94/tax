@@ -13,7 +13,7 @@ namespace tax::detail
  */
 template < typename E, typename Op >
 class FuncExpr
-    : public tax::DAExpr< FuncExpr< E, Op >, typename E::scalar_type, E::order, E::nvars >
+    : public tax::Expr< FuncExpr< E, Op >, typename E::scalar_type, E::order, E::nvars >
 {
    public:
     using T = typename E::scalar_type;
@@ -47,7 +47,7 @@ class FuncExpr
  */
 template < typename E, typename Op, typename P >
 class ParamFuncExpr
-    : public tax::DAExpr< ParamFuncExpr< E, Op, P >, typename E::scalar_type, E::order, E::nvars >
+    : public tax::Expr< ParamFuncExpr< E, Op, P >, typename E::scalar_type, E::order, E::nvars >
 {
    public:
     using T = typename E::scalar_type;
@@ -82,7 +82,7 @@ class ParamFuncExpr
  */
 template < typename L, typename R, typename Op >
 class BinFuncExpr
-    : public tax::DAExpr< BinFuncExpr< L, R, Op >, typename L::scalar_type, L::order, L::nvars >
+    : public tax::Expr< BinFuncExpr< L, R, Op >, typename L::scalar_type, L::order, L::nvars >
 {
     static_assert( L::order == R::order && L::nvars == R::nvars &&
                    std::is_same_v< typename L::scalar_type, typename R::scalar_type > );
@@ -130,7 +130,7 @@ class BinFuncExpr
  */
 template < typename A, typename B, typename C, typename Op >
 class TerFuncExpr
-    : public tax::DAExpr< TerFuncExpr< A, B, C, Op >, typename A::scalar_type, A::order, A::nvars >
+    : public tax::Expr< TerFuncExpr< A, B, C, Op >, typename A::scalar_type, A::order, A::nvars >
 {
     static_assert( A::order == B::order && B::order == C::order && A::nvars == B::nvars &&
                    B::nvars == C::nvars &&

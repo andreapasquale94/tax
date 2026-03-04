@@ -15,7 +15,7 @@ template < typename E >
 {
     using T = typename E::scalar_type;
     constexpr int N = E::order, M = E::nvars;
-    using DAType = TDA< T, N, M >;
+    using DAType = TruncatedTaylorExpansionT< T, N, M >;
     using coeff_array = std::array< T, detail::numMonomials( N, M ) >;
 
     coeff_array sa{}, ca{};
@@ -36,7 +36,7 @@ template < typename E >
 {
     using T = typename E::scalar_type;
     constexpr int N = E::order, M = E::nvars;
-    using DAType = TDA< T, N, M >;
+    using DAType = TruncatedTaylorExpansionT< T, N, M >;
     using coeff_array = std::array< T, detail::numMonomials( N, M ) >;
 
     coeff_array sha{}, cha{};

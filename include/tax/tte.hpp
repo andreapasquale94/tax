@@ -19,7 +19,7 @@ namespace tax
  * @details Coefficients are stored in graded-lex order as defined by `flatIndex`.
  */
 template < typename T, int N, int M = 1 >
-class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
+class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, M >, T, N, M >, public ExpansionLeaf
 {
    public:
     static_assert( N >= 0, "DA order must be non-negative" );
@@ -35,15 +35,15 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     // -- Constructors ---------------------------------------------------------
 
     /// @brief Construct zero polynomial.
-    constexpr TDA() noexcept : c_{} {}
+    constexpr TruncatedTaylorExpansionT() noexcept : c_{} {}
     /// @brief Construct from a full coefficient array.
-    explicit constexpr TDA( coeff_array c ) noexcept : c_( std::move( c ) ) {}
+    explicit constexpr TruncatedTaylorExpansionT( coeff_array c ) noexcept : c_( std::move( c ) ) {}
     /// @brief Construct constant polynomial with value `val`.
-    /*implicit*/ constexpr TDA( T val ) noexcept : c_{} { c_[0] = val; }
+    /*implicit*/ constexpr TruncatedTaylorExpansionT( T val ) noexcept : c_{} { c_[0] = val; }
 
     /// @brief Materialize a compatible expression in one evaluation pass.
     template < typename Derived >
-    /*implicit*/ constexpr TDA( const DAExpr< Derived, T, N, M >& expr ) noexcept : c_{}
+    /*implicit*/ constexpr TruncatedTaylorExpansionT( const Expr< Derived, T, N, M >& expr ) noexcept : c_{}
     {
         expr.self().evalTo( c_ );
     }
@@ -54,13 +54,13 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
      * @brief Create the univariate variable expanded at `x0`.
      * @details Produces `x0 + 1*dx` (truncated to order `N`).
      */
-    [[nodiscard]] static constexpr TDA variable( T x0 ) noexcept
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT variable( T x0 ) noexcept
         requires( M == 1 )
     {
         coeff_array c{};
         c[0] = x0;
         if constexpr ( N >= 1 ) c[1] = T{ 1 };
-        return TDA{ c };
+        return TruncatedTaylorExpansionT{ c };
     }
 
     /**
@@ -68,7 +68,7 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
      * @details The constant term is `x0[I]` and the `e_I` coefficient is `1`.
      */
     template < int I >
-    [[nodiscard]] static constexpr TDA variable( const point_type& x0 ) noexcept
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT variable( const point_type& x0 ) noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         coeff_array c{};
@@ -79,7 +79,7 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
             ei[I] = 1;
             c[detail::flatIndex< M >( ei )] = T{ 1 };
         }
-        return TDA{ c };
+        return TruncatedTaylorExpansionT{ c };
     }
 
     /**
@@ -94,13 +94,13 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     }
 
     /// @brief Create a constant polynomial with value `v`.
-    [[nodiscard]] static constexpr TDA constant( T v ) noexcept { return TDA{ v }; }
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT constant( T v ) noexcept { return TruncatedTaylorExpansionT{ v }; }
 
     /// @brief Create a constant polynomial with value `0`.
-    [[nodiscard]] static constexpr TDA zero() noexcept { return TDA{ 0 }; }
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT zero() noexcept { return TruncatedTaylorExpansionT{ 0 }; }
 
     /// @brief Create a constant polynomial with value `1`.
-    [[nodiscard]] static constexpr TDA one() noexcept { return TDA{ 1 }; }
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT one() noexcept { return TruncatedTaylorExpansionT{ 1 }; }
 
     // -- evalTo / addTo / subTo -----------------------------------------------
 
@@ -267,20 +267,20 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     // -- In-place operators ---------------------------------------------------
 
     /// @brief In-place polynomial addition.
-    constexpr TDA& operator+=( const TDA& o ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator+=( const TruncatedTaylorExpansionT& o ) noexcept
     {
         detail::addInPlace< T, ncoef >( c_, o.c_ );
         return *this;
     }
     /// @brief In-place polynomial subtraction.
-    constexpr TDA& operator-=( const TDA& o ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator-=( const TruncatedTaylorExpansionT& o ) noexcept
     {
         detail::subInPlace< T, ncoef >( c_, o.c_ );
         return *this;
     }
     template < typename Derived >
     /// @brief In-place addition from an expression node.
-    constexpr TDA& operator+=( const DAExpr< Derived, T, N, M >& e ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator+=( const Expr< Derived, T, N, M >& e ) noexcept
     {
         coeff_array t{};
         e.self().evalTo( t );
@@ -289,7 +289,7 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     }
     template < typename Derived >
     /// @brief In-place subtraction from an expression node.
-    constexpr TDA& operator-=( const DAExpr< Derived, T, N, M >& e ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator-=( const Expr< Derived, T, N, M >& e ) noexcept
     {
         coeff_array t{};
         e.self().evalTo( t );
@@ -297,13 +297,13 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
         return *this;
     }
     /// @brief In-place scalar multiplication.
-    constexpr TDA& operator*=( T s ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator*=( T s ) noexcept
     {
         detail::scaleInPlace< T, ncoef >( c_, s );
         return *this;
     }
     /// @brief In-place polynomial multiplication (Cauchy product).
-    constexpr TDA& operator*=( const TDA& o ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator*=( const TruncatedTaylorExpansionT& o ) noexcept
     {
         coeff_array tmp{};
         detail::cauchyProduct< T, N, M >( tmp, c_, o.c_ );
@@ -311,13 +311,13 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
         return *this;
     }
     /// @brief In-place scalar division.
-    constexpr TDA& operator/=( T s ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator/=( T s ) noexcept
     {
         detail::scaleInPlace< T, ncoef >( c_, T{ 1 } / s );
         return *this;
     }
     /// @brief In-place polynomial division.
-    constexpr TDA& operator/=( const TDA& o ) noexcept
+    constexpr TruncatedTaylorExpansionT& operator/=( const TruncatedTaylorExpansionT& o ) noexcept
     {
         coeff_array rec{};
         detail::seriesReciprocal< T, N, M >( rec, o.c_ );
@@ -329,85 +329,85 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
 
     // -- Comparison operators (on constant term) --------------------------------
 
-    [[nodiscard]] friend constexpr bool operator==( const TDA& a, const TDA& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() == b.value();
     }
-    [[nodiscard]] friend constexpr bool operator!=( const TDA& a, const TDA& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() != b.value();
     }
-    [[nodiscard]] friend constexpr bool operator<( const TDA& a, const TDA& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() < b.value();
     }
-    [[nodiscard]] friend constexpr bool operator>( const TDA& a, const TDA& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() > b.value();
     }
-    [[nodiscard]] friend constexpr bool operator<=( const TDA& a, const TDA& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() <= b.value();
     }
-    [[nodiscard]] friend constexpr bool operator>=( const TDA& a, const TDA& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() >= b.value();
     }
 
     // DA vs scalar (T)
-    [[nodiscard]] friend constexpr bool operator==( const TDA& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
     {
         return a.value() == s;
     }
-    [[nodiscard]] friend constexpr bool operator!=( const TDA& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
     {
         return a.value() != s;
     }
-    [[nodiscard]] friend constexpr bool operator<( const TDA& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
     {
         return a.value() < s;
     }
-    [[nodiscard]] friend constexpr bool operator>( const TDA& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
     {
         return a.value() > s;
     }
-    [[nodiscard]] friend constexpr bool operator<=( const TDA& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
     {
         return a.value() <= s;
     }
-    [[nodiscard]] friend constexpr bool operator>=( const TDA& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
     {
         return a.value() >= s;
     }
 
     // scalar (T) vs DA
-    [[nodiscard]] friend constexpr bool operator==( const T& s, const TDA& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s == a.value();
     }
-    [[nodiscard]] friend constexpr bool operator!=( const T& s, const TDA& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s != a.value();
     }
-    [[nodiscard]] friend constexpr bool operator<( const T& s, const TDA& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s < a.value();
     }
-    [[nodiscard]] friend constexpr bool operator>( const T& s, const TDA& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s > a.value();
     }
-    [[nodiscard]] friend constexpr bool operator<=( const T& s, const TDA& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s <= a.value();
     }
-    [[nodiscard]] friend constexpr bool operator>=( const T& s, const TDA& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s >= a.value();
     }
 
     /// @brief Stream as polynomial in `dx`, using superscripts for powers and subscripts for variable indices.
-    friend std::ostream& operator<<( std::ostream& os, const TDA& a )
+    friend std::ostream& operator<<( std::ostream& os, const TruncatedTaylorExpansionT& a )
     {
         bool write = false;
         for ( int d = 0; d <= N; ++d )
@@ -489,12 +489,12 @@ class TDA : public DAExpr< TDA< T, N, M >, T, N, M >, public DALeaf
     coeff_array c_;
 };
 
-/// @brief Univariate DA alias (`double`, order `N`, one variable).
+/// @brief Univariate TE alias (`double`, order `N`, one variable).
 template < int N >
-using DA = TDA< double, N, 1 >;
+using TE = TruncatedTaylorExpansionT< double, N, 1 >;
 
-/// @brief Multivariate DA alias (`double`, order `N`, `M` variables).
+/// @brief Multivariate TEn alias (`double`, order `N`, `M` variables).
 template < int N, int M >
-using DAn = TDA< double, N, M >;
+using TEn = TruncatedTaylorExpansionT< double, N, M >;
 
 }  // namespace tax

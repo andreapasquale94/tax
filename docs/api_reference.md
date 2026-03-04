@@ -2,11 +2,11 @@
 
 ## Core Type
 
-### `TDA<T, N, M>`
+### `TruncatedTaylorExpansionT<T, N, M>`
 
 ```cpp
 template <typename T, int N, int M = 1>
-class TDA;
+class TruncatedTaylorExpansionT;
 ```
 
 Materialized truncated Taylor polynomial in $M$ variables up to total degree $N$ with scalar type $T$. Coefficients are stored in a `std::array<T, ncoef>` in graded lexicographic order.
@@ -22,27 +22,27 @@ Materialized truncated Taylor polynomial in $M$ variables up to total degree $N$
 **Type Aliases:**
 
 ```cpp
-template <int N>       using DA  = TDA<double, N, 1>;
-template <int N, int M> using DAn = TDA<double, N, M>;
+template <int N>       using TE  = TruncatedTaylorExpansionT<double, N, 1>;
+template <int N, int M> using TEn = TruncatedTaylorExpansionT<double, N, M>;
 ```
 
 ### Constants
 
 | Member                  | Type          | Value                       |
 |-------------------------|---------------|-----------------------------|
-| `TDA::ncoef`            | `std::size_t` | $\binom{N+M}{M}$           |
-| `TDA::coeff_array`      | type alias    | `std::array<T, ncoef>`      |
-| `TDA::point_type`       | type alias    | `std::array<T, M>`          |
+| `TruncatedTaylorExpansionT::ncoef`            | `std::size_t` | $\binom{N+M}{M}$           |
+| `TruncatedTaylorExpansionT::coeff_array`      | type alias    | `std::array<T, ncoef>`      |
+| `TruncatedTaylorExpansionT::point_type`       | type alias    | `std::array<T, M>`          |
 
 ---
 
 ## Constructors
 
 ```cpp
-constexpr TDA();                              // zero polynomial
-explicit constexpr TDA(coeff_array c);        // from coefficient array
-constexpr TDA(T val);                         // constant polynomial
-constexpr TDA(const DAExpr<Derived, T, N, M>& expr);  // materialize expression
+constexpr TruncatedTaylorExpansionT();                              // zero polynomial
+explicit constexpr TruncatedTaylorExpansionT(coeff_array c);        // from coefficient array
+constexpr TruncatedTaylorExpansionT(T val);                         // constant polynomial
+constexpr TruncatedTaylorExpansionT(const Expr<Derived, T, N, M>& expr);  // materialize expression
 ```
 
 | Constructor        | Description                                                |
@@ -50,7 +50,7 @@ constexpr TDA(const DAExpr<Derived, T, N, M>& expr);  // materialize expression
 | Default            | All coefficients zero                                      |
 | Coefficient array  | Direct initialization from a `std::array<T, ncoef>`       |
 | Scalar             | Constant polynomial with `coeff[0] = val`, rest zero       |
-| Expression         | Evaluates a lazy expression tree into a materialized `TDA` |
+| Expression         | Evaluates a lazy expression tree into a materialized `TruncatedTaylorExpansionT` |
 
 ---
 
@@ -59,7 +59,7 @@ constexpr TDA(const DAExpr<Derived, T, N, M>& expr);  // materialize expression
 ### `variable(T x0)` (univariate)
 
 ```cpp
-static constexpr TDA variable(T x0) noexcept;   // requires M == 1
+static constexpr TruncatedTaylorExpansionT variable(T x0) noexcept;   // requires M == 1
 ```
 
 Creates $x_0 + \delta x$. The constant term is $x_0$ and the linear coefficient is $1$.
@@ -68,7 +68,7 @@ Creates $x_0 + \delta x$. The constant term is $x_0$ and the linear coefficient 
 
 ```cpp
 template <int I>
-static constexpr TDA variable(const point_type& x0) noexcept;
+static constexpr TruncatedTaylorExpansionT variable(const point_type& x0) noexcept;
 ```
 
 Creates variable $x_I$ expanded around $\mathbf{x}_0$. The constant term is $x_{0,I}$ and the coefficient of $\delta x_I$ is $1$; all other coefficients are zero.
@@ -82,15 +82,15 @@ static constexpr auto variables(const point_type& x0) noexcept;
 Returns `std::tuple(x_0, ..., x_{M-1})` via structured bindings.
 
 ```cpp
-auto [x, y, z] = DAn<3, 3>::variables({1.0, 2.0, 3.0});
+auto [x, y, z] = TEn<3, 3>::variables({1.0, 2.0, 3.0});
 ```
 
 ### `constant(T v)` / `zero()` / `one()`
 
 ```cpp
-static constexpr TDA constant(T v) noexcept;
-static constexpr TDA zero() noexcept;
-static constexpr TDA one() noexcept;
+static constexpr TruncatedTaylorExpansionT constant(T v) noexcept;
+static constexpr TruncatedTaylorExpansionT zero() noexcept;
+static constexpr TruncatedTaylorExpansionT one() noexcept;
 ```
 
 ---
@@ -210,14 +210,14 @@ $$f(\mathbf{x}_0 + \delta\mathbf{x}) = \sum_{|\alpha| \le N} f_\alpha \, \delta\
 ## In-place Operators
 
 ```cpp
-TDA& operator+=(const TDA& o);
-TDA& operator-=(const TDA& o);
-TDA& operator+=(const DAExpr<Derived, T, N, M>& e);
-TDA& operator-=(const DAExpr<Derived, T, N, M>& e);
-TDA& operator*=(T s);          // scalar multiply
-TDA& operator/=(T s);          // scalar divide
-TDA& operator*=(const TDA& o); // Cauchy product
-TDA& operator/=(const TDA& o); // division via reciprocal
+TruncatedTaylorExpansionT& operator+=(const TruncatedTaylorExpansionT& o);
+TruncatedTaylorExpansionT& operator-=(const TruncatedTaylorExpansionT& o);
+TruncatedTaylorExpansionT& operator+=(const Expr<Derived, T, N, M>& e);
+TruncatedTaylorExpansionT& operator-=(const Expr<Derived, T, N, M>& e);
+TruncatedTaylorExpansionT& operator*=(T s);          // scalar multiply
+TruncatedTaylorExpansionT& operator/=(T s);          // scalar divide
+TruncatedTaylorExpansionT& operator*=(const TruncatedTaylorExpansionT& o); // Cauchy product
+TruncatedTaylorExpansionT& operator/=(const TruncatedTaylorExpansionT& o); // division via reciprocal
 ```
 
 ---
@@ -227,43 +227,43 @@ TDA& operator/=(const TDA& o); // division via reciprocal
 All comparisons act on `value()` (the constant term):
 
 ```cpp
-bool operator==(const TDA& a, const TDA& b);
-bool operator!=(const TDA& a, const TDA& b);
-bool operator< (const TDA& a, const TDA& b);
-bool operator> (const TDA& a, const TDA& b);
-bool operator<=(const TDA& a, const TDA& b);
-bool operator>=(const TDA& a, const TDA& b);
+bool operator==(const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b);
+bool operator!=(const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b);
+bool operator< (const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b);
+bool operator> (const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b);
+bool operator<=(const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b);
+bool operator>=(const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b);
 ```
 
-Scalar comparisons (`TDA` vs `T` and `T` vs `TDA`) are also provided.
+Scalar comparisons (`TruncatedTaylorExpansionT` vs `T` and `T` vs `TruncatedTaylorExpansionT`) are also provided.
 
 ---
 
 ## Arithmetic Operators
 
-All return lazy expression templates that are evaluated on assignment to a `TDA`.
+All return lazy expression templates that are evaluated on assignment to a `TruncatedTaylorExpansionT`.
 
 ### DA--DA
 
 ```cpp
-auto operator+(const DAExpr& a, const DAExpr& b);   // addition
-auto operator-(const DAExpr& a, const DAExpr& b);   // subtraction
-auto operator*(const DAExpr& a, const DAExpr& b);   // Cauchy product
-auto operator/(const DAExpr& a, const DAExpr& b);   // division
-auto operator-(const DAExpr& a);                     // negation
+auto operator+(const Expr& a, const Expr& b);   // addition
+auto operator-(const Expr& a, const Expr& b);   // subtraction
+auto operator*(const Expr& a, const Expr& b);   // Cauchy product
+auto operator/(const Expr& a, const Expr& b);   // division
+auto operator-(const Expr& a);                     // negation
 ```
 
 ### DA--scalar and scalar--DA
 
 ```cpp
-auto operator+(const DAExpr& a, T s);
-auto operator+(T s, const DAExpr& a);
-auto operator-(const DAExpr& a, T s);
-auto operator-(T s, const DAExpr& a);
-auto operator*(const DAExpr& a, T s);
-auto operator*(T s, const DAExpr& a);
-auto operator/(const DAExpr& a, T s);
-auto operator/(T s, const DAExpr& a);
+auto operator+(const Expr& a, T s);
+auto operator+(T s, const Expr& a);
+auto operator-(const Expr& a, T s);
+auto operator-(T s, const Expr& a);
+auto operator*(const Expr& a, T s);
+auto operator*(T s, const Expr& a);
+auto operator/(const Expr& a, T s);
+auto operator/(T s, const Expr& a);
 ```
 
 ---
@@ -316,7 +316,7 @@ All functions live in the `tax` namespace and return lazy expressions.
 ## Streaming
 
 ```cpp
-std::ostream& operator<<(std::ostream& os, const TDA& a);
+std::ostream& operator<<(std::ostream& os, const TruncatedTaylorExpansionT& a);
 ```
 
 Prints the polynomial in human-readable form with Unicode superscripts and subscripts:

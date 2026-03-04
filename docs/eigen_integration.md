@@ -6,7 +6,7 @@ TAX provides adapters for working with Eigen vectors, matrices, and tensors of D
 
 ```cpp
 template <typename T, int N, int M, int Rows, int Cols>
-using Mat = Eigen::Matrix<TDA<T, N, M>, Rows, Cols>;
+using Mat = Eigen::Matrix<TruncatedTaylorExpansionT<T, N, M>, Rows, Cols>;
 
 template <typename Scalar, int Size>
 using VecT = Eigen::Matrix<Scalar, Size, 1>;
@@ -15,16 +15,16 @@ template <typename Scalar, int Size>
 using RowVecT = Eigen::Matrix<Scalar, 1, Size>;
 
 template <int N, int Size>
-using DAVec = VecT<DA<N>, Size>;
+using TEVec = VecT<TE<N>, Size>;
 
 template <int N, int Size>
-using DARowVec = RowVecT<DA<N>, Size>;
+using TERowVec = RowVecT<TE<N>, Size>;
 
 template <int N, int M>
-using DAnVec = VecT<DAn<N, M>, M>;
+using TEnVec = VecT<TEn<N, M>, M>;
 
 template <int N, int M>
-using DAnRowVec = RowVecT<DAn<N, M>, M>;
+using TEnRowVec = RowVecT<TEn<N, M>, M>;
 ```
 
 ## Creating DA Variables from Eigen Vectors
@@ -35,11 +35,11 @@ Converts an Eigen vector (or matrix) into a same-shaped Eigen container of DA va
 
 ```cpp
 Eigen::Vector3d x0{1.0, 2.0, 3.0};
-auto vars = tax::tensor<DAn<2, 3>>(x0);
-// vars is Eigen::Matrix<DAn<2,3>, 3, 1>
-// vars(0) = DAn<2,3>::variable<0>(x0)
-// vars(1) = DAn<2,3>::variable<1>(x0)
-// vars(2) = DAn<2,3>::variable<2>(x0)
+auto vars = tax::tensor<TEn<2, 3>>(x0);
+// vars is Eigen::Matrix<TEn<2,3>, 3, 1>
+// vars(0) = TEn<2,3>::variable<0>(x0)
+// vars(1) = TEn<2,3>::variable<1>(x0)
+// vars(2) = TEn<2,3>::variable<2>(x0)
 ```
 
 Requirements:
@@ -52,10 +52,10 @@ Returns a `std::tuple` of DA variables from an Eigen vector, for use with struct
 
 ```cpp
 Eigen::Vector3d x0{1.0, 2.0, 3.0};
-auto [x, y, z] = tax::variables<DAn<2, 3>>(x0);
+auto [x, y, z] = tax::variables<TEn<2, 3>>(x0);
 ```
 
-This is equivalent to calling `DAn<2,3>::variables(...)` but accepts an Eigen vector directly.
+This is equivalent to calling `TEn<2,3>::variables(...)` but accepts an Eigen vector directly.
 
 ## Extracting Scalar Results
 
@@ -64,7 +64,7 @@ This is equivalent to calling `DAn<2,3>::variables(...)` but accepts an Eigen ve
 Extracts the constant term from each DA element, returning a plain scalar Eigen container of the same shape:
 
 ```cpp
-Eigen::Matrix<DAn<2, 3>, 3, 1> f = /* ... */;
+Eigen::Matrix<TEn<2, 3>, 3, 1> f = /* ... */;
 Eigen::Vector3d v = tax::value(f);   // v(i) = f(i).value()
 ```
 
@@ -87,7 +87,7 @@ The displacement `dx` can be:
 For a single multivariate DA scalar (not in a container):
 
 ```cpp
-DAn<2, 3> g = /* ... */;
+TEn<2, 3> g = /* ... */;
 Eigen::Vector3d dx{0.1, 0.2, 0.3};
 double result = tax::eval(g, dx);
 ```
@@ -123,7 +123,7 @@ Eigen::Vector3d d2f_dxdy = tax::derivative<1, 1, 0>(f);
 Computes the gradient of a scalar DA at its expansion point:
 
 ```cpp
-DAn<2, 3> f = /* scalar function of 3 variables */;
+TEn<2, 3> f = /* scalar function of 3 variables */;
 Eigen::Vector3d grad = tax::gradient(f);
 // grad = [∂f/∂x₀, ∂f/∂x₁, ∂f/∂x₂]
 ```
@@ -135,7 +135,7 @@ Requires $N \ge 1$.
 Computes the Jacobian matrix of a vector-valued DA function:
 
 ```cpp
-Eigen::Matrix<DAn<2, 3>, 3, 1> F = /* vector field */;
+Eigen::Matrix<TEn<2, 3>, 3, 1> F = /* vector field */;
 Eigen::Matrix3d J = tax::jacobian(F);
 // J(i, j) = ∂Fᵢ/∂xⱼ
 ```
@@ -151,7 +151,7 @@ For multivariate DA ($M > 1$), TAX can extract higher-order derivative informati
 Builds the order-$K$ derivative tensor at the expansion point:
 
 ```cpp
-DAn<3, 2> f = /* ... */;
+TEn<3, 2> f = /* ... */;
 
 // Gradient vector (rank-1 tensor, 2 entries)
 auto grad = tax::derivative<1>(f);
@@ -190,7 +190,7 @@ where the multinomial factor accounts for repeated indices.
 #include <iostream>
 
 int main() {
-    using DA3 = tax::DAn<3, 3>;
+    using DA3 = tax::TEn<3, 3>;
 
     // Expansion point
     Eigen::Vector3d x0{1.0, 0.5, 2.0};
@@ -224,4 +224,4 @@ int main() {
 
 ## Tensor Overloads
 
-All functions above (`value`, `derivative`, `eval`) also work with `Eigen::Tensor<TDA<T,N,M>, Rank>` containers (rank $\ge 1$). The interface is identical.
+All functions above (`value`, `derivative`, `eval`) also work with `Eigen::Tensor<TruncatedTaylorExpansionT<T,N,M>, Rank>` containers (rank $\ge 1$). The interface is identical.

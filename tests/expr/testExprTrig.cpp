@@ -6,16 +6,16 @@
 
 TEST( Sin, ConstantSin )
 {
-    DA< 3 > a{ 1.0 };
-    DA< 3 > r = sin( a );
+    TE< 3 > a{ 1.0 };
+    TE< 3 > r = sin( a );
     EXPECT_NEAR( r.value(), std::sin( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < DA< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Sin, SinOfVariableZero )
 {
-    auto x = DA< 5 >::variable< 0 >( { 0.0 } );
-    DA< 5 > r = sin( x );
+    auto x = TE< 5 >::variable< 0 >( { 0.0 } );
+    TE< 5 > r = sin( x );
     EXPECT_NEAR( r[0], 0.0, kTol );
     EXPECT_NEAR( r[1], 1.0, kTol );
     EXPECT_NEAR( r[2], 0.0, kTol );
@@ -26,8 +26,8 @@ TEST( Sin, SinOfVariableZero )
 
 TEST( Sin, SinOfVariable )
 {
-    auto x = DA< 5 >::variable( 1.0 );
-    DA< 5 > r = sin( x );
+    auto x = TE< 5 >::variable( 1.0 );
+    TE< 5 > r = sin( x );
     EXPECT_NEAR( r[0], 0.8414709848078965, kTol );
     EXPECT_NEAR( r[1], 0.5403023058681398, kTol );
     EXPECT_NEAR( r[2], -0.42073549240394825, kTol );
@@ -40,16 +40,16 @@ TEST( Sin, DerivativeCheck )
 {
     // d/dx sin(x) at x0=pi/4: value = sin(pi/4), deriv = cos(pi/4)
     constexpr double x0 = M_PI / 4.0;
-    auto x = DA< 3 >::variable< 0 >( { x0 } );
-    DA< 3 > r = sin( x );
+    auto x = TE< 3 >::variable< 0 >( { x0 } );
+    TE< 3 > r = sin( x );
     EXPECT_NEAR( r.value(), std::sin( x0 ), kTol );
     EXPECT_NEAR( r.derivative( { 1 } ), std::cos( x0 ), kTol );
 }
 
 TEST( Sin, Bivariate )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
-    DAn< 3, 2 > r = sin( x );
+    auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
+    TEn< 3, 2 > r = sin( x );
     // sin(x) should not depend on y
     EXPECT_NEAR( r.coeff( { 0, 1 } ), 0.0, kTol );
     EXPECT_NEAR( r.coeff( { 0, 0 } ), std::sin( 1.0 ), kTol );
@@ -57,8 +57,8 @@ TEST( Sin, Bivariate )
 
 TEST( Sin, OfExpression )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 1.0 } );
-    DAn< 3, 2 > r = sin( x + y );
+    auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 1.0 } );
+    TEn< 3, 2 > r = sin( x + y );
     EXPECT_NEAR( r.coeff( { 0, 0 } ), 0.9092974268256817, kTol );
     EXPECT_NEAR( r.coeff( { 1, 0 } ), -0.4161468365471424, kTol );
     EXPECT_NEAR( r.coeff( { 0, 1 } ), -0.4161468365471424, kTol );
@@ -77,17 +77,17 @@ TEST( Sin, OfExpression )
 
 TEST( Cos, ConstantCos )
 {
-    DA< 3 > a{ 1.0 };
-    DA< 3 > r = cos( a );
+    TE< 3 > a{ 1.0 };
+    TE< 3 > r = cos( a );
     EXPECT_NEAR( r.value(), std::cos( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < DA< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Cos, CosOfVariableZero )
 {
     // cos(x) at x0=0: coeffs are 1, 0, -1/2, 0, 1/24, ...
-    auto x = DA< 5 >::variable< 0 >( { 0.0 } );
-    DA< 5 > r = cos( x );
+    auto x = TE< 5 >::variable< 0 >( { 0.0 } );
+    TE< 5 > r = cos( x );
     EXPECT_NEAR( r[0], 1.0, kTol );
     EXPECT_NEAR( r[1], 0.0, kTol );
     EXPECT_NEAR( r[2], -0.5, kTol );
@@ -99,8 +99,8 @@ TEST( Cos, CosOfVariableZero )
 TEST( Cos, CosOfVariable )
 {
     // cos(x) at x0=0: coeffs are 1, 0, -1/2, 0, 1/24, ...
-    auto x = DA< 5 >::variable( 1.0 );
-    DA< 5 > r = cos( x );
+    auto x = TE< 5 >::variable( 1.0 );
+    TE< 5 > r = cos( x );
     EXPECT_NEAR( r[0], 0.5403023058681398, kTol );
     EXPECT_NEAR( r[1], -0.841470984807896, kTol );
     EXPECT_NEAR( r[2], -0.270151152934069, kTol );
@@ -113,24 +113,24 @@ TEST( Cos, DerivativeCheck )
 {
     // d/dx cos(x) at x0=pi/4: value = cos(pi/4), deriv = -sin(pi/4)
     constexpr double x0 = M_PI / 4.0;
-    auto x = DA< 3 >::variable< 0 >( { x0 } );
-    DA< 3 > r = cos( x );
+    auto x = TE< 3 >::variable< 0 >( { x0 } );
+    TE< 3 > r = cos( x );
     EXPECT_NEAR( r.value(), std::cos( x0 ), kTol );
     EXPECT_NEAR( r.derivative( { 1 } ), -std::sin( x0 ), kTol );
 }
 
 TEST( Cos, Bivariate )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 1.0, 2.0 } );
-    DAn< 3, 2 > r = cos( x );
+    auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
+    TEn< 3, 2 > r = cos( x );
     EXPECT_NEAR( r.coeff( { 0, 1 } ), 0.0, kTol );
     EXPECT_NEAR( r.coeff( { 0, 0 } ), std::cos( 1.0 ), kTol );
 }
 
 TEST( Cos, OfExpression )
 {
-    DA< 4 > a{ M_PI / 6.0 };
-    DA< 4 > r = cos( a + a );  // cos(pi/3)
+    TE< 4 > a{ M_PI / 6.0 };
+    TE< 4 > r = cos( a + a );  // cos(pi/3)
     EXPECT_NEAR( r.value(), std::cos( M_PI / 3.0 ), kTol );
 }
 
@@ -140,23 +140,23 @@ TEST( Cos, OfExpression )
 
 TEST( SinCosIdentity, PythagoreanUnivariate )
 {
-    auto x = DA< 5 >::variable< 0 >( { 1.5 } );
-    DA< 5 > s = sin( x );
-    DA< 5 > c = cos( x );
-    DA< 5 > r = square( s ) + square( c );
+    auto x = TE< 5 >::variable< 0 >( { 1.5 } );
+    TE< 5 > s = sin( x );
+    TE< 5 > c = cos( x );
+    TE< 5 > r = square( s ) + square( c );
     // Should be identically 1
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < DA< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( SinCosIdentity, PythagoreanBivariate )
 {
-    auto [x, y] = DAn< 4, 2 >::variables( { 0.7, -1.3 } );
-    DAn< 4, 2 > s = sin( x + y );
-    DAn< 4, 2 > c = cos( x + y );
-    DAn< 4, 2 > r = square( s ) + square( c );
+    auto [x, y] = TEn< 4, 2 >::variables( { 0.7, -1.3 } );
+    TEn< 4, 2 > s = sin( x + y );
+    TEn< 4, 2 > c = cos( x + y );
+    TEn< 4, 2 > r = square( s ) + square( c );
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < DAn< 4, 2 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TEn< 4, 2 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 // =============================================================================
@@ -165,32 +165,32 @@ TEST( SinCosIdentity, PythagoreanBivariate )
 
 TEST( SinCos, MatchesSeparate )
 {
-    auto x = DA< 5 >::variable< 0 >( { 1.5 } );
+    auto x = TE< 5 >::variable< 0 >( { 1.5 } );
     auto [s, c] = sincos( x );
-    DA< 5 > s2 = sin( x );
-    DA< 5 > c2 = cos( x );
+    TE< 5 > s2 = sin( x );
+    TE< 5 > c2 = cos( x );
     ExpectCoeffsNear( s, s2 );
     ExpectCoeffsNear( c, c2 );
 }
 
 TEST( SinCos, MatchesSeparateBivariate )
 {
-    auto [x, y] = DAn< 4, 2 >::variables( { 0.7, -1.3 } );
+    auto [x, y] = TEn< 4, 2 >::variables( { 0.7, -1.3 } );
     auto expr = x * y + x;
     auto [s, c] = sincos( expr );
-    DAn< 4, 2 > s2 = sin( expr );
-    DAn< 4, 2 > c2 = cos( expr );
+    TEn< 4, 2 > s2 = sin( expr );
+    TEn< 4, 2 > c2 = cos( expr );
     ExpectCoeffsNear( s, s2 );
     ExpectCoeffsNear( c, c2 );
 }
 
 TEST( SinCos, Pythagorean )
 {
-    auto x = DA< 5 >::variable< 0 >( { 2.3 } );
+    auto x = TE< 5 >::variable< 0 >( { 2.3 } );
     auto [s, c] = sincos( x );
-    DA< 5 > r = square( s ) + square( c );
+    TE< 5 > r = square( s ) + square( c );
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < DA< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 // =============================================================================
@@ -199,16 +199,16 @@ TEST( SinCos, Pythagorean )
 
 TEST( Tan, ConstantTan )
 {
-    DA< 3 > a{ 0.5 };
-    DA< 3 > r = tan( a );
+    TE< 3 > a{ 0.5 };
+    TE< 3 > r = tan( a );
     EXPECT_NEAR( r.value(), std::tan( 0.5 ), kTol );
-    for ( std::size_t k = 1; k < DA< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Tan, TanOfVariableZero )
 {
-    auto x = DA< 5 >::variable< 0 >( { 0.0 } );
-    DA< 5 > r = tan( x );
+    auto x = TE< 5 >::variable< 0 >( { 0.0 } );
+    TE< 5 > r = tan( x );
     EXPECT_NEAR( r[0], 0.0, kTol );
     EXPECT_NEAR( r[1], 1.0, kTol );
     EXPECT_NEAR( r[2], 0.0, kTol );
@@ -219,8 +219,8 @@ TEST( Tan, TanOfVariableZero )
 
 TEST( Tan, TanOfVariable )
 {
-    auto x = DA< 5 >::variable( 1.0 );
-    DA< 5 > r = tan( x );
+    auto x = TE< 5 >::variable( 1.0 );
+    TE< 5 > r = tan( x );
     EXPECT_NEAR( r[0], 1.5574077246549023, kTol );
     EXPECT_NEAR( r[1], 3.42551882081476, kTol );
     EXPECT_NEAR( r[2], 5.3349294724876595, kTol );
@@ -231,9 +231,9 @@ TEST( Tan, TanOfVariable )
 
 TEST( Tan, MatchesSinOverCos )
 {
-    auto x = DA< 5 >::variable< 0 >( { 0.8 } );
-    DA< 5 > r1 = tan( x );
-    DA< 5 > r2 = sin( x ) / cos( x );
+    auto x = TE< 5 >::variable< 0 >( { 0.8 } );
+    TE< 5 > r1 = tan( x );
+    TE< 5 > r2 = sin( x ) / cos( x );
     ExpectCoeffsNear( r1, r2 );
 }
 
@@ -241,8 +241,8 @@ TEST( Tan, DerivativeCheck )
 {
     // d/dx tan(x) at x0 = 1/sec^2(x0) = 1 + tan^2(x0)
     constexpr double x0 = 0.7;
-    auto x = DA< 3 >::variable< 0 >( { x0 } );
-    DA< 3 > r = tan( x );
+    auto x = TE< 3 >::variable< 0 >( { x0 } );
+    TE< 3 > r = tan( x );
     EXPECT_NEAR( r.value(), std::tan( x0 ), kTol );
     double expected_deriv = 1.0 + std::tan( x0 ) * std::tan( x0 );
     EXPECT_NEAR( r.derivative( { 1 } ), expected_deriv, kTol );
@@ -250,16 +250,16 @@ TEST( Tan, DerivativeCheck )
 
 TEST( Tan, Bivariate )
 {
-    auto [x, y] = DAn< 3, 2 >::variables( { 0.5, 1.0 } );
-    DAn< 3, 2 > r1 = tan( x + y );
-    DAn< 3, 2 > r2 = sin( x + y ) / cos( x + y );
+    auto [x, y] = TEn< 3, 2 >::variables( { 0.5, 1.0 } );
+    TEn< 3, 2 > r1 = tan( x + y );
+    TEn< 3, 2 > r2 = sin( x + y ) / cos( x + y );
     ExpectCoeffsNear( r1, r2 );
 }
 
 TEST( Tan, OfExpression )
 {
-    auto x = DA< 4 >::variable< 0 >( { 0.3 } );
-    DA< 4 > r1 = tan( x * 2.0 );
-    DA< 4 > r2 = sin( x * 2.0 ) / cos( x * 2.0 );
+    auto x = TE< 4 >::variable< 0 >( { 0.3 } );
+    TE< 4 > r1 = tan( x * 2.0 );
+    TE< 4 > r2 = sin( x * 2.0 ) / cos( x * 2.0 );
     ExpectCoeffsNear( r1, r2 );
 }

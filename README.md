@@ -4,7 +4,7 @@
 [![Sanitizers](https://github.com/andreapasquale94/tax/actions/workflows/sanitizers.yml/badge.svg?branch=main)](https://github.com/andreapasquale94/tax/actions/workflows/sanitizers.yml)
 [![codecov](https://codecov.io/gh/andreapasquale94/tax/graph/badge.svg?token=XwO5JOoaz6)](https://codecov.io/gh/andreapasquale94/tax)
 
-**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions** -- a Differential Algebra (DA) framework for computing truncated multivariate Taylor polynomials.
+**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions** -- a framework for computing truncated multivariate Taylor polynomials.
 
 Write natural mathematical expressions and tax automatically propagates the full Taylor series, giving you the function value and all partial derivatives up to order $N$ in a single evaluation pass.
 
@@ -12,7 +12,7 @@ Write natural mathematical expressions and tax automatically propagates the full
 
 ## Features
 
-- **Compile-time fixed** order $N$ and variable count $M$ via `TDA<T, N, M>`
+- **Compile-time fixed** order $N$ and variable count $M$ via `TruncatedTaylorExpansionT<T, N, M>`
 - **Lazy expression templates** with automatic sum/product flattening and leaf fast-paths
 - **Comprehensive math**: arithmetic, trigonometric, hyperbolic, transcendental, power, and special functions
 - **Direct derivative access**: coefficients, partial derivatives, gradient, Jacobian, and higher-order derivative tensors
@@ -33,11 +33,11 @@ Write natural mathematical expressions and tax automatically propagates the full
 #include <iostream>
 
 int main() {
-    using tax::DA;
+    using tax::TE;
 
     // sin(x) expanded at x₀ = 0, up to order 9
-    auto x = DA<9>::variable(0.0);
-    DA<9> f = tax::sin(x);
+    auto x = TE<9>::variable(0.0);
+    TE<9> f = tax::sin(x);
 
     std::cout << f.value()          << "\n";   // sin(0) = 0
     std::cout << f.derivative({1})  << "\n";   // cos(0) = 1
@@ -53,11 +53,11 @@ int main() {
 #include <iostream>
 
 int main() {
-    using tax::DAn;
+    using tax::TEn;
 
     // f(x, y) = sin(x + y) expanded at (1, 2)
-    auto [x, y] = DAn<3, 2>::variables({1.0, 2.0});
-    DAn<3, 2> f = tax::sin(x + y);
+    auto [x, y] = TEn<3, 2>::variables({1.0, 2.0});
+    TEn<3, 2> f = tax::sin(x + y);
 
     std::cout << f.value()              << "\n";   // sin(3)
     std::cout << f.derivative({1, 0})   << "\n";   // ∂f/∂x = cos(3)
@@ -133,16 +133,16 @@ cmake -S . -B build -DCMAKE_PREFIX_PATH=/your/install/prefix
 
 | Type            | Description                                       |
 |-----------------|---------------------------------------------------|
-| `DA<N>`         | `TDA<double, N, 1>`                               |
-| `DAn<N, M>`     | `TDA<double, N, M>`                               |
+| `TE<N>`         | `TruncatedTaylorExpansionT<double, N, 1>`                               |
+| `TEn<N, M>`     | `TruncatedTaylorExpansionT<double, N, M>`                               |
 
 ### Factories
 
 ```cpp
-DA<N>::variable(x0)              // univariate variable at x₀
-DAn<N,M>::variable<I>(x0)       // I-th variable at expansion point
-DAn<N,M>::variables(x0)         // all variables (structured bindings)
-TDA::constant(v) / zero() / one()
+TE<N>::variable(x0)              // univariate variable at x₀
+TEn<N,M>::variable<I>(x0)       // I-th variable at expansion point
+TEn<N,M>::variables(x0)         // all variables (structured bindings)
+TruncatedTaylorExpansionT::constant(v) / zero() / one()
 ```
 
 ### Accessors

@@ -18,7 +18,7 @@ namespace tax::ode
  *
  * @tparam N   Taylor order.
  * @tparam RHS Callable with signature compatible with
- *             `VecT<DA<N>, Rows> rhs(DA<N> t, VecT<DA<N>, Rows> y)`.
+ *             `VecT<TE<N>, Rows> rhs(TE<N> t, VecT<TE<N>, Rows> y)`.
  * @tparam StepSizeController Step-size controller type.
  */
 template < int N, typename RHS, typename StepSizeController = JorbaZouStepSizeController< N > >

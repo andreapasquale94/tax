@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tax/da.hpp>
+#include <tax/tte.hpp>
 #include <type_traits>
 
 namespace tax
@@ -18,6 +18,6 @@ concept CompatibleDA = ( L::order == R::order ) && ( L::nvars == R::nvars ) &&
  * @brief Helper alias for the DA expression base type of a concrete expression `E`.
  */
 template < typename E >
-using ExprBase = DAExpr< E, typename E::scalar_type, E::order, E::nvars >;
+using ExprBase = Expr< E, typename E::scalar_type, E::order, E::nvars >;
 
 }  // namespace tax

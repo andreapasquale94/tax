@@ -11,11 +11,11 @@ namespace
 template < int N, class Op >
 void runTaxBenchmark( benchmark::State& state, double x0, Op&& op )
 {
-    const auto x = tax::DA< N >::variable( x0 );
+    const auto x = tax::TE< N >::variable( x0 );
 
     for ( auto _ : state )
     {
-        tax::DA< N > y = op( x );
+        tax::TE< N > y = op( x );
         benchmark::DoNotOptimize( y );
         benchmark::ClobberMemory();
     }
