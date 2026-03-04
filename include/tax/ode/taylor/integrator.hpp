@@ -113,7 +113,7 @@ class TaylorIntegrator
         result.t.push_back( t0 );
         result.y.push_back( y0 );
 
-        using DVec = ::tax::detail::eigen::rebind_matrix_t< Vec, da_type >;
+        using DVec = ::tax::detail::rebind_matrix_t< Vec, da_type >;
 
         Vec y = y0;
         double t = t0;

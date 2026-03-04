@@ -39,13 +39,10 @@ set(TEST_SOURCES
     expr/testExprInvTrig.cpp
     expr/testExprErf.cpp
     expr/testExprFMA.cpp
+    eigen/testTensorFunction.cpp
+    eigen/testTensors.cpp 
+    eigen/testTypes.cpp
 )
-
-file(GLOB EIGEN_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/eigen/*.cpp")
-file(GLOB ODE_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ode/*.cpp")
-list(APPEND TEST_SOURCES ${EIGEN_TEST_SOURCES})
-list(APPEND TEST_SOURCES ${ODE_TEST_SOURCES})
-
 
 include(GoogleTest)
 

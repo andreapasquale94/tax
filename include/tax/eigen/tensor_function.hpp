@@ -11,16 +11,16 @@ namespace tax
 // =============================================================================
 
 /**
- * @brief Extract the scalar value (constant term) from each DA matrix/vector element.
+ * @brief Extract the scalar value (constant term) from each TTE matrix/vector element.
  * @returns Eigen matrix/vector with same shape and scalar type `T`.
  */
 template < typename Derived >
 [[nodiscard]] auto value( const Eigen::DenseBase< Derived >& t )
-    requires( detail::eigen::is_da_v< typename Derived::Scalar > )
+    requires( detail::is_tte_v< typename Derived::Scalar > )
 {
-    using DA = typename Derived::Scalar;
-    using T = typename detail::eigen::da_traits< DA >::scalar_type;
-    using Out = detail::eigen::rebind_matrix_t< Derived, T >;
+    using TTE = typename Derived::Scalar;
+    using T = typename detail::expansion_traits< TTE >::scalar_type;
+    using Out = detail::rebind_matrix_t< Derived, T >;
     Out out( t.rows(), t.cols() );
     for ( Eigen::Index i = 0; i < t.size(); ++i )
         out.coeffRef( i ) = t.derived().coeff( i ).value();
@@ -28,20 +28,20 @@ template < typename Derived >
 }
 
 /**
- * @brief Extract a partial derivative from each DA matrix/vector element (runtime multi-index).
+ * @brief Extract a partial derivative from each TTE matrix/vector element (runtime multi-index).
  * @param alpha Multi-index specifying the derivative order per variable.
  * @returns Eigen matrix/vector with same shape and scalar type `T`.
  */
 template < typename Derived, std::size_t M >
 [[nodiscard]] auto derivative( const Eigen::DenseBase< Derived >& t,
                                const std::array< int, M >& alpha )
-    requires( detail::eigen::is_da_v< typename Derived::Scalar > )
+    requires( detail::is_tte_v< typename Derived::Scalar > )
 {
-    using DA = typename Derived::Scalar;
-    using T = typename detail::eigen::da_traits< DA >::scalar_type;
-    static_assert( M == std::size_t( detail::eigen::da_traits< DA >::vars ),
+    using TTE = typename Derived::Scalar;
+    using T = typename detail::expansion_traits< TTE >::scalar_type;
+    static_assert( M == std::size_t( detail::expansion_traits< TTE >::vars ),
                    "Derivative multi-index arity must match number of variables" );
-    using Out = detail::eigen::rebind_matrix_t< Derived, T >;
+    using Out = detail::rebind_matrix_t< Derived, T >;
     Out out( t.rows(), t.cols() );
     for ( Eigen::Index i = 0; i < t.size(); ++i )
         out.coeffRef( i ) = t.derived().coeff( i ).derivative( alpha );
@@ -49,39 +49,39 @@ template < typename Derived, std::size_t M >
 }
 
 /**
- * @brief Extract the k-th time derivative from each univariate DA matrix/vector element.
+ * @brief Extract the k-th time derivative from each univariate TTE matrix/vector element.
  * @param k Derivative order (0 = value, 1 = first derivative, ...).
  * @returns Eigen matrix/vector with same shape and scalar type `T`.
  */
 template < typename Derived >
 [[nodiscard]] auto derivative( const Eigen::DenseBase< Derived >& t, int k )
-    requires( detail::eigen::is_da_v< typename Derived::Scalar > &&
-              detail::eigen::da_traits< typename Derived::Scalar >::vars == 1 )
+    requires( detail::is_tte_v< typename Derived::Scalar > &&
+              detail::expansion_traits< typename Derived::Scalar >::vars == 1 )
 {
     return derivative( t, MultiIndex< 1 >{ k } );
 }
 
 /**
- * @brief Extract a partial derivative from each DA matrix/vector element (compile-time
+ * @brief Extract a partial derivative from each TTE matrix/vector element (compile-time
  * multi-index).
  * @tparam Alpha Derivative orders for each variable.
  * @returns Eigen matrix/vector with same shape and scalar type `T`.
  */
 template < int... Alpha, typename Derived >
 [[nodiscard]] auto derivative( const Eigen::DenseBase< Derived >& t )
-    requires( detail::eigen::is_da_v< typename Derived::Scalar > )
+    requires( detail::is_tte_v< typename Derived::Scalar > )
 {
-    using DA = typename Derived::Scalar;
-    using T = typename detail::eigen::da_traits< DA >::scalar_type;
-    constexpr int N = detail::eigen::da_traits< DA >::order;
-    constexpr int M = detail::eigen::da_traits< DA >::vars;
+    using TTE = typename Derived::Scalar;
+    using T = typename detail::expansion_traits< TTE >::scalar_type;
+    constexpr int N = detail::expansion_traits< TTE >::order;
+    constexpr int M = detail::expansion_traits< TTE >::vars;
     static_assert( sizeof...( Alpha ) == std::size_t( M ),
                    "Derivative multi-index arity must match number of variables" );
     static_assert( ( ( Alpha >= 0 ) && ... ), "Derivative orders must be non-negative" );
     constexpr int total_order = ( Alpha + ... + 0 );
-    static_assert( total_order <= N, "Derivative total order exceeds DA truncation order" );
+    static_assert( total_order <= N, "Derivative total order exceeds TTE truncation order" );
 
-    using Out = detail::eigen::rebind_matrix_t< Derived, T >;
+    using Out = detail::rebind_matrix_t< Derived, T >;
     Out out( t.rows(), t.cols() );
     for ( Eigen::Index i = 0; i < t.size(); ++i )
         out.coeffRef( i ) = t.derived().coeff( i ).template derivative< Alpha... >();
@@ -89,13 +89,13 @@ template < int... Alpha, typename Derived >
 }
 
 /**
- * @brief Compute the gradient of a scalar DA at its expansion point.
+ * @brief Compute the gradient of a scalar TTE at its expansion point.
  * @returns Eigen column vector `[df/dx_0, ..., df/dx_{M-1}]`.
  */
 template < typename T, int N, int M >
 [[nodiscard]] auto gradient( const TruncatedTaylorExpansionT< T, N, M >& f )
 {
-    static_assert( N >= 1, "gradient requires DA order >= 1" );
+    static_assert( N >= 1, "gradient requires TTE order >= 1" );
     Eigen::Matrix< T, M, 1 > g;
     for ( int i = 0; i < M; ++i )
     {
@@ -107,17 +107,17 @@ template < typename T, int N, int M >
 }
 
 /**
- * @brief Compute the Jacobian matrix of a vector-valued DA function at its expansion point.
- * @param vec Eigen vector/matrix of DA elements (treated as a flat list of `K` components).
+ * @brief Compute the Jacobian matrix of a vector-valued TTE function at its expansion point.
+ * @param vec Eigen vector/matrix of TTE elements (treated as a flat list of `K` components).
  * @returns Eigen matrix of shape `(K, M)` where `J(i,j) = df_i / dx_j`.
  */
 template < typename Derived >
 [[nodiscard]] auto jacobian( const Eigen::DenseBase< Derived >& vec )
-    requires( detail::eigen::is_da_v< typename Derived::Scalar > )
+    requires( detail::is_tte_v< typename Derived::Scalar > )
 {
-    using DA = typename Derived::Scalar;
-    using T = typename detail::eigen::da_traits< DA >::scalar_type;
-    constexpr int M = detail::eigen::da_traits< DA >::vars;
+    using TTE = typename Derived::Scalar;
+    using T = typename detail::expansion_traits< TTE >::scalar_type;
+    constexpr int M = detail::expansion_traits< TTE >::vars;
     constexpr int K = Derived::SizeAtCompileTime;
 
     Eigen::Matrix< T, K, M > out( vec.size(), M );
@@ -134,25 +134,25 @@ template < typename Derived >
 }
 
 /**
- * @brief Evaluate each DA element of an Eigen matrix/vector at displacement `dx`.
- * @param container Eigen matrix/vector of DA elements.
+ * @brief Evaluate each TTE element of an Eigen matrix/vector at displacement `dx`.
+ * @param container Eigen matrix/vector of TTE elements.
  * @param dx Displacement: scalar `T` (univariate), `Input` (multivariate),
  *           or Eigen vector (multivariate, converted internally).
  * @returns Eigen matrix/vector of same shape with scalar type `T`.
  */
 template < typename Derived, typename Dx >
 [[nodiscard]] auto eval( const Eigen::DenseBase< Derived >& container, const Dx& dx )
-    requires( detail::eigen::is_da_v< typename Derived::Scalar > )
+    requires( detail::is_tte_v< typename Derived::Scalar > )
 {
-    using DA = typename Derived::Scalar;
-    using T = typename detail::eigen::da_traits< DA >::scalar_type;
-    using Out = detail::eigen::rebind_matrix_t< Derived, T >;
+    using TTE = typename Derived::Scalar;
+    using T = typename detail::expansion_traits< TTE >::scalar_type;
+    using Out = detail::rebind_matrix_t< Derived, T >;
     Out out( container.rows(), container.cols() );
 
-    if constexpr ( detail::eigen::EigenDenseExpr< Dx > )
+    if constexpr ( detail::EigenDenseExpr< Dx > )
     {
-        constexpr int M = detail::eigen::da_traits< DA >::vars;
-        typename DA::Input p{};
+        constexpr int M = detail::expansion_traits< TTE >::vars;
+        typename TTE::Input p{};
         for ( int i = 0; i < M; ++i )
             p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
         for ( Eigen::Index i = 0; i < container.size(); ++i )
@@ -170,7 +170,7 @@ template < typename Derived, typename Dx >
 // =============================================================================
 
 /**
- * @brief Extract the scalar value (constant term) from each DA element.
+ * @brief Extract the scalar value (constant term) from each TTE element.
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank >
@@ -183,7 +183,7 @@ template < typename T, int N, int M, int Rank >
 }
 
 /**
- * @brief Extract a partial derivative from each DA element (runtime multi-index).
+ * @brief Extract a partial derivative from each TTE element (runtime multi-index).
  * @param alpha Multi-index specifying the derivative order per variable.
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
@@ -198,7 +198,7 @@ template < typename T, int N, int M, int Rank >
 }
 
 /**
- * @brief Extract the k-th time derivative from each univariate DA element.
+ * @brief Extract the k-th time derivative from each univariate TTE element.
  * @param k Derivative order (0 = value, 1 = first derivative, ...).
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
@@ -211,7 +211,7 @@ template < typename T, int N, int Rank >
 }
 
 /**
- * @brief Extract a partial derivative from each DA element (compile-time multi-index).
+ * @brief Extract a partial derivative from each TTE element (compile-time multi-index).
  * @tparam Alpha Derivative orders for each variable.
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
@@ -224,7 +224,7 @@ template < int... Alpha, typename T, int N, int M, int Rank >
                    "Derivative multi-index arity must match number of variables" );
     static_assert( ( ( Alpha >= 0 ) && ... ), "Derivative orders must be non-negative" );
     constexpr int total_order = ( Alpha + ... + 0 );
-    static_assert( total_order <= N, "Derivative total order exceeds DA truncation order" );
+    static_assert( total_order <= N, "Derivative total order exceeds TTE truncation order" );
 
     Eigen::Tensor< T, Rank > out( t.dimensions() );
     for ( Eigen::Index i = 0; i < t.size(); ++i )
@@ -233,8 +233,8 @@ template < int... Alpha, typename T, int N, int M, int Rank >
 }
 
 /**
- * @brief Evaluate each DA element of an Eigen::Tensor at displacement `dx`.
- * @param t Eigen::Tensor of DA elements.
+ * @brief Evaluate each TTE element of an Eigen::Tensor at displacement `dx`.
+ * @param t Eigen::Tensor of TTE elements.
  * @param dx Displacement: scalar `T` (univariate), `Input` (multivariate),
  *           or Eigen vector (multivariate, converted internally).
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
@@ -246,7 +246,7 @@ template < typename T, int N, int M, int Rank, typename Dx >
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );
 
-    if constexpr ( detail::eigen::EigenDenseExpr< Dx > )
+    if constexpr ( detail::EigenDenseExpr< Dx > )
     {
         typename TruncatedTaylorExpansionT< T, N, M >::Input p{};
         for ( int i = 0; i < M; ++i )

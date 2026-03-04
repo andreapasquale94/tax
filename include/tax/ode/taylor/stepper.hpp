@@ -37,12 +37,12 @@ class TaylorStepper
     static_assert( N >= 1, "Taylor order N must be at least 1." );
 
     using da_type = TE< N >;
-    using da_traits = ::tax::detail::eigen::da_traits< da_type >;
-    using scalar_type = typename da_traits::scalar_type;
+    using expansion_traits = ::tax::detail::expansion_traits< da_type >;
+    using scalar_type = typename expansion_traits::scalar_type;
 
     using rhs_type = RHS;
-    static constexpr int order = da_traits::order;
-    static constexpr int vars  = da_traits::vars;
+    static constexpr int order = expansion_traits::order;
+    static constexpr int vars  = expansion_traits::vars;
     static_assert( vars == 1, "TaylorStepper currently requires univariate DA scalars." );
 
     explicit TaylorStepper( RHS rhs ) noexcept : rhs_( std::move( rhs ) ) {}
@@ -59,12 +59,12 @@ class TaylorStepper
      * @return DA-vector series of y(t0 + dt).
      */
     template < typename Vec >
-    [[nodiscard]] ::tax::detail::eigen::rebind_matrix_t< Vec, da_type >
+    [[nodiscard]] ::tax::detail::rebind_matrix_t< Vec, da_type >
     series( double t0, const Vec& y0 )
     {
         detail::taylor::assertColumnVector( y0 );
 
-        using DVec = ::tax::detail::eigen::rebind_matrix_t< Vec, da_type >;
+        using DVec = ::tax::detail::rebind_matrix_t< Vec, da_type >;
 
         da_type t_da = da_type::variable( static_cast< scalar_type >( t0 ) );
 
@@ -100,7 +100,7 @@ class TaylorStepper
     template < typename Vec >
     [[nodiscard]] Vec step( double t0, const Vec& y0, double h )
     {
-        using DVec = ::tax::detail::eigen::rebind_matrix_t< Vec, da_type >;
+        using DVec = ::tax::detail::rebind_matrix_t< Vec, da_type >;
         auto y_da  = series< Vec >( t0, y0 );
 
         // Vectorised evaluation with compile-time T, N, and Dim.
