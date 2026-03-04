@@ -12,7 +12,7 @@ When you compose DA variables through arbitrary expressions (arithmetic, trigono
 
 ## Building
 
-TAX requires a C++23 compiler. Eigen support is optional.
+TAX requires a C++23 compiler and Eigen 3.4+.
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -20,19 +20,11 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-To enable Eigen integration:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTAX_ENABLE_EIGEN=ON
-cmake --build build
-```
-
 ### CMake Options
 
 | Option             | Default | Description                       |
 |--------------------|---------|-----------------------------------|
 | `TAX_BUILD_TEST`   | `ON`    | Build the test suite              |
-| `TAX_ENABLE_EIGEN` | `OFF`   | Enable Eigen adapters and tensors |
 
 ### Installation
 
@@ -54,8 +46,6 @@ A single umbrella header pulls in everything:
 ```cpp
 #include <tax/tax.hpp>
 ```
-
-If Eigen headers are available on the include path, the Eigen integration is auto-detected even without the CMake flag.
 
 ## Core Type
 

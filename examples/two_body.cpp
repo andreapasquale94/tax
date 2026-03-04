@@ -24,10 +24,10 @@
  *   Period:   T = 2π
  *   Solution: x(t)=cos(t), y(t)=sin(t), vx=-sin(t), vy=cos(t)
  *
- * Build & run (from the repo root with Eigen enabled)
+ * Build & run (from the repo root)
  * ---------------------------------------------------
  *   mkdir -p build && cd build
- *   cmake .. -DTAX_ENABLE_EIGEN=ON -DTAX_BUILD_EXAMPLES=ON
+ *   cmake .. -DTAX_BUILD_EXAMPLES=ON
  *   make two_body
  *   ./examples/two_body
  */

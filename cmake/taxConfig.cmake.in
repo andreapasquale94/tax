@@ -1,8 +1,6 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-
-# If this build of tax was configured with Eigen enabled, require it for consumers.
-@TAX_CONFIG_EIGEN_DEP@
+find_dependency(Eigen3 REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/taxTargets.cmake")

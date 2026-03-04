@@ -16,13 +16,13 @@ Write natural mathematical expressions and tax automatically propagates the full
 - **Lazy expression templates** with automatic sum/product flattening and leaf fast-paths
 - **Comprehensive math**: arithmetic, trigonometric, hyperbolic, transcendental, power, and special functions
 - **Direct derivative access**: coefficients, partial derivatives, gradient, Jacobian, and higher-order derivative tensors
-- **Eigen integration**: adapters for Eigen vectors, matrices, and tensors (optional)
+- **Eigen integration**: adapters for Eigen vectors, matrices, and tensors
 
 ## Requirements
 
 - C++23 compiler
 - CMake 4.2+
-- Eigen 3.4+ (optional)
+- Eigen 3.4+
 
 ## Quick Start
 
@@ -73,17 +73,9 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-With Eigen support:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTAX_ENABLE_EIGEN=ON
-cmake --build build
-```
-
 | Option             | Default | Description                       |
 |--------------------|---------|-----------------------------------|
 | `TAX_BUILD_TEST`   | `ON`    | Build the test suite              |
-| `TAX_ENABLE_EIGEN` | `OFF`   | Enable Eigen adapters and tensors |
 | `TAX_BUILD_BENCHMARK` | `OFF` | Build Google Benchmark suite      |
 | `TAX_USE_DACE` | `OFF`  | Fetch/enable DACE for tests and benchmarks |
 

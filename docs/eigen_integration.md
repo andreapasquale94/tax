@@ -1,6 +1,6 @@
 # Eigen Integration
 
-TAX provides adapters for working with Eigen vectors, matrices, and tensors of DA objects. The integration is enabled when Eigen headers are available on the include path (auto-detected) or explicitly via `-DTAX_ENABLE_EIGEN=ON`.
+TAX provides adapters for working with Eigen vectors, matrices, and tensors of DA objects. Eigen is a required dependency.
 
 ## Type Aliases
 

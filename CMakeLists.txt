@@ -6,7 +6,6 @@ project(tax VERSION 0.1.0 LANGUAGES CXX)
 # Options
 # -------------------------------
 option(TAX_BUILD_TEST "Build and enable unittests" ON)
-option(TAX_ENABLE_EIGEN "Enable Eigen tensor adapters" OFF)
 option(TAX_BUILD_BENCHMARK "Build benchmark suite (Google Benchmark)" OFF)
 option(TAX_USE_DACE "Enable DACE integration (fetches dacelib/dace@v2.1.0) for tests and benchmarks" OFF)
 option(TAX_BUILD_EXAMPLES "Build example programs" OFF)
@@ -44,18 +43,10 @@ target_include_directories(tax
 )
 
 # -------------------------------
-# Optional Eigen dependency
+# Required Eigen dependency
 # -------------------------------
-if(TAX_ENABLE_EIGEN)
-    find_package(Eigen3 QUIET)
-    if(Eigen3_FOUND)
-        target_link_libraries(tax INTERFACE Eigen3::Eigen)
-        target_compile_definitions(tax INTERFACE TAX_ENABLE_EIGEN=1)
-    else()
-        message(STATUS "Eigen3 not found, disabling TAX_ENABLE_EIGEN")
-        set(TAX_ENABLE_EIGEN OFF)
-    endif()
-endif()
+find_package(Eigen3 REQUIRED)
+target_link_libraries(tax INTERFACE Eigen3::Eigen)
 
 # -------------------------------
 # Optional DACE dependency
@@ -142,13 +133,6 @@ install(EXPORT taxTargets
     NAMESPACE tax::
     DESTINATION ${TAX_INSTALL_CMAKEDIR}
 )
-
-# Configure whether installed package requires Eigen
-if(TAX_ENABLE_EIGEN)
-    set(TAX_CONFIG_EIGEN_DEP "find_dependency(Eigen3)")
-else()
-    set(TAX_CONFIG_EIGEN_DEP "")
-endif()
 
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/taxConfig.cmake.in"

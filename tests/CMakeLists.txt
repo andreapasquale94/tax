@@ -24,7 +24,7 @@ set(TEST_SOURCES
     foundation/testCombinatorics.cpp
     foundation/testEnumeration.cpp
     kernels/testKernels.cpp
-    core/testDA.cpp
+    core/testTTE.cpp
     core/testNested.cpp
     core/testCompose.cpp
     expr/testExprAdd.cpp
@@ -41,12 +41,10 @@ set(TEST_SOURCES
     expr/testExprFMA.cpp
 )
 
-if(TAX_ENABLE_EIGEN)
-    file(GLOB EIGEN_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/eigen/*.cpp")
-    file(GLOB ODE_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ode/*.cpp")
-    list(APPEND TEST_SOURCES ${EIGEN_TEST_SOURCES})
-    list(APPEND TEST_SOURCES ${ODE_TEST_SOURCES})
-endif()
+file(GLOB EIGEN_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/eigen/*.cpp")
+file(GLOB ODE_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ode/*.cpp")
+list(APPEND TEST_SOURCES ${EIGEN_TEST_SOURCES})
+list(APPEND TEST_SOURCES ${ODE_TEST_SOURCES})
 
 
 include(GoogleTest)

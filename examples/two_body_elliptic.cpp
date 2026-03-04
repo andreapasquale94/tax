@@ -15,7 +15,7 @@
  *   y0 = (rp, 0, 0, vp)
  *
  * Build & run:
- *   cmake -S . -B build -DTAX_ENABLE_EIGEN=ON -DTAX_BUILD_EXAMPLES=ON
+ *   cmake -S . -B build -DTAX_BUILD_EXAMPLES=ON
  *   cmake --build build --target two_body_elliptic
  *   ./build/examples/two_body_elliptic
  */

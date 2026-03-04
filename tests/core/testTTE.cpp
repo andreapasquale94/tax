@@ -4,20 +4,20 @@
 // Constructors
 // =============================================================================
 
-TEST( DAConstruct, DefaultIsZero )
+TEST( TTEConstruct, DefaultIsZero )
 {
     TE< 4 > a;
     for ( std::size_t k = 0; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
 }
 
-TEST( DAConstruct, ValueCtorSetsConstant )
+TEST( TTEConstruct, ValueCtorSetsConstant )
 {
     TE< 4 > a{ 3.14 };
     EXPECT_NEAR( a[0], 3.14, kTol );
     for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
 }
 
-TEST( DAConstruct, CoeffArrayCtor )
+TEST( TTEConstruct, CoeffArrayCtor )
 {
     TE< 3 >::coeff_array c{ 1, 2, 3, 4 };
     TE< 3 > a{ c };
@@ -25,7 +25,7 @@ TEST( DAConstruct, CoeffArrayCtor )
         EXPECT_NEAR( a[k], double( k + 1 ), kTol ) << "k=" << k;
 }
 
-TEST( DAConstruct, FromExpression )
+TEST( TTEConstruct, FromExpression )
 {
     auto x = TE< 4 >::variable< 0 >( { 1.0 } );
     TE< 4 > r = x + x;  // construct from expression
@@ -38,7 +38,7 @@ TEST( DAConstruct, FromExpression )
 // Variable factories
 // =============================================================================
 
-TEST( DAVariable, Univariate_Variable0 )
+TEST( TTEVariable, Univariate_Variable0 )
 {
     // variable<0>({x0}) = x0 + 1*delta
     auto x = TE< 4 >::variable< 0 >( { 3.0 } );
@@ -47,7 +47,7 @@ TEST( DAVariable, Univariate_Variable0 )
     for ( std::size_t k = 2; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( x[k], 0.0 ) << "k=" << k;
 }
 
-TEST( DAVariable, Bivariate_Variable0 )
+TEST( TTEVariable, Bivariate_Variable0 )
 {
     auto x = TEn< 3, 2 >::variable< 0 >( { 2.0, 5.0 } );
     EXPECT_NEAR( x.coeff( { 0, 0 } ), 2.0, kTol );  // expansion point for x
@@ -55,7 +55,7 @@ TEST( DAVariable, Bivariate_Variable0 )
     EXPECT_NEAR( x.coeff( { 0, 1 } ), 0.0, kTol );  // dx/dy = 0
 }
 
-TEST( DAVariable, Bivariate_Variable1 )
+TEST( TTEVariable, Bivariate_Variable1 )
 {
     auto y = TEn< 3, 2 >::variable< 1 >( { 2.0, 5.0 } );
     EXPECT_NEAR( y.coeff( { 0, 0 } ), 5.0, kTol );  // expansion point for y
@@ -63,7 +63,7 @@ TEST( DAVariable, Bivariate_Variable1 )
     EXPECT_NEAR( y.coeff( { 0, 1 } ), 1.0, kTol );  // dy/dy = 1
 }
 
-TEST( DAVariable, Variables_StructuredBinding )
+TEST( TTEVariable, Variables_StructuredBinding )
 {
     auto [x, y, z] = TEn< 2, 3 >::variables( { 1.0, 2.0, 3.0 } );
     EXPECT_NEAR( x.value(), 1.0, kTol );
@@ -77,7 +77,7 @@ TEST( DAVariable, Variables_StructuredBinding )
     EXPECT_NEAR( z.coeff( { 0, 0, 1 } ), 1.0, kTol );
 }
 
-TEST( DAVariable, Constant )
+TEST( TTEVariable, Constant )
 {
     auto c = TE< 5 >::constant( 7.0 );
     EXPECT_NEAR( c.value(), 7.0, kTol );
@@ -88,7 +88,7 @@ TEST( DAVariable, Constant )
 // Element access
 // =============================================================================
 
-TEST( DAAccess, ReadWrite )
+TEST( TTEAccess, ReadWrite )
 {
     TE< 3 > a;
     a[0] = 1.0;
@@ -101,13 +101,13 @@ TEST( DAAccess, ReadWrite )
     EXPECT_NEAR( a[3], 0.5, kTol );
 }
 
-TEST( DAAccess, Value )
+TEST( TTEAccess, Value )
 {
     TE< 3 > a{ 5.0 };
     EXPECT_NEAR( a.value(), 5.0, kTol );
 }
 
-TEST( DAAccess, Coeff_Alpha )
+TEST( TTEAccess, Coeff_Alpha )
 {
     auto x = TE< 4 >::variable< 0 >( { 2.0 } );
     EXPECT_NEAR( x.coeff( { 0 } ), 2.0, kTol );
@@ -115,7 +115,7 @@ TEST( DAAccess, Coeff_Alpha )
     EXPECT_NEAR( x.coeff( { 2 } ), 0.0, kTol );
 }
 
-TEST( DAAccess, Coeff_TemplateUnivariate )
+TEST( TTEAccess, Coeff_TemplateUnivariate )
 {
     auto x = TE< 4 >::variable< 0 >( { 2.0 } );
     EXPECT_NEAR( x.coeff< 0 >(), 2.0, kTol );
@@ -123,7 +123,7 @@ TEST( DAAccess, Coeff_TemplateUnivariate )
     EXPECT_NEAR( x.coeff< 2 >(), 0.0, kTol );
 }
 
-TEST( DAAccess, Coeff_TemplateBivariate )
+TEST( TTEAccess, Coeff_TemplateBivariate )
 {
     auto [x, y] = TEn< 2, 2 >::variables( { 0.0, 0.0 } );
     TEn< 2, 2 > f = x * x + x * y + y * y;
@@ -132,7 +132,7 @@ TEST( DAAccess, Coeff_TemplateBivariate )
     EXPECT_NEAR( ( f.coeff< 0, 2 >() ), 1.0, kTol );
 }
 
-TEST( DAAccess, Derivative_FactorialFactor )
+TEST( TTEAccess, Derivative_FactorialFactor )
 {
     // (1+x)^2 = 1 + 2x + x^2: derivative at x=0:
     //   d/dx = 2 → derivative({1}) = c[1]*1! = 2
@@ -146,7 +146,7 @@ TEST( DAAccess, Derivative_FactorialFactor )
     EXPECT_NEAR( a.derivative( { 2 } ), 2.0, kTol );
 }
 
-TEST( DAAccess, Derivative_TemplateUnivariate )
+TEST( TTEAccess, Derivative_TemplateUnivariate )
 {
     TE< 3 > a{};
     a[0] = 1;
@@ -157,7 +157,7 @@ TEST( DAAccess, Derivative_TemplateUnivariate )
     EXPECT_NEAR( a.derivative< 2 >(), 2.0, kTol );
 }
 
-TEST( DAAccess, Derivative_Bivariate )
+TEST( TTEAccess, Derivative_Bivariate )
 {
     // f(x,y) = x^2 + x*y + y^2 at (0,0): coefficients are exact
     // d^2f/dx^2 = 2 → coeff({2,0}) = 1, derivative({2,0}) = 1*2! = 2
@@ -168,7 +168,7 @@ TEST( DAAccess, Derivative_Bivariate )
     EXPECT_NEAR( f.derivative( { 1, 1 } ), 1.0, kTol );
 }
 
-TEST( DAAccess, Derivative_TemplateBivariate )
+TEST( TTEAccess, Derivative_TemplateBivariate )
 {
     auto [x, y] = TEn< 2, 2 >::variables( { 0.0, 0.0 } );
     TEn< 2, 2 > f = x * x + x * y + y * y;
@@ -177,7 +177,7 @@ TEST( DAAccess, Derivative_TemplateBivariate )
     EXPECT_NEAR( ( f.derivative< 1, 1 >() ), 1.0, kTol );
 }
 
-TEST( DAAccess, Coeffs_ReturnsArray )
+TEST( TTEAccess, Coeffs_ReturnsArray )
 {
     TE< 2 > a{};
     a[0] = 1;
@@ -193,21 +193,21 @@ TEST( DAAccess, Coeffs_ReturnsArray )
 // In-place operators
 // =============================================================================
 
-TEST( DAInPlace, PlusEqDA )
+TEST( TTEInPlace, PlusEqTTE )
 {
     TE< 3 > a{ 2.0 }, b{ 3.0 };
     a += b;
     EXPECT_NEAR( a.value(), 5.0, kTol );
 }
 
-TEST( DAInPlace, MinusEqDA )
+TEST( TTEInPlace, MinusEqTTE )
 {
     TE< 3 > a{ 5.0 }, b{ 3.0 };
     a -= b;
     EXPECT_NEAR( a.value(), 2.0, kTol );
 }
 
-TEST( DAInPlace, PlusEqExpression )
+TEST( TTEInPlace, PlusEqExpression )
 {
     auto x = TE< 4 >::variable< 0 >( { 1.0 } );
     TE< 4 > r{ 2.0 };
@@ -216,7 +216,7 @@ TEST( DAInPlace, PlusEqExpression )
     EXPECT_NEAR( r[1], 1.0, kTol );
 }
 
-TEST( DAInPlace, MinusEqExpression )
+TEST( TTEInPlace, MinusEqExpression )
 {
     auto x = TE< 4 >::variable< 0 >( { 1.0 } );
     TE< 4 > r{ 2.0 };
@@ -225,7 +225,7 @@ TEST( DAInPlace, MinusEqExpression )
     EXPECT_NEAR( r[1], -1.0, kTol );
 }
 
-TEST( DAInPlace, TimesEqScalar )
+TEST( TTEInPlace, TimesEqScalar )
 {
     auto x = TE< 3 >::variable< 0 >( { 2.0 } );
     TE< 3 > r = x;
@@ -234,7 +234,7 @@ TEST( DAInPlace, TimesEqScalar )
     EXPECT_NEAR( r[1], 3.0, kTol );
 }
 
-TEST( DAInPlace, DivEqScalar )
+TEST( TTEInPlace, DivEqScalar )
 {
     auto x = TE< 3 >::variable< 0 >( { 4.0 } );
     TE< 3 > r = x;
@@ -243,7 +243,7 @@ TEST( DAInPlace, DivEqScalar )
     EXPECT_NEAR( r[1], 0.5, kTol );
 }
 
-TEST( DAInPlace, ChainedPlusEq )
+TEST( TTEInPlace, ChainedPlusEq )
 {
     TE< 2 > a{ 1.0 }, b{ 2.0 }, c{ 3.0 };
     a += b;
@@ -255,14 +255,14 @@ TEST( DAInPlace, ChainedPlusEq )
 // eval — polynomial evaluation
 // =============================================================================
 
-TEST( DAEval, UnivariateConstant )
+TEST( TTEEval, UnivariateConstant )
 {
     TE< 3 > a{ 5.0 };
     EXPECT_NEAR( a.eval( 0.1 ), 5.0, kTol );
     EXPECT_NEAR( a.eval( 0.0 ), 5.0, kTol );
 }
 
-TEST( DAEval, UnivariateLinear )
+TEST( TTEEval, UnivariateLinear )
 {
     // f = 2 + 3*dx  (at x0=2, slope 3)
     auto x = TE< 3 >::variable( 2.0 );
@@ -272,7 +272,7 @@ TEST( DAEval, UnivariateLinear )
     EXPECT_NEAR( f.eval( -0.5 ), 4.5, kTol );
 }
 
-TEST( DAEval, UnivariateSinAtZero )
+TEST( TTEEval, UnivariateSinAtZero )
 {
     // sin(x) expanded at x0=0, evaluate at dx to get sin(dx)
     auto x = TE< 9 >::variable( 0.0 );
@@ -281,7 +281,7 @@ TEST( DAEval, UnivariateSinAtZero )
     EXPECT_NEAR( f.eval( 0.5 ), std::sin( 0.5 ), 1e-10 );
 }
 
-TEST( DAEval, UnivariateExpAtOne )
+TEST( TTEEval, UnivariateExpAtOne )
 {
     // exp(x) expanded at x0=1, evaluate at dx=0.5 to get exp(1.5)
     auto x = TE< 12 >::variable( 1.0 );
@@ -289,14 +289,14 @@ TEST( DAEval, UnivariateExpAtOne )
     EXPECT_NEAR( f.eval( 0.5 ), std::exp( 1.5 ), 1e-12 );
 }
 
-TEST( DAEval, UnivariateAtZeroDisplacement )
+TEST( TTEEval, UnivariateAtZeroDisplacement )
 {
     auto x = TE< 5 >::variable( 1.0 );
     TE< 5 > f = sin( x );
     EXPECT_NEAR( f.eval( 0.0 ), std::sin( 1.0 ), kTol );
 }
 
-TEST( DAEval, UnivariateViaPointType )
+TEST( TTEEval, UnivariateViaPointType )
 {
     // eval(point_type) delegates to eval(T) for M=1
     auto x = TE< 9 >::variable( 0.0 );
@@ -305,13 +305,13 @@ TEST( DAEval, UnivariateViaPointType )
     EXPECT_NEAR( f.eval( dx ), std::cos( 0.3 ), 1e-11 );
 }
 
-TEST( DAEval, MultivariateConstant )
+TEST( TTEEval, MultivariateConstant )
 {
     TEn< 3, 2 > a{ 5.0 };
     EXPECT_NEAR( a.eval( { 0.1, 0.2 } ), 5.0, kTol );
 }
 
-TEST( DAEval, MultivariateLinear )
+TEST( TTEEval, MultivariateLinear )
 {
     auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
     TEn< 3, 2 > f = x + 2.0 * y;  // (1+dx) + 2*(2+dy) = 5 + dx + 2*dy
@@ -321,7 +321,7 @@ TEST( DAEval, MultivariateLinear )
     EXPECT_NEAR( f.eval( { 0.5, 0.3 } ), 5.0 + 0.5 + 0.6, kTol );
 }
 
-TEST( DAEval, MultivariateQuadratic )
+TEST( TTEEval, MultivariateQuadratic )
 {
     auto [x, y] = TEn< 3, 2 >::variables( { 0.0, 0.0 } );
     TEn< 3, 2 > f = x * y;  // dx*dy
@@ -329,7 +329,7 @@ TEST( DAEval, MultivariateQuadratic )
     EXPECT_NEAR( f.eval( { 0.0, 5.0 } ), 0.0, kTol );
 }
 
-TEST( DAEval, MultivariateSin )
+TEST( TTEEval, MultivariateSin )
 {
     auto [x, y] = TEn< 8, 2 >::variables( { 0.0, 0.0 } );
     TEn< 8, 2 > f = sin( x + y );
@@ -337,12 +337,10 @@ TEST( DAEval, MultivariateSin )
     EXPECT_NEAR( f.eval( { 0.1, 0.2 } ), std::sin( 0.3 ), 1e-10 );
 }
 
-#if TAX_ENABLE_EIGEN
-TEST( DAEval, MultivariateEigenVector )
+TEST( TTEEval, MultivariateEigenVector )
 {
     auto [x, y] = TEn< 3, 2 >::variables( { 1.0, 2.0 } );
     TEn< 3, 2 > f = x + 2.0 * y;  // 5 + dx + 2*dy
     Eigen::Vector2d dx( 0.5, 0.3 );
     EXPECT_NEAR( tax::eval( f, dx ), 5.0 + 0.5 + 0.6, kTol );
 }
-#endif
