@@ -7,21 +7,21 @@
 TEST( TTEConstruct, DefaultIsZero )
 {
     TE< 4 > a;
-    for ( std::size_t k = 0; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
+    for ( std::size_t k = 0; k < TE< 4 >::nCoefficients; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
 }
 
 TEST( TTEConstruct, ValueCtorSetsConstant )
 {
     TE< 4 > a{ 3.14 };
     EXPECT_NEAR( a[0], 3.14, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
+    for ( std::size_t k = 1; k < TE< 4 >::nCoefficients; ++k ) EXPECT_EQ( a[k], 0.0 ) << "k=" << k;
 }
 
 TEST( TTEConstruct, CoeffArrayCtor )
 {
-    TE< 3 >::coeff_array c{ 1, 2, 3, 4 };
+    TE< 3 >::Data c{ 1, 2, 3, 4 };
     TE< 3 > a{ c };
-    for ( std::size_t k = 0; k < TE< 3 >::ncoef; ++k )
+    for ( std::size_t k = 0; k < TE< 3 >::nCoefficients; ++k )
         EXPECT_NEAR( a[k], double( k + 1 ), kTol ) << "k=" << k;
 }
 
@@ -31,7 +31,7 @@ TEST( TTEConstruct, FromExpression )
     TE< 4 > r = x + x;  // construct from expression
     EXPECT_NEAR( r[0], 2.0, kTol );
     EXPECT_NEAR( r[1], 2.0, kTol );
-    for ( std::size_t k = 2; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( r[k], 0.0 );
+    for ( std::size_t k = 2; k < TE< 4 >::nCoefficients; ++k ) EXPECT_EQ( r[k], 0.0 );
 }
 
 // =============================================================================
@@ -44,7 +44,7 @@ TEST( TTEVariable, Univariate_Variable0 )
     auto x = TE< 4 >::variable< 0 >( { 3.0 } );
     EXPECT_NEAR( x[0], 3.0, kTol );  // expansion point
     EXPECT_NEAR( x[1], 1.0, kTol );  // linear coefficient = 1
-    for ( std::size_t k = 2; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( x[k], 0.0 ) << "k=" << k;
+    for ( std::size_t k = 2; k < TE< 4 >::nCoefficients; ++k ) EXPECT_EQ( x[k], 0.0 ) << "k=" << k;
 }
 
 TEST( TTEVariable, Bivariate_Variable0 )
@@ -81,7 +81,7 @@ TEST( TTEVariable, Constant )
 {
     auto c = TE< 5 >::constant( 7.0 );
     EXPECT_NEAR( c.value(), 7.0, kTol );
-    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_EQ( c[k], 0.0 );
+    for ( std::size_t k = 1; k < TE< 5 >::nCoefficients; ++k ) EXPECT_EQ( c[k], 0.0 );
 }
 
 // =============================================================================
@@ -298,10 +298,10 @@ TEST( TTEEval, UnivariateAtZeroDisplacement )
 
 TEST( TTEEval, UnivariateViaPointType )
 {
-    // eval(point_type) delegates to eval(T) for M=1
+    // eval(Input) delegates to eval(T) for M=1
     auto x = TE< 9 >::variable( 0.0 );
     TE< 9 > f = cos( x );
-    TE< 9 >::point_type dx{ 0.3 };
+    TE< 9 >::Input dx{ 0.3 };
     EXPECT_NEAR( f.eval( dx ), std::cos( 0.3 ), 1e-11 );
 }
 

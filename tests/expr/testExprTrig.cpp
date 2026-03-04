@@ -9,7 +9,7 @@ TEST( Sin, ConstantSin )
     TE< 3 > a{ 1.0 };
     TE< 3 > r = sin( a );
     EXPECT_NEAR( r.value(), std::sin( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Sin, SinOfVariableZero )
@@ -80,7 +80,7 @@ TEST( Cos, ConstantCos )
     TE< 3 > a{ 1.0 };
     TE< 3 > r = cos( a );
     EXPECT_NEAR( r.value(), std::cos( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Cos, CosOfVariableZero )
@@ -146,7 +146,7 @@ TEST( SinCosIdentity, PythagoreanUnivariate )
     TE< 5 > r = square( s ) + square( c );
     // Should be identically 1
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( SinCosIdentity, PythagoreanBivariate )
@@ -156,7 +156,7 @@ TEST( SinCosIdentity, PythagoreanBivariate )
     TEn< 4, 2 > c = cos( x + y );
     TEn< 4, 2 > r = square( s ) + square( c );
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < TEn< 4, 2 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TEn< 4, 2 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 // =============================================================================
@@ -190,7 +190,7 @@ TEST( SinCos, Pythagorean )
     auto [s, c] = sincos( x );
     TE< 5 > r = square( s ) + square( c );
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 // =============================================================================
@@ -202,7 +202,7 @@ TEST( Tan, ConstantTan )
     TE< 3 > a{ 0.5 };
     TE< 3 > r = tan( a );
     EXPECT_NEAR( r.value(), std::tan( 0.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Tan, TanOfVariableZero )

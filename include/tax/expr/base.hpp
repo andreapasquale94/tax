@@ -25,8 +25,8 @@ struct Expr
     using scalar_type = T;
     static constexpr int order = N;
     static constexpr int nvars = M;
-    static constexpr std::size_t ncoef = detail::numMonomials( N, M );
-    using coeff_array = std::array< T, ncoef >;
+    static constexpr std::size_t nCoefficients = detail::numMonomials( N, M );
+    using Data = std::array< T, nCoefficients >;
 
     /// @brief Access the concrete expression implementation.
     [[nodiscard]] constexpr const Derived& self() const noexcept
@@ -38,33 +38,33 @@ struct Expr
      * @brief Evaluate this expression into `out`.
      * @param out Destination coefficient buffer.
      */
-    constexpr void evalTo( coeff_array& out ) const noexcept { self().evalTo( out ); }
+    constexpr void evalTo( Data& out ) const noexcept { self().evalTo( out ); }
 
     /**
      * @brief Accumulate this expression into `out`.
      * @param out Destination buffer updated as `out += eval()`.
      */
-    constexpr void addTo( coeff_array& out ) const noexcept
+    constexpr void addTo( Data& out ) const noexcept
     {
-        coeff_array tmp{};
+        Data tmp{};
         self().evalTo( tmp );
-        detail::addInPlace< T, ncoef >( out, tmp );
+        detail::addInPlace< T, nCoefficients >( out, tmp );
     }
     /**
      * @brief Subtract this expression from `out`.
      * @param out Destination buffer updated as `out -= eval()`.
      */
-    constexpr void subTo( coeff_array& out ) const noexcept
+    constexpr void subTo( Data& out ) const noexcept
     {
-        coeff_array tmp{};
+        Data tmp{};
         self().evalTo( tmp );
-        detail::subInPlace< T, ncoef >( out, tmp );
+        detail::subInPlace< T, nCoefficients >( out, tmp );
     }
 
     /// @brief Materialize this expression as a coefficient array.
-    [[nodiscard]] constexpr coeff_array eval() const noexcept
+    [[nodiscard]] constexpr Data eval() const noexcept
     {
-        coeff_array out{};
+        Data out{};
         self().evalTo( out );
         return out;
     }

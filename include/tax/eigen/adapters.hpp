@@ -70,7 +70,7 @@ template < typename DA, typename Derived >
 
     using Out = Eigen::Matrix< DA, Rows, Cols, Derived::Options, Derived::MaxRowsAtCompileTime,
                                Derived::MaxColsAtCompileTime >;
-    typename DA::point_type p{};
+    typename DA::Input p{};
     [&]< std::size_t... I >( std::index_sequence< I... > ) {
         (
             [&] {
@@ -119,7 +119,7 @@ template < typename DA, typename Derived >
     assert( x0.rows() == 1 || x0.cols() == 1 );
     assert( x0.size() == Eigen::Index( M ) );
 
-    typename DA::point_type p{};
+    typename DA::Input p{};
     if ( x0.cols() == 1 )
     {
         for ( int i = 0; i < M; ++i )
@@ -143,7 +143,7 @@ template < typename T, int N, int M, typename Derived >
                       const Eigen::DenseBase< Derived >& dx ) noexcept
     requires( M > 1 && std::convertible_to< typename Derived::Scalar, T > )
 {
-    typename TruncatedTaylorExpansionT< T, N, M >::point_type p{};
+    typename TruncatedTaylorExpansionT< T, N, M >::Input p{};
     for ( int i = 0; i < M; ++i ) p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
     return f.eval( p );
 }
@@ -167,7 +167,7 @@ template < typename T, int N, int Dim >
 {
     const Eigen::Index dim = v.size();
     Eigen::Matrix< T, Dim, 1 > out( dim );
-    for ( Eigen::Index i = 0; i < dim; ++i ) out( i ) = v( i ).coeffSpan()[std::size_t( k )];
+    for ( Eigen::Index i = 0; i < dim; ++i ) out( i ) = v( i ).coeffs()[std::size_t( k )];
     return out;
 }
 
@@ -175,7 +175,7 @@ template < typename T, int N, int Dim >
  * @brief Scatter values into the k-th Taylor coefficient slot of every element of a
  *        DA column-vector.
  *
- * Sets `v(i).coeffSpan()[k] = vals(i)` for all `i`.  Accepts any Eigen
+ * Sets `v(i).coeffs()[k] = vals(i)` for all `i`.  Accepts any Eigen
  * column-vector *expression* for `vals` so callers can pass temporaries such as
  * `coeffRow(f_da, k) / (k + 1)` without an extra intermediate allocation.
  *
@@ -193,7 +193,7 @@ void setCoeffRow( Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >&
 {
     assert( v.size() == vals.size() );
     for ( Eigen::Index i = 0; i < v.size(); ++i )
-        v( i ).coeffSpan()[std::size_t( k )] = vals.derived()( i );
+        v( i ).coeffs()[std::size_t( k )] = vals.derived()( i );
 }
 
 /**
@@ -237,8 +237,8 @@ template < typename T, int N, int Dim >
     Eigen::Matrix< T, Dim, N1 > C( dim, N1 );
     for ( Eigen::Index i = 0; i < dim; ++i )
     {
-        const auto sp = y_da( i ).coeffSpan();
-        for ( int k = 0; k < N1; ++k ) C( i, k ) = sp[std::size_t( k )];
+        const auto& c = y_da( i ).coeffs();
+        for ( int k = 0; k < N1; ++k ) C( i, k ) = c[std::size_t( k )];
     }
 
     // h-powers vector (fixed size N+1): hp[k] = hᵏ.

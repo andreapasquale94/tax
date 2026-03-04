@@ -9,7 +9,7 @@ TEST( Exp, Constant )
     TE< 3 > a{ 2.0 };
     TE< 3 > r = exp( a );
     EXPECT_NEAR( r.value(), std::exp( 2.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Exp, KnownSeries )
@@ -81,7 +81,7 @@ TEST( IPow, ZeroPower )
     auto x = TE< 4 >::variable( 3.0 );
     TE< 4 > r = ipow( x, 0 );
     EXPECT_NEAR( r.value(), 1.0, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( IPow, FirstPower )

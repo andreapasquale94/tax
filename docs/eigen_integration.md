@@ -79,7 +79,7 @@ Eigen::Vector3d result = tax::eval(f, dx);   // result(i) = f(i).eval(dx)
 
 The displacement `dx` can be:
 - A scalar `T` (univariate DA)
-- A `point_type` (`std::array<T, M>`)
+- A `Input` (`std::array<T, M>`)
 - An Eigen vector (automatically converted)
 
 ### `tax::eval(scalar_da, dx)`

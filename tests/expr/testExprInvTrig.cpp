@@ -9,7 +9,7 @@ TEST( Asin, Constant )
     TE< 3 > a{ 0.5 };
     TE< 3 > r = asin( a );
     EXPECT_NEAR( r.value(), std::asin( 0.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Asin, KnownSeries )
@@ -69,7 +69,7 @@ TEST( Acos, Constant )
     TE< 3 > a{ 0.5 };
     TE< 3 > r = acos( a );
     EXPECT_NEAR( r.value(), std::acos( 0.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Acos, DerivativeCheck )
@@ -86,7 +86,7 @@ TEST( Acos, AsinPlusAcosIsPiOver2 )
     auto x = TE< 5 >::variable( 0.4 );
     TE< 5 > r = asin( x ) + acos( x );
     EXPECT_NEAR( r.value(), std::acos( -1.0 ) / 2.0, kTol );
-    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Acos, RoundTrip )
@@ -107,7 +107,7 @@ TEST( Atan, Constant )
     TE< 3 > a{ 1.0 };
     TE< 3 > r = atan( a );
     EXPECT_NEAR( r.value(), std::atan( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Atan, KnownSeries )
@@ -167,7 +167,7 @@ TEST( Atan2, ConstantArgs )
     TE< 3 > y{ 1.0 }, x{ 1.0 };
     TE< 3 > r = atan2( y, x );
     EXPECT_NEAR( r.value(), std::atan2( 1.0, 1.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Atan2, MatchesAtan )

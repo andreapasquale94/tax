@@ -36,7 +36,7 @@ TEST( AddTo, LinearExpansion )
     TE< 4 > r = x + x;
     EXPECT_NEAR( r[0], 6.0, kTol );
     EXPECT_NEAR( r[1], 2.0, kTol );
-    for ( std::size_t k = 2; k < TE< 4 >::ncoef; ++k ) EXPECT_EQ( r[k], 0.0 );
+    for ( std::size_t k = 2; k < TE< 4 >::nCoefficients; ++k ) EXPECT_EQ( r[k], 0.0 );
 }
 
 TEST( AddTo, MulLeaves_Plus_MulLeaves )
@@ -98,7 +98,7 @@ TEST( AddTo, SumExpr_SubtractCancel )
     auto x = TE< 3 >::variable< 0 >( { 1.0 } );
     TE< 3 > two{ 2.0 };
     TE< 3 > r = ( x + two ) - ( x + two );
-    for ( std::size_t k = 0; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
+    for ( std::size_t k = 0; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
 }
 
 // =============================================================================
@@ -134,7 +134,7 @@ TEST( SubTo, SubtractSelf_IsZero )
 {
     auto x = TE< 5 >::variable< 0 >( { 3.0 } );
     TE< 5 > r = x - x;
-    for ( std::size_t k = 0; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
+    for ( std::size_t k = 0; k < TE< 5 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
 }
 
 TEST( SubTo, Bivariate_Subtraction )

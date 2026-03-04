@@ -9,7 +9,7 @@ template <typename T, int N, int M = 1>
 class TruncatedTaylorExpansionT;
 ```
 
-Materialized truncated Taylor polynomial in $M$ variables up to total degree $N$ with scalar type $T$. Coefficients are stored in a `std::array<T, ncoef>` in graded lexicographic order.
+Materialized truncated Taylor polynomial in $M$ variables up to total degree $N$ with scalar type $T$. Coefficients are stored in a `std::array<T, nCoefficients>` in graded lexicographic order.
 
 **Template Parameters:**
 
@@ -30,9 +30,9 @@ template <int N, int M> using TEn = TruncatedTaylorExpansionT<double, N, M>;
 
 | Member                  | Type          | Value                       |
 |-------------------------|---------------|-----------------------------|
-| `TruncatedTaylorExpansionT::ncoef`            | `std::size_t` | $\binom{N+M}{M}$           |
-| `TruncatedTaylorExpansionT::coeff_array`      | type alias    | `std::array<T, ncoef>`      |
-| `TruncatedTaylorExpansionT::point_type`       | type alias    | `std::array<T, M>`          |
+| `TruncatedTaylorExpansionT::nCoefficients`            | `std::size_t` | $\binom{N+M}{M}$           |
+| `TruncatedTaylorExpansionT::Data`      | type alias    | `std::array<T, nCoefficients>`      |
+| `TruncatedTaylorExpansionT::Input`       | type alias    | `std::array<T, M>`          |
 
 ---
 
@@ -40,7 +40,7 @@ template <int N, int M> using TEn = TruncatedTaylorExpansionT<double, N, M>;
 
 ```cpp
 constexpr TruncatedTaylorExpansionT();                              // zero polynomial
-explicit constexpr TruncatedTaylorExpansionT(coeff_array c);        // from coefficient array
+explicit constexpr TruncatedTaylorExpansionT(Data c);        // from coefficient array
 constexpr TruncatedTaylorExpansionT(T val);                         // constant polynomial
 constexpr TruncatedTaylorExpansionT(const Expr<Derived, T, N, M>& expr);  // materialize expression
 ```
@@ -48,7 +48,7 @@ constexpr TruncatedTaylorExpansionT(const Expr<Derived, T, N, M>& expr);  // mat
 | Constructor        | Description                                                |
 |--------------------|------------------------------------------------------------|
 | Default            | All coefficients zero                                      |
-| Coefficient array  | Direct initialization from a `std::array<T, ncoef>`       |
+| Coefficient array  | Direct initialization from a `std::array<T, nCoefficients>`       |
 | Scalar             | Constant polynomial with `coeff[0] = val`, rest zero       |
 | Expression         | Evaluates a lazy expression tree into a materialized `TruncatedTaylorExpansionT` |
 
@@ -64,19 +64,19 @@ static constexpr TruncatedTaylorExpansionT variable(T x0) noexcept;   // require
 
 Creates $x_0 + \delta x$. The constant term is $x_0$ and the linear coefficient is $1$.
 
-### `variable<I>(point_type x0)` (indexed)
+### `variable<I>(Input x0)` (indexed)
 
 ```cpp
 template <int I>
-static constexpr TruncatedTaylorExpansionT variable(const point_type& x0) noexcept;
+static constexpr TruncatedTaylorExpansionT variable(const Input& x0) noexcept;
 ```
 
 Creates variable $x_I$ expanded around $\mathbf{x}_0$. The constant term is $x_{0,I}$ and the coefficient of $\delta x_I$ is $1$; all other coefficients are zero.
 
-### `variables(point_type x0)`
+### `variables(Input x0)`
 
 ```cpp
-static constexpr auto variables(const point_type& x0) noexcept;
+static constexpr auto variables(const Input& x0) noexcept;
 ```
 
 Returns `std::tuple(x_0, ..., x_{M-1})` via structured bindings.
@@ -117,10 +117,11 @@ Direct access to the coefficient at flat index `i` in grlex order.
 ### `coeffs()`
 
 ```cpp
-constexpr const coeff_array& coeffs() const noexcept;
+constexpr Data& coeffs() noexcept;
+constexpr const Data& coeffs() const noexcept;
 ```
 
-Returns a const reference to the full coefficient array.
+Returns a reference to the full coefficient array (mutable or const overload).
 
 ### `coeff(alpha)` (runtime)
 
@@ -176,7 +177,7 @@ Compile-time version.
 ### `derivatives()`
 
 ```cpp
-constexpr coeff_array derivatives() const noexcept;
+constexpr Data derivatives() const noexcept;
 ```
 
 Returns all partial derivatives in flat grlex order: entry `i` equals the derivative corresponding to monomial `i`.
@@ -195,10 +196,10 @@ Evaluates the polynomial at $x_0 + \delta x$ using Horner's method:
 
 $$f(x_0 + \delta x) = \sum_{d=0}^{N} f_d \, (\delta x)^d$$
 
-### `eval(point_type dx)` (multivariate)
+### `eval(Input dx)` (multivariate)
 
 ```cpp
-constexpr T eval(const point_type& dx) const noexcept;
+constexpr T eval(const Input& dx) const noexcept;
 ```
 
 Evaluates the polynomial at $\mathbf{x}_0 + \delta\mathbf{x}$:

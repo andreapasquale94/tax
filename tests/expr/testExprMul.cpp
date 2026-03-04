@@ -79,7 +79,7 @@ TEST( Div, DivideByConstant )
     TE< 4 > b{ 4.0 };
     TE< 4 > r = a / b;  // 8/4 = 2
     EXPECT_NEAR( r.value(), 2.0, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
+    for ( std::size_t k = 1; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
 }
 
 TEST( Div, DivideByLinear )
@@ -91,7 +91,7 @@ TEST( Div, DivideByLinear )
     one_plus_x[1] = 1.0;
     TE< 4 > r = one_plus_x / one_plus_x;
     EXPECT_NEAR( r[0], 1.0, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
+    for ( std::size_t k = 1; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
 }
 
 TEST( Div, OneOverGeometricSeries )

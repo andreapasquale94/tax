@@ -136,7 +136,7 @@ template < typename Derived >
 /**
  * @brief Evaluate each DA element of an Eigen matrix/vector at displacement `dx`.
  * @param container Eigen matrix/vector of DA elements.
- * @param dx Displacement: scalar `T` (univariate), `point_type` (multivariate),
+ * @param dx Displacement: scalar `T` (univariate), `Input` (multivariate),
  *           or Eigen vector (multivariate, converted internally).
  * @returns Eigen matrix/vector of same shape with scalar type `T`.
  */
@@ -152,7 +152,7 @@ template < typename Derived, typename Dx >
     if constexpr ( detail::eigen::EigenDenseExpr< Dx > )
     {
         constexpr int M = detail::eigen::da_traits< DA >::vars;
-        typename DA::point_type p{};
+        typename DA::Input p{};
         for ( int i = 0; i < M; ++i )
             p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
         for ( Eigen::Index i = 0; i < container.size(); ++i )
@@ -235,7 +235,7 @@ template < int... Alpha, typename T, int N, int M, int Rank >
 /**
  * @brief Evaluate each DA element of an Eigen::Tensor at displacement `dx`.
  * @param t Eigen::Tensor of DA elements.
- * @param dx Displacement: scalar `T` (univariate), `point_type` (multivariate),
+ * @param dx Displacement: scalar `T` (univariate), `Input` (multivariate),
  *           or Eigen vector (multivariate, converted internally).
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
@@ -248,7 +248,7 @@ template < typename T, int N, int M, int Rank, typename Dx >
 
     if constexpr ( detail::eigen::EigenDenseExpr< Dx > )
     {
-        typename TruncatedTaylorExpansionT< T, N, M >::point_type p{};
+        typename TruncatedTaylorExpansionT< T, N, M >::Input p{};
         for ( int i = 0; i < M; ++i )
             p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
         for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].eval( p );

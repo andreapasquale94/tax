@@ -322,7 +322,7 @@ TEST( TensorFunction, EvalContainerMultivariatePointType )
     vec( 0 ) = x + y;
     vec( 1 ) = x * y;
 
-    auto vals = tax::eval( vec, TEn< 3, 2 >::point_type{ 1.0, 2.0 } );
+    auto vals = tax::eval( vec, TEn< 3, 2 >::Input{ 1.0, 2.0 } );
     EXPECT_NEAR( vals( 0 ), 3.0, kTol );
     EXPECT_NEAR( vals( 1 ), 2.0, kTol );
 }

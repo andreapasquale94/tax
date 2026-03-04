@@ -18,7 +18,7 @@ TEST( Aliasing, MinusEqSelf_IsZero )
     auto x = TE< 4 >::variable< 0 >( { 3.0 } );
     TE< 4 > r = x;
     r -= r;
-    for ( std::size_t k = 0; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 0; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Aliasing, PlusEqExpression_Safe )

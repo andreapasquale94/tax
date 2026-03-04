@@ -158,7 +158,7 @@ TEST( ScalarDivL, LeafDivisor_Constant )
     TE< 4 > c{ 4.0 };
     TE< 4 > r = 1.0 / c;
     EXPECT_NEAR( r.value(), 0.25, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( ScalarDivL, LeafDivisor_Linear )
@@ -215,5 +215,5 @@ TEST( ScalarDivL, ProductWithOriginal_IsScalar )
     auto x = TE< 4 >::variable< 0 >( { 3.0 } );
     TE< 4 > r = ( 2.0 / x ) * x;
     EXPECT_NEAR( r[0], 2.0, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
+    for ( std::size_t k = 1; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
 }

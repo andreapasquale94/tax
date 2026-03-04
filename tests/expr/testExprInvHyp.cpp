@@ -9,7 +9,7 @@ TEST( Asinh, Constant )
     TE< 3 > a{ 1.5 };
     TE< 3 > r = asinh( a );
     EXPECT_NEAR( r.value(), std::asinh( 1.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Asinh, KnownSeries )
@@ -69,7 +69,7 @@ TEST( Acosh, Constant )
     TE< 3 > a{ 1.5 };
     TE< 3 > r = acosh( a );
     EXPECT_NEAR( r.value(), std::acosh( 1.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Acosh, DerivativeCheck )
@@ -116,7 +116,7 @@ TEST( Atanh, Constant )
     TE< 3 > a{ 0.5 };
     TE< 3 > r = atanh( a );
     EXPECT_NEAR( r.value(), std::atanh( 0.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Atanh, KnownSeries )

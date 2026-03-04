@@ -70,7 +70,7 @@ TEST( Nested, EvalInTime )
     InDA a = x * y;  // a = x*y
     InDA b = x + y;  // b = x+y
 
-    OutDA::coeff_array coeffs{};
+    OutDA::Data coeffs{};
     coeffs[0] = a;
     coeffs[1] = b;
     OutDA f{ coeffs };

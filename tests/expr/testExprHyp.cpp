@@ -9,7 +9,7 @@ TEST( Sinh, Constant )
     TE< 3 > a{ 1.5 };
     TE< 3 > r = sinh( a );
     EXPECT_NEAR( r.value(), std::sinh( 1.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Sinh, KnownSeries )
@@ -60,7 +60,7 @@ TEST( Cosh, Constant )
     TE< 3 > a{ 1.5 };
     TE< 3 > r = cosh( a );
     EXPECT_NEAR( r.value(), std::cosh( 1.5 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Cosh, KnownSeries )
@@ -104,7 +104,7 @@ TEST( SinhCoshIdentity, HyperbolicPythagorean )
     auto x = TE< 5 >::variable( 1.5 );
     TE< 5 > r = square( cosh( x ) ) - square( sinh( x ) );
     EXPECT_NEAR( r.value(), 1.0, kTol );
-    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( SinhCosh, MatchesSeparate )
@@ -123,7 +123,7 @@ TEST( SinhCosh, Pythagorean )
     auto [sh, ch] = sinhcosh( x );
     TE< 5 > r = square( ch ) - square( sh );
     EXPECT_NEAR( r.value(), 1.0, kTol );
-    for ( std::size_t k = 1; k < TE< 5 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 5 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 // =============================================================================
@@ -135,7 +135,7 @@ TEST( Tanh, Constant )
     TE< 3 > a{ 1.0 };
     TE< 3 > r = tanh( a );
     EXPECT_NEAR( r.value(), std::tanh( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Tanh, AtZero )

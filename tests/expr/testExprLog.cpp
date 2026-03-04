@@ -9,7 +9,7 @@ TEST( Log, ConstantLog )
     TE< 3 > a{ 2.0 };
     TE< 3 > r = log( a );
     EXPECT_NEAR( r.value(), std::log( 2.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Log, LogOfVariable )
@@ -99,7 +99,7 @@ TEST( Log10, ConstantLog10 )
     TE< 3 > a{ 100.0 };
     TE< 3 > r = log10( a );
     EXPECT_NEAR( r.value(), 2.0, kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Log10, MatchesLogScaled )

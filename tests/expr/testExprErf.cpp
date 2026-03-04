@@ -9,7 +9,7 @@ TEST( Erf, Constant )
     TE< 3 > a{ 1.0 };
     TE< 3 > r = erf( a );
     EXPECT_NEAR( r.value(), std::erf( 1.0 ), kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Erf, AtZero )

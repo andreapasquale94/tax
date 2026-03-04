@@ -9,7 +9,7 @@ TEST( Square, ConstantSquare )
     TE< 3 > a{ 3.0 };
     TE< 3 > r = square( a );
     EXPECT_NEAR( r.value(), 9.0, kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Square, LinearSquare )
@@ -20,7 +20,7 @@ TEST( Square, LinearSquare )
     EXPECT_NEAR( r[0], 1.0, kTol );
     EXPECT_NEAR( r[1], 2.0, kTol );
     EXPECT_NEAR( r[2], 1.0, kTol );
-    for ( std::size_t k = 3; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 3; k < TE< 4 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Square, MatchesSelfMultiply )
@@ -59,7 +59,7 @@ TEST( Cube, ConstantCube )
     TE< 3 > a{ 2.0 };
     TE< 3 > r = cube( a );
     EXPECT_NEAR( r.value(), 8.0, kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Cube, LinearCube )
@@ -110,7 +110,7 @@ TEST( Sqrt, ConstantSqrt )
     TE< 3 > a{ 9.0 };
     TE< 3 > r = sqrt( a );
     EXPECT_NEAR( r.value(), 3.0, kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Sqrt, Sqrt1PlusX )
@@ -177,7 +177,7 @@ TEST( Cbrt, ConstantCbrt )
     TE< 3 > a{ 8.0 };
     TE< 3 > r = cbrt( a );
     EXPECT_NEAR( r.value(), 2.0, kTol );
-    for ( std::size_t k = 1; k < TE< 3 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
+    for ( std::size_t k = 1; k < TE< 3 >::nCoefficients; ++k ) EXPECT_NEAR( r[k], 0.0, kTol );
 }
 
 TEST( Cbrt, Cbrt8PlusX )
