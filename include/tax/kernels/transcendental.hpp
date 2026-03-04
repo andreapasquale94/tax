@@ -346,7 +346,7 @@ template < typename T, int N, int M >
  * @details Solves `sqrt(1 + a²) · out' = a'` degree by degree.
  */
 constexpr void seriesAsinh( std::array< T, numMonomials( N, M ) >& out,
-                             const std::array< T, numMonomials( N, M ) >& a ) noexcept
+                            const std::array< T, numMonomials( N, M ) >& a ) noexcept
 {
     using std::asinh;
     constexpr auto S = numMonomials( N, M );
@@ -392,7 +392,7 @@ template < typename T, int N, int M >
  * @details Solves `sqrt(a² - 1) · out' = a'` degree by degree. Requires `a[0] > 1`.
  */
 constexpr void seriesAcosh( std::array< T, numMonomials( N, M ) >& out,
-                             const std::array< T, numMonomials( N, M ) >& a ) noexcept
+                            const std::array< T, numMonomials( N, M ) >& a ) noexcept
 {
     using std::acosh;
     constexpr auto S = numMonomials( N, M );
@@ -437,7 +437,7 @@ template < typename T, int N, int M >
  * @details Solves `(1 - a²) · out' = a'` degree by degree. Requires `|a[0]| < 1`.
  */
 constexpr void seriesAtanh( std::array< T, numMonomials( N, M ) >& out,
-                             const std::array< T, numMonomials( N, M ) >& a ) noexcept
+                            const std::array< T, numMonomials( N, M ) >& a ) noexcept
 {
     using std::atanh;
     constexpr auto S = numMonomials( N, M );

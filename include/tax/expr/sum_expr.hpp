@@ -12,9 +12,9 @@ namespace tax::detail
 template < typename... Es >
 class SumExpr
     : public tax::Expr< SumExpr< Es... >,
-                          typename std::tuple_element_t< 0, std::tuple< Es... > >::scalar_type,
-                          std::tuple_element_t< 0, std::tuple< Es... > >::order,
-                          std::tuple_element_t< 0, std::tuple< Es... > >::nvars >
+                        typename std::tuple_element_t< 0, std::tuple< Es... > >::scalar_type,
+                        std::tuple_element_t< 0, std::tuple< Es... > >::order,
+                        std::tuple_element_t< 0, std::tuple< Es... > >::nvars >
 {
     static_assert( sizeof...( Es ) >= 2, "SumExpr needs at least 2 operands" );
     template < typename... >

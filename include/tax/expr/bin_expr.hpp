@@ -11,8 +11,7 @@ namespace tax::detail
  * @details Stores leaf operands by reference and composite operands by value.
  */
 template < typename L, typename R, typename Op >
-class BinExpr
-    : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, L::order, L::nvars >
+class BinExpr : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, L::order, L::nvars >
 {
     static_assert( L::order == R::order && L::nvars == R::nvars &&
                    std::is_same_v< typename L::scalar_type, typename R::scalar_type > );

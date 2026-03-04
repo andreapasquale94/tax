@@ -22,7 +22,8 @@ template < typename Derived >
     using T = typename detail::eigen::da_traits< DA >::scalar_type;
     using Out = detail::eigen::rebind_matrix_t< Derived, T >;
     Out out( t.rows(), t.cols() );
-    for ( Eigen::Index i = 0; i < t.size(); ++i ) out.coeffRef( i ) = t.derived().coeff( i ).value();
+    for ( Eigen::Index i = 0; i < t.size(); ++i )
+        out.coeffRef( i ) = t.derived().coeff( i ).value();
     return out;
 }
 
@@ -61,7 +62,8 @@ template < typename Derived >
 }
 
 /**
- * @brief Extract a partial derivative from each DA matrix/vector element (compile-time multi-index).
+ * @brief Extract a partial derivative from each DA matrix/vector element (compile-time
+ * multi-index).
  * @tparam Alpha Derivative orders for each variable.
  * @returns Eigen matrix/vector with same shape and scalar type `T`.
  */
@@ -201,7 +203,8 @@ template < typename T, int N, int M, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, 1 >, Rank >& t, int k )
+[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, 1 >, Rank >& t,
+                               int k )
     requires( Rank >= 1 )
 {
     return derivative( t, MultiIndex< 1 >{ k } );
@@ -213,7 +216,8 @@ template < typename T, int N, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < int... Alpha, typename T, int N, int M, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
+[[nodiscard]] auto derivative(
+    const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
     requires( Rank >= 1 )
 {
     static_assert( sizeof...( Alpha ) == M,
@@ -236,7 +240,8 @@ template < int... Alpha, typename T, int N, int M, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank, typename Dx >
-[[nodiscard]] auto eval( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t, const Dx& dx )
+[[nodiscard]] auto eval( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t,
+                         const Dx& dx )
     requires( Rank >= 1 )
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );

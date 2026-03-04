@@ -25,9 +25,8 @@ constexpr void cauchyProduct( std::array< T, numMonomials( N, M ) >& out,
         for ( int d = 0; d <= N; ++d )
         {
             forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
-                forEachSubIndex< M >( alpha, [&]( auto bi, auto gi ) {
-                    out[ai] += f[bi] * g[gi];
-                } );
+                forEachSubIndex< M >( alpha,
+                                      [&]( auto bi, auto gi ) { out[ai] += f[bi] * g[gi]; } );
             } );
         }
     }
@@ -51,9 +50,8 @@ constexpr void cauchyAccumulate( std::array< T, numMonomials( N, M ) >& out,
         for ( int d = 0; d <= N; ++d )
         {
             forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
-                forEachSubIndex< M >( alpha, [&]( auto bi, auto gi ) {
-                    out[ai] += f[bi] * g[gi];
-                } );
+                forEachSubIndex< M >( alpha,
+                                      [&]( auto bi, auto gi ) { out[ai] += f[bi] * g[gi]; } );
             } );
         }
     }

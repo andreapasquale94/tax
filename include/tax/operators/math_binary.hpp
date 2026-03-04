@@ -8,21 +8,21 @@ namespace tax
 {
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto atan2( const ExprBase< L >& y, const ExprBase< R >& x ) noexcept
 {
     return detail::BinFuncExpr< L, R, detail::OpAtan2< L::order, L::nvars > >{ y.self(), x.self() };
 }
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto hypot( const ExprBase< L >& x, const ExprBase< R >& y ) noexcept
 {
     return detail::BinFuncExpr< L, R, detail::OpHypot< L::order, L::nvars > >{ x.self(), y.self() };
 }
 
 template < typename A, typename B, typename C >
-    requires CompatibleDA< A, B > && CompatibleDA< B, C >
+    requires CompatibleTTE< A, B > && CompatibleTTE< B, C >
 [[nodiscard]] constexpr auto hypot( const ExprBase< A >& x, const ExprBase< B >& y,
                                     const ExprBase< C >& z ) noexcept
 {
@@ -44,7 +44,7 @@ template < typename E >
 }
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto tpow( const ExprBase< L >& l, const ExprBase< R >& r ) noexcept
 {
     return detail::BinFuncExpr< L, R, detail::OpTPow< L::order, L::nvars > >{ l.self(), r.self() };
@@ -65,7 +65,7 @@ template < typename E >
 }
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto pow( const ExprBase< L >& l, const ExprBase< R >& r ) noexcept
 {
     return tpow( l, r );

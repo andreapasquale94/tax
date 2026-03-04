@@ -13,17 +13,17 @@ namespace tax
 
 // All overloads return lazy expression nodes; evaluation happens on materialization.
 
-// -- DA + DA (overloads for SumExpr flattening) ------------------------------
+// -- TTE + TTE (overloads for SumExpr flattening) ------------------------------
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto operator+( const ExprBase< L >& l, const ExprBase< R >& r ) noexcept
 {
     return detail::SumExpr< L, R >{ l.self(), r.self() };
 }
 
 template < typename... Ls, typename R >
-    requires CompatibleDA< detail::SumExpr< Ls... >, R >
+    requires CompatibleTTE< detail::SumExpr< Ls... >, R >
 [[nodiscard]] constexpr auto operator+( const detail::SumExpr< Ls... >& l,
                                         const ExprBase< R >& r ) noexcept
 {
@@ -31,7 +31,7 @@ template < typename... Ls, typename R >
 }
 
 template < typename L, typename... Rs >
-    requires CompatibleDA< L, detail::SumExpr< Rs... > >
+    requires CompatibleTTE< L, detail::SumExpr< Rs... > >
 [[nodiscard]] constexpr auto operator+( const ExprBase< L >& l,
                                         const detail::SumExpr< Rs... >& r ) noexcept
 {
@@ -39,43 +39,43 @@ template < typename L, typename... Rs >
 }
 
 template < typename... Ls, typename... Rs >
-    requires CompatibleDA< detail::SumExpr< Ls... >, detail::SumExpr< Rs... > >
+    requires CompatibleTTE< detail::SumExpr< Ls... >, detail::SumExpr< Rs... > >
 [[nodiscard]] constexpr auto operator+( const detail::SumExpr< Ls... >& l,
                                         const detail::SumExpr< Rs... >& r ) noexcept
 {
     return l.concat( r );
 }
 
-// -- DA - DA -----------------------------------------------------------------
+// -- TTE - TTE -----------------------------------------------------------------
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto operator-( const ExprBase< L >& l, const ExprBase< R >& r ) noexcept
 {
     return detail::BinExpr< L, R, detail::OpSub >{ l.self(), r.self() };
 }
 
-// -- DA * DA (overloads for ProductExpr flattening) --------------------------
+// -- TTE * TTE (overloads for ProductExpr flattening) --------------------------
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto operator*( const ExprBase< L >& l, const ExprBase< R >& r ) noexcept
 {
     return detail::ProductExpr< L, R >{ l.self(), r.self() };
 }
 
 template < typename... Ls, typename R >
-    requires CompatibleDA< detail::ProductExpr< Ls... >, R >
+    requires CompatibleTTE< detail::ProductExpr< Ls... >, R >
 [[nodiscard]] constexpr auto operator*( const detail::ProductExpr< Ls... >& l,
                                         const ExprBase< R >& r ) noexcept
 {
     return l.template append< R >( r.self() );
 }
 
-// -- DA / DA -----------------------------------------------------------------
+// -- TTE / TTE -----------------------------------------------------------------
 
 template < typename L, typename R >
-    requires CompatibleDA< L, R >
+    requires CompatibleTTE< L, R >
 [[nodiscard]] constexpr auto operator/( const ExprBase< L >& l, const ExprBase< R >& r ) noexcept
 {
     return detail::BinExpr< L, R, detail::OpDiv< L::order, L::nvars > >{ l.self(), r.self() };
@@ -89,7 +89,7 @@ template < typename E >
     return detail::UnaryExpr< E, detail::OpNeg >{ e.self() };
 }
 
-// -- DA op scalar -------------------------------------------------------------
+// -- TTE op scalar -------------------------------------------------------------
 
 template < typename E >
 [[nodiscard]] constexpr auto operator+( const ExprBase< E >& e, typename E::scalar_type s ) noexcept
@@ -115,7 +115,7 @@ template < typename E >
     return detail::ScalarExpr< E, detail::OpScalarDivR >{ e.self(), s };
 }
 
-// -- scalar op DA -------------------------------------------------------------
+// -- scalar op TTE -------------------------------------------------------------
 
 template < typename E >
 [[nodiscard]] constexpr auto operator+( typename E::scalar_type s, const ExprBase< E >& e ) noexcept

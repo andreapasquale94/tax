@@ -1,8 +1,8 @@
 #pragma once
 
-#include <tax/eigen/num_traits.hpp>
 #include <cassert>
 #include <concepts>
+#include <tax/eigen/num_traits.hpp>
 #include <tuple>
 #include <utility>
 
@@ -12,7 +12,8 @@ namespace tax
 namespace detail::eigen
 {
 
-/// @brief Traits for extracting scalar type, order, and number of variables from a TruncatedTaylorExpansionT type.
+/// @brief Traits for extracting scalar type, order, and number of variables from a
+/// TruncatedTaylorExpansionT type.
 template < typename >
 struct da_traits;
 
@@ -34,9 +35,8 @@ inline constexpr bool is_da_v< TruncatedTaylorExpansionT< T, N, M > > = true;
 /// @brief Rebind an Eigen matrix type to use a different scalar.
 template < typename Derived, typename Scalar >
 using rebind_matrix_t =
-    Eigen::Matrix< Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime,
-                   Derived::Options, Derived::MaxRowsAtCompileTime,
-                   Derived::MaxColsAtCompileTime >;
+    Eigen::Matrix< Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime, Derived::Options,
+                   Derived::MaxRowsAtCompileTime, Derived::MaxColsAtCompileTime >;
 
 /// @brief Concept for Eigen dense expression types.
 template < typename T >
@@ -72,16 +72,17 @@ template < typename DA, typename Derived >
                                Derived::MaxColsAtCompileTime >;
     typename DA::point_type p{};
     [&]< std::size_t... I >( std::index_sequence< I... > ) {
-        ( [&] {
-            if constexpr ( Rows == 1 )
-                p[I] = static_cast< T >( x0( Eigen::Index( 0 ), Eigen::Index( I ) ) );
-            else if constexpr ( Cols == 1 )
-                p[I] = static_cast< T >( x0( Eigen::Index( I ), Eigen::Index( 0 ) ) );
-            else
-                p[I] = static_cast< T >(
-                    x0( Eigen::Index( int( I ) / Cols ), Eigen::Index( int( I ) % Cols ) ) );
-        }(),
-          ... );
+        (
+            [&] {
+                if constexpr ( Rows == 1 )
+                    p[I] = static_cast< T >( x0( Eigen::Index( 0 ), Eigen::Index( I ) ) );
+                else if constexpr ( Cols == 1 )
+                    p[I] = static_cast< T >( x0( Eigen::Index( I ), Eigen::Index( 0 ) ) );
+                else
+                    p[I] = static_cast< T >(
+                        x0( Eigen::Index( int( I ) / Cols ), Eigen::Index( int( I ) % Cols ) ) );
+            }(),
+            ... );
     }( std::make_index_sequence< std::size_t( M ) >{} );
 
     Out out{};
@@ -95,7 +96,8 @@ template < typename DA, typename Derived >
 
 /**
  * @brief Create all coordinate variables from an Eigen vector expansion point.
- * @tparam DA The TruncatedTaylorExpansionT type (e.g., `TEn<2, 3>`). `M` must match the vector size.
+ * @tparam DA The TruncatedTaylorExpansionT type (e.g., `TEn<2, 3>`). `M` must match the vector
+ * size.
  * @param x0 Eigen vector with `M` entries.
  * @return Tuple `(x_0, ..., x_{M-1})` of DA variables.
  */
@@ -112,9 +114,8 @@ template < typename DA, typename Derived >
                        Derived::RowsAtCompileTime == Eigen::Dynamic ||
                        Derived::ColsAtCompileTime == Eigen::Dynamic,
                    "Eigen input must be a vector expression" );
-    static_assert(
-        Derived::SizeAtCompileTime == Eigen::Dynamic || Derived::SizeAtCompileTime == M,
-        "Eigen vector size must match number of variables" );
+    static_assert( Derived::SizeAtCompileTime == Eigen::Dynamic || Derived::SizeAtCompileTime == M,
+                   "Eigen vector size must match number of variables" );
     assert( x0.rows() == 1 || x0.cols() == 1 );
     assert( x0.size() == Eigen::Index( M ) );
 
@@ -122,13 +123,11 @@ template < typename DA, typename Derived >
     if ( x0.cols() == 1 )
     {
         for ( int i = 0; i < M; ++i )
-            p[std::size_t( i )] =
-                static_cast< T >( x0( Eigen::Index( i ), Eigen::Index( 0 ) ) );
+            p[std::size_t( i )] = static_cast< T >( x0( Eigen::Index( i ), Eigen::Index( 0 ) ) );
     } else
     {
         for ( int i = 0; i < M; ++i )
-            p[std::size_t( i )] =
-                static_cast< T >( x0( Eigen::Index( 0 ), Eigen::Index( i ) ) );
+            p[std::size_t( i )] = static_cast< T >( x0( Eigen::Index( 0 ), Eigen::Index( i ) ) );
     }
     return DA::variables( p );
 }
@@ -140,12 +139,12 @@ template < typename DA, typename Derived >
  * @return `f(x0 + dx)` truncated to order `N`.
  */
 template < typename T, int N, int M, typename Derived >
-[[nodiscard]] T eval( const TruncatedTaylorExpansionT< T, N, M >& f, const Eigen::DenseBase< Derived >& dx ) noexcept
+[[nodiscard]] T eval( const TruncatedTaylorExpansionT< T, N, M >& f,
+                      const Eigen::DenseBase< Derived >& dx ) noexcept
     requires( M > 1 && std::convertible_to< typename Derived::Scalar, T > )
 {
     typename TruncatedTaylorExpansionT< T, N, M >::point_type p{};
-    for ( int i = 0; i < M; ++i )
-        p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
+    for ( int i = 0; i < M; ++i ) p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
     return f.eval( p );
 }
 
@@ -163,13 +162,12 @@ template < typename T, int N, int M, typename Derived >
  * @return      `Eigen::Matrix<T, Dim, 1>` containing the k-th coefficients.
  */
 template < typename T, int N, int Dim >
-[[nodiscard]] Eigen::Matrix< T, Dim, 1 >
-coeffRow( const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& v, int k ) noexcept
+[[nodiscard]] Eigen::Matrix< T, Dim, 1 > coeffRow(
+    const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& v, int k ) noexcept
 {
     const Eigen::Index dim = v.size();
     Eigen::Matrix< T, Dim, 1 > out( dim );
-    for ( Eigen::Index i = 0; i < dim; ++i )
-        out( i ) = v( i ).coeffSpan()[std::size_t( k )];
+    for ( Eigen::Index i = 0; i < dim; ++i ) out( i ) = v( i ).coeffSpan()[std::size_t( k )];
     return out;
 }
 
@@ -228,10 +226,10 @@ void setCoeffRow( Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >&
  * @return      `Eigen::Matrix<T, Dim, 1>` with the evaluated polynomial values.
  */
 template < typename T, int N, int Dim >
-[[nodiscard]] Eigen::Matrix< T, Dim, 1 >
-evalSeries( const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& y_da, T h ) noexcept
+[[nodiscard]] Eigen::Matrix< T, Dim, 1 > evalSeries(
+    const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& y_da, T h ) noexcept
 {
-    constexpr int N1       = N + 1;
+    constexpr int N1 = N + 1;
     const Eigen::Index dim = y_da.size();
 
     // Coefficient matrix: row i holds the N+1 Taylor coefficients of y_da(i).
@@ -240,15 +238,13 @@ evalSeries( const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >&
     for ( Eigen::Index i = 0; i < dim; ++i )
     {
         const auto sp = y_da( i ).coeffSpan();
-        for ( int k = 0; k < N1; ++k )
-            C( i, k ) = sp[std::size_t( k )];
+        for ( int k = 0; k < N1; ++k ) C( i, k ) = sp[std::size_t( k )];
     }
 
     // h-powers vector (fixed size N+1): hp[k] = hᵏ.
     Eigen::Matrix< T, N1, 1 > hp;
     hp[0] = T( 1 );
-    for ( int k = 1; k < N1; ++k )
-        hp[k] = hp[k - 1] * h;
+    for ( int k = 1; k < N1; ++k ) hp[k] = hp[k - 1] * h;
 
     // Matrix–vector product with full compile-time dimension knowledge.
     return C * hp;

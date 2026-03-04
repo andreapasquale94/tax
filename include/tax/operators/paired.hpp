@@ -15,7 +15,7 @@ template < typename E >
 {
     using T = typename E::scalar_type;
     constexpr int N = E::order, M = E::nvars;
-    using DAType = TruncatedTaylorExpansionT< T, N, M >;
+    using TTEType = TruncatedTaylorExpansionT< T, N, M >;
     using coeff_array = std::array< T, detail::numMonomials( N, M ) >;
 
     coeff_array sa{}, ca{};
@@ -28,7 +28,7 @@ template < typename E >
         e.self().evalTo( a );
         detail::seriesSinCos< T, N, M >( sa, ca, a );
     }
-    return std::pair< DAType, DAType >{ DAType{ sa }, DAType{ ca } };
+    return std::pair< TTEType, TTEType >{ TTEType{ sa }, TTEType{ ca } };
 }
 
 template < typename E >
@@ -36,7 +36,7 @@ template < typename E >
 {
     using T = typename E::scalar_type;
     constexpr int N = E::order, M = E::nvars;
-    using DAType = TruncatedTaylorExpansionT< T, N, M >;
+    using TTEType = TruncatedTaylorExpansionT< T, N, M >;
     using coeff_array = std::array< T, detail::numMonomials( N, M ) >;
 
     coeff_array sha{}, cha{};
@@ -49,7 +49,7 @@ template < typename E >
         e.self().evalTo( a );
         detail::seriesSinhCosh< T, N, M >( sha, cha, a );
     }
-    return std::pair< DAType, DAType >{ DAType{ sha }, DAType{ cha } };
+    return std::pair< TTEType, TTEType >{ TTEType{ sha }, TTEType{ cha } };
 }
 
 }  // namespace tax

@@ -33,9 +33,8 @@ constexpr void seriesReciprocal( std::array< T, numMonomials( N, M ) >& out,
         {
             forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = ( d == 0 ) ? T{ 1 } : T{ 0 };
-                forEachSubIndex< M >( alpha, 1, d, [&]( auto bi, auto gi, int ) {
-                    rhs -= a[bi] * out[gi];
-                } );
+                forEachSubIndex< M >( alpha, 1, d,
+                                      [&]( auto bi, auto gi, int ) { rhs -= a[bi] * out[gi]; } );
                 out[ai] = rhs * inv_a0;
             } );
         }
@@ -96,9 +95,8 @@ constexpr void seriesSqrt( std::array< T, numMonomials( N, M ) >& out,
         {
             forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = a[ai];
-                forEachSubIndex< M >( alpha, 1, d - 1, [&]( auto bi, auto gi, int ) {
-                    rhs -= out[bi] * out[gi];
-                } );
+                forEachSubIndex< M >( alpha, 1, d - 1,
+                                      [&]( auto bi, auto gi, int ) { rhs -= out[bi] * out[gi]; } );
                 out[ai] = rhs * inv2g0;
             } );
         }

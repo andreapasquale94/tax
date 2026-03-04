@@ -12,8 +12,7 @@ namespace tax::detail
  * otherwise the operand is materialized once into a temporary buffer.
  */
 template < typename E, typename Op >
-class FuncExpr
-    : public tax::Expr< FuncExpr< E, Op >, typename E::scalar_type, E::order, E::nvars >
+class FuncExpr : public tax::Expr< FuncExpr< E, Op >, typename E::scalar_type, E::order, E::nvars >
 {
    public:
     using T = typename E::scalar_type;

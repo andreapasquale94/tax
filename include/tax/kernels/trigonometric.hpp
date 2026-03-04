@@ -107,9 +107,8 @@ constexpr void seriesTan( std::array< T, numMonomials( N, M ) >& out,
         {
             forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = s[ai];
-                forEachSubIndex< M >( alpha, 1, d, [&]( auto bi, auto gi, int ) {
-                    rhs -= c[bi] * out[gi];
-                } );
+                forEachSubIndex< M >( alpha, 1, d,
+                                      [&]( auto bi, auto gi, int ) { rhs -= c[bi] * out[gi]; } );
                 out[ai] = rhs * inv_c0;
             } );
         }
@@ -204,9 +203,8 @@ constexpr void seriesTanh( std::array< T, numMonomials( N, M ) >& out,
         {
             forEachMonomial< M >( d, [&]( const auto& alpha, std::size_t ai ) {
                 T rhs = sh[ai];
-                forEachSubIndex< M >( alpha, 1, d, [&]( auto bi, auto gi, int ) {
-                    rhs -= ch[bi] * out[gi];
-                } );
+                forEachSubIndex< M >( alpha, 1, d,
+                                      [&]( auto bi, auto gi, int ) { rhs -= ch[bi] * out[gi]; } );
                 out[ai] = rhs * inv_ch0;
             } );
         }

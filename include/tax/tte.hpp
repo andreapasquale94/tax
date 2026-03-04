@@ -1,11 +1,11 @@
 #pragma once
 
+#include <ostream>
+#include <span>
 #include <tax/expr/base.hpp>
 #include <tax/kernels.hpp>
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/streaming.hpp>
-#include <ostream>
-#include <span>
 #include <type_traits>
 
 namespace tax
@@ -19,7 +19,8 @@ namespace tax
  * @details Coefficients are stored in graded-lex order as defined by `flatIndex`.
  */
 template < typename T, int N, int M = 1 >
-class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, M >, T, N, M >, public ExpansionLeaf
+class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, M >, T, N, M >,
+                                  public ExpansionLeaf
 {
    public:
     static_assert( N >= 0, "DA order must be non-negative" );
@@ -43,7 +44,9 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
 
     /// @brief Materialize a compatible expression in one evaluation pass.
     template < typename Derived >
-    /*implicit*/ constexpr TruncatedTaylorExpansionT( const Expr< Derived, T, N, M >& expr ) noexcept : c_{}
+    /*implicit*/ constexpr TruncatedTaylorExpansionT(
+        const Expr< Derived, T, N, M >& expr ) noexcept
+        : c_{}
     {
         expr.self().evalTo( c_ );
     }
@@ -68,7 +71,8 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
      * @details The constant term is `x0[I]` and the `e_I` coefficient is `1`.
      */
     template < int I >
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT variable( const point_type& x0 ) noexcept
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT variable(
+        const point_type& x0 ) noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         coeff_array c{};
@@ -94,13 +98,22 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     }
 
     /// @brief Create a constant polynomial with value `v`.
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT constant( T v ) noexcept { return TruncatedTaylorExpansionT{ v }; }
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT constant( T v ) noexcept
+    {
+        return TruncatedTaylorExpansionT{ v };
+    }
 
     /// @brief Create a constant polynomial with value `0`.
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT zero() noexcept { return TruncatedTaylorExpansionT{ 0 }; }
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT zero() noexcept
+    {
+        return TruncatedTaylorExpansionT{ 0 };
+    }
 
     /// @brief Create a constant polynomial with value `1`.
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT one() noexcept { return TruncatedTaylorExpansionT{ 1 }; }
+    [[nodiscard]] static constexpr TruncatedTaylorExpansionT one() noexcept
+    {
+        return TruncatedTaylorExpansionT{ 1 };
+    }
 
     // -- evalTo / addTo / subTo -----------------------------------------------
 
@@ -329,84 +342,103 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
 
     // -- Comparison operators (on constant term) --------------------------------
 
-    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a,
+                                                    const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() == b.value();
     }
-    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a,
+                                                    const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() != b.value();
     }
-    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a,
+                                                   const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() < b.value();
     }
-    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a,
+                                                   const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() > b.value();
     }
-    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a,
+                                                    const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() <= b.value();
     }
-    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a, const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a,
+                                                    const TruncatedTaylorExpansionT& b ) noexcept
     {
         return a.value() >= b.value();
     }
 
     // DA vs scalar (T)
-    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a,
+                                                    const T& s ) noexcept
     {
         return a.value() == s;
     }
-    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a,
+                                                    const T& s ) noexcept
     {
         return a.value() != s;
     }
-    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a,
+                                                   const T& s ) noexcept
     {
         return a.value() < s;
     }
-    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a,
+                                                   const T& s ) noexcept
     {
         return a.value() > s;
     }
-    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a,
+                                                    const T& s ) noexcept
     {
         return a.value() <= s;
     }
-    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a, const T& s ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a,
+                                                    const T& s ) noexcept
     {
         return a.value() >= s;
     }
 
     // scalar (T) vs DA
-    [[nodiscard]] friend constexpr bool operator==( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const T& s,
+                                                    const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s == a.value();
     }
-    [[nodiscard]] friend constexpr bool operator!=( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const T& s,
+                                                    const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s != a.value();
     }
-    [[nodiscard]] friend constexpr bool operator<( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const T& s,
+                                                   const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s < a.value();
     }
-    [[nodiscard]] friend constexpr bool operator>( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const T& s,
+                                                   const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s > a.value();
     }
-    [[nodiscard]] friend constexpr bool operator<=( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const T& s,
+                                                    const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s <= a.value();
     }
-    [[nodiscard]] friend constexpr bool operator>=( const T& s, const TruncatedTaylorExpansionT& a ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const T& s,
+                                                    const TruncatedTaylorExpansionT& a ) noexcept
     {
         return s >= a.value();
     }
 
-    /// @brief Stream as polynomial in `dx`, using superscripts for powers and subscripts for variable indices.
+    /// @brief Stream as polynomial in `dx`, using superscripts for powers and subscripts for
+    /// variable indices.
     friend std::ostream& operator<<( std::ostream& os, const TruncatedTaylorExpansionT& a )
     {
         bool write = false;
@@ -458,7 +490,7 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
         return os;
     }
 
-  private:
+   private:
     [[nodiscard]] static constexpr coeff_array makeDerivativeFactors() noexcept
     {
         coeff_array factors{};
