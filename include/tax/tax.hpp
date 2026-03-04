@@ -20,7 +20,8 @@
 #include <tax/kernels.hpp>
 #include <tax/operators.hpp>
 #include <tax/utils.hpp>
-#include <tax/eigen/adapters.hpp>
-#include <tax/eigen/tensor_function.hpp>
-#include <tax/eigen/tensors.hpp>
+#include <tax/eigen/derivative.hpp>
+#include <tax/eigen/eval.hpp>
 #include <tax/eigen/types.hpp>
+#include <tax/eigen/value.hpp>
+#include <tax/eigen/variables.hpp>

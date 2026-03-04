@@ -39,8 +39,10 @@ set(TEST_SOURCES
     expr/testExprInvTrig.cpp
     expr/testExprErf.cpp
     expr/testExprFMA.cpp
-    eigen/testTensorFunction.cpp
-    eigen/testTensors.cpp 
+    eigen/testVariables.cpp
+    eigen/testValue.cpp
+    eigen/testEval.cpp
+    eigen/testDerivative.cpp
     eigen/testTypes.cpp
 )
 

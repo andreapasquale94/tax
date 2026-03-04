@@ -2,6 +2,12 @@
 
 TAX provides adapters for working with Eigen vectors, matrices, and tensors of DA objects. Eigen is a required dependency.
 
+Core Eigen integration headers:
+- `tax/eigen/variables.hpp` for `tensor(...)` and `variables(...)`
+- `tax/eigen/value.hpp` for `value(...)`
+- `tax/eigen/derivative.hpp` for `derivative(...)`, `gradient(...)`, and `jacobian(...)`
+- `tax/eigen/eval.hpp` for `eval(...)`
+
 ## Type Aliases
 
 ```cpp
@@ -142,22 +148,28 @@ Eigen::Matrix3d J = tax::jacobian(F);
 
 Returns a $K \times M$ matrix where $K$ is the number of components in the DA vector and $M$ is the number of variables.
 
-## Derivative Tensors
+## Derivative Objects
 
-For multivariate DA ($M > 1$), TAX can extract higher-order derivative information as Eigen tensors.
+For multivariate DA ($M > 1$), TAX can extract higher-order derivative information at the expansion point.
 
-### `tax::derivative<K>(f)` (tensor)
+### `tax::derivative<K>(f)` (compile-time order)
 
-Builds the order-$K$ derivative tensor at the expansion point:
+Return type depends on `K`:
+- `K == 0`: scalar `T` (`f.value()`)
+- `K == 1`: `Eigen::Matrix<T, M, 1>` (gradient)
+- `K == 2`: `Eigen::Matrix<T, M, M>` (Hessian)
+- `K >= 3`: `Eigen::Tensor<T, K, Eigen::RowMajor>`
+
+Example:
 
 ```cpp
 TEn<3, 2> f = /* ... */;
 
-// Gradient vector (rank-1 tensor, 2 entries)
+// Gradient vector (Dense)
 auto grad = tax::derivative<1>(f);
 // grad(i) = ∂f/∂xᵢ
 
-// Hessian matrix (rank-2 tensor, 2×2)
+// Hessian matrix (Dense)
 auto hess = tax::derivative<2>(f);
 // hess(i, j) = ∂²f/∂xᵢ∂xⱼ
 
@@ -166,21 +178,9 @@ auto third = tax::derivative<3>(f);
 // third(i, j, k) = ∂³f/∂xᵢ∂xⱼ∂xₖ
 ```
 
-The tensor is symmetric: `hess(i, j) == hess(j, i)`.
+All mixed-partial tensors are symmetric, e.g. `hess(i, j) == hess(j, i)`.
 
 Requires `Eigen/CXX11/Tensor` (unsupported Eigen module).
-
-### `tax::coeff<K>(f)` (coefficient tensor)
-
-Builds the order-$K$ coefficient tensor, normalized so that:
-
-$$f^{(K)}(\delta\mathbf{x}) = \sum_{i_1, \ldots, i_K} C_{i_1 \cdots i_K} \, \delta x_{i_1} \cdots \delta x_{i_K}$$
-
-reproduces the degree-$K$ part of the polynomial. The relationship to the derivative tensor is:
-
-$$C_{i_1 \cdots i_K} = \frac{1}{\text{multinomial}} \cdot f_\alpha$$
-
-where the multinomial factor accounts for repeated indices.
 
 ## Complete Example
 

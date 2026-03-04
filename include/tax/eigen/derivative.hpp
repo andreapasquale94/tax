@@ -1,31 +1,64 @@
 #pragma once
 
-#include <tax/eigen/adapters.hpp>
+#include <tax/eigen/variables.hpp>
 #include <unsupported/Eigen/CXX11/Tensor>
 
 namespace tax
 {
 
+namespace detail::tensor
+{
+
+template < int K >
+[[nodiscard]] constexpr Eigen::array< Eigen::Index, K > tensorDims( Eigen::Index extent ) noexcept
+{
+    Eigen::array< Eigen::Index, K > dims{};
+    for ( int i = 0; i < K; ++i ) dims[i] = extent;
+    return dims;
+}
+
+template < int Pos, int K, int M, typename F, int... I >
+constexpr void forEachIndexTuple( F& f )
+{
+    if constexpr ( Pos == K )
+    {
+        f( std::integer_sequence< int, I... >{} );
+    } else
+    {
+        [&]< std::size_t... J >( std::index_sequence< J... > ) {
+            ( forEachIndexTuple< Pos + 1, K, M, F, I..., int( J ) >( f ), ... );
+        }( std::make_index_sequence< std::size_t( M ) >{} );
+    }
+}
+
+template < int Var, int... I >
+[[nodiscard]] consteval int countInTuple() noexcept
+{
+    return ( ( I == Var ? 1 : 0 ) + ... + 0 );
+}
+
+template < int M, int... I, std::size_t... V >
+[[nodiscard]] consteval auto alphaSequenceImpl( std::index_sequence< V... > ) noexcept
+{
+    return std::integer_sequence< int, countInTuple< int( V ), I... >()... >{};
+}
+
+template < int M, int... I >
+using alpha_sequence_t =
+    decltype( alphaSequenceImpl< M, I... >( std::make_index_sequence< std::size_t( M ) >{} ) );
+
+template < typename TTE, int... Alpha >
+[[nodiscard]] constexpr auto derivativeFromAlphaSeq(
+    const TTE& f, std::integer_sequence< int, Alpha... > ) noexcept
+{
+    return f.template derivative< Alpha... >();
+}
+
+}  // namespace detail::tensor
+
 // =============================================================================
 // DenseBase (Matrix / Vector) overloads
 // =============================================================================
-
-/**
- * @brief Extract the scalar value (constant term) from each TTE matrix/vector element.
- * @returns Eigen matrix/vector with same shape and scalar type `T`.
- */
-template < typename Derived >
-[[nodiscard]] auto value( const Eigen::DenseBase< Derived >& t )
-    requires( detail::is_tte_v< typename Derived::Scalar > )
-{
-    using TTE = typename Derived::Scalar;
-    using T = typename detail::expansion_traits< TTE >::scalar_type;
-    using Out = detail::rebind_matrix_t< Derived, T >;
-    Out out( t.rows(), t.cols() );
-    for ( Eigen::Index i = 0; i < t.size(); ++i )
-        out.coeffRef( i ) = t.derived().coeff( i ).value();
-    return out;
-}
 
 /**
  * @brief Extract a partial derivative from each TTE matrix/vector element (runtime multi-index).
@@ -133,54 +166,9 @@ template < typename Derived >
     return out;
 }
 
-/**
- * @brief Evaluate each TTE element of an Eigen matrix/vector at displacement `dx`.
- * @param container Eigen matrix/vector of TTE elements.
- * @param dx Displacement: scalar `T` (univariate), `Input` (multivariate),
- *           or Eigen vector (multivariate, converted internally).
- * @returns Eigen matrix/vector of same shape with scalar type `T`.
- */
-template < typename Derived, typename Dx >
-[[nodiscard]] auto eval( const Eigen::DenseBase< Derived >& container, const Dx& dx )
-    requires( detail::is_tte_v< typename Derived::Scalar > )
-{
-    using TTE = typename Derived::Scalar;
-    using T = typename detail::expansion_traits< TTE >::scalar_type;
-    using Out = detail::rebind_matrix_t< Derived, T >;
-    Out out( container.rows(), container.cols() );
-
-    if constexpr ( detail::EigenDenseExpr< Dx > )
-    {
-        constexpr int M = detail::expansion_traits< TTE >::vars;
-        typename TTE::Input p{};
-        for ( int i = 0; i < M; ++i )
-            p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
-        for ( Eigen::Index i = 0; i < container.size(); ++i )
-            out.coeffRef( i ) = container.derived().coeff( i ).eval( p );
-    } else
-    {
-        for ( Eigen::Index i = 0; i < container.size(); ++i )
-            out.coeffRef( i ) = container.derived().coeff( i ).eval( dx );
-    }
-    return out;
-}
-
 // =============================================================================
 // Eigen::Tensor overloads (rank >= 1)
 // =============================================================================
-
-/**
- * @brief Extract the scalar value (constant term) from each TTE element.
- * @returns Eigen::Tensor<T, Rank> with the same dimensions.
- */
-template < typename T, int N, int M, int Rank >
-[[nodiscard]] auto value( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
-    requires( Rank >= 1 )
-{
-    Eigen::Tensor< T, Rank > out( t.dimensions() );
-    for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].value();
-    return out;
-}
 
 /**
  * @brief Extract a partial derivative from each TTE element (runtime multi-index).
@@ -233,30 +221,60 @@ template < int... Alpha, typename T, int N, int M, int Rank >
 }
 
 /**
- * @brief Evaluate each TTE element of an Eigen::Tensor at displacement `dx`.
- * @param t Eigen::Tensor of TTE elements.
- * @param dx Displacement: scalar `T` (univariate), `Input` (multivariate),
- *           or Eigen vector (multivariate, converted internally).
- * @returns Eigen::Tensor<T, Rank> with the same dimensions.
+ * @brief Build the order-`K` derivative object at the expansion point.
+ * @details
+ * - `K == 0`: returns scalar value `f(x0)`.
+ * - `K == 1`: returns gradient as `Eigen::Matrix<T, M, 1>`.
+ * - `K == 2`: returns Hessian as `Eigen::Matrix<T, M, M>`.
+ * - `K >= 3`: returns `Eigen::Tensor<T, K, Eigen::RowMajor>`.
  */
-template < typename T, int N, int M, int Rank, typename Dx >
-[[nodiscard]] auto eval( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t,
-                         const Dx& dx )
-    requires( Rank >= 1 )
+template < int K, typename T, int N, int M >
+[[nodiscard]] auto derivative( const TruncatedTaylorExpansionT< T, N, M >& f )
 {
-    Eigen::Tensor< T, Rank > out( t.dimensions() );
+    static_assert( M > 1, "Eigen derivative objects are only provided for multivariate TTE (M > 1)" );
+    static_assert( K >= 0, "Derivative order K must be non-negative" );
+    static_assert( K <= N, "Tensor order K exceeds TTE truncation order N" );
 
-    if constexpr ( detail::EigenDenseExpr< Dx > )
+    if constexpr ( K == 0 )
     {
-        typename TruncatedTaylorExpansionT< T, N, M >::Input p{};
+        return f.value();
+    } else if constexpr ( K == 1 )
+    {
+        Eigen::Matrix< T, M, 1 > out;
         for ( int i = 0; i < M; ++i )
-            p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
-        for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].eval( p );
+        {
+            MultiIndex< M > alpha{};
+            alpha[i] = 1;
+            out( i ) = f.derivative( alpha );
+        }
+        return out;
+    } else if constexpr ( K == 2 )
+    {
+        Eigen::Matrix< T, M, M > out;
+        for ( int i = 0; i < M; ++i )
+        {
+            for ( int j = 0; j < M; ++j )
+            {
+                MultiIndex< M > alpha{};
+                alpha[i] += 1;
+                alpha[j] += 1;
+                out( i, j ) = f.derivative( alpha );
+            }
+        }
+        return out;
     } else
     {
-        for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].eval( dx );
+        Eigen::Tensor< T, K, Eigen::RowMajor > out{
+            detail::tensor::tensorDims< K >( Eigen::Index( M ) ) };
+
+        auto fill = [&]< int... I >( std::integer_sequence< int, I... > ) {
+            using alpha_seq = detail::tensor::alpha_sequence_t< M, I... >;
+            out( Eigen::Index( I )... ) = detail::tensor::derivativeFromAlphaSeq( f, alpha_seq{} );
+        };
+
+        detail::tensor::forEachIndexTuple< 0, K, M >( fill );
+        return out;
     }
-    return out;
 }
 
 }  // namespace tax
