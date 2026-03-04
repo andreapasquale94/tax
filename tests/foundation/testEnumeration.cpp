@@ -1,9 +1,8 @@
-#include "testUtils.hpp"
-
-#include <tax/utils/enumeration.hpp>
-
 #include <set>
+#include <tax/utils/enumeration.hpp>
 #include <vector>
+
+#include "testUtils.hpp"
 
 using namespace tax::detail;
 
@@ -14,9 +13,8 @@ using namespace tax::detail;
 TEST( Enumeration, MonomialM1Degree0 )
 {
     std::vector< std::pair< std::array< int, 1 >, std::size_t > > visited;
-    forEachMonomial< 1 >( 0, [&]( const auto& alpha, std::size_t ai ) {
-        visited.push_back( { alpha, ai } );
-    } );
+    forEachMonomial< 1 >(
+        0, [&]( const auto& alpha, std::size_t ai ) { visited.push_back( { alpha, ai } ); } );
     ASSERT_EQ( visited.size(), 1u );
     EXPECT_EQ( visited[0].first[0], 0 );
     EXPECT_EQ( visited[0].second, flatIndex< 1 >( { 0 } ) );
@@ -25,9 +23,8 @@ TEST( Enumeration, MonomialM1Degree0 )
 TEST( Enumeration, MonomialM1Degree3 )
 {
     std::vector< int > degrees;
-    forEachMonomial< 1 >( 3, [&]( const auto& alpha, std::size_t ) {
-        degrees.push_back( alpha[0] );
-    } );
+    forEachMonomial< 1 >(
+        3, [&]( const auto& alpha, std::size_t ) { degrees.push_back( alpha[0] ); } );
     ASSERT_EQ( degrees.size(), 1u );
     EXPECT_EQ( degrees[0], 3 );
 }
@@ -42,8 +39,7 @@ TEST( Enumeration, MonomialM2Degree2 )
     } );
     ASSERT_EQ( visited.size(), 3u );
     // Check total degree
-    for ( const auto& a : visited )
-        EXPECT_EQ( a[0] + a[1], 2 );
+    for ( const auto& a : visited ) EXPECT_EQ( a[0] + a[1], 2 );
 }
 
 TEST( Enumeration, MonomialM3Degree1 )
@@ -77,9 +73,7 @@ TEST( Enumeration, SubIndexM1 )
     // alpha = {3}: sub-indices are beta={0}..{3}, gamma = alpha - beta
     std::array< int, 1 > alpha = { 3 };
     std::vector< std::pair< std::size_t, std::size_t > > visited;
-    forEachSubIndex< 1 >( alpha, [&]( auto bi, auto gi ) {
-        visited.push_back( { bi, gi } );
-    } );
+    forEachSubIndex< 1 >( alpha, [&]( auto bi, auto gi ) { visited.push_back( { bi, gi } ); } );
     ASSERT_EQ( visited.size(), 4u );  // beta = 0, 1, 2, 3
     for ( const auto& [bi, gi] : visited )
     {
@@ -111,9 +105,7 @@ TEST( Enumeration, SubIndexBoundedM1 )
     // alpha = {4}, db_lo=1, db_hi=3
     std::array< int, 1 > alpha = { 4 };
     std::vector< int > db_values;
-    forEachSubIndex< 1 >( alpha, 1, 3, [&]( auto, auto, int db ) {
-        db_values.push_back( db );
-    } );
+    forEachSubIndex< 1 >( alpha, 1, 3, [&]( auto, auto, int db ) { db_values.push_back( db ); } );
     ASSERT_EQ( db_values.size(), 3u );
     EXPECT_EQ( db_values[0], 1 );
     EXPECT_EQ( db_values[1], 2 );
@@ -152,14 +144,11 @@ TEST( Enumeration, SubIndexBoundedConsistency )
     int total_degree = alpha[0] + alpha[1];
 
     std::set< std::pair< std::size_t, std::size_t > > from_unbounded;
-    forEachSubIndex< 2 >( alpha, [&]( auto bi, auto gi ) {
-        from_unbounded.insert( { bi, gi } );
-    } );
+    forEachSubIndex< 2 >( alpha, [&]( auto bi, auto gi ) { from_unbounded.insert( { bi, gi } ); } );
 
     std::set< std::pair< std::size_t, std::size_t > > from_bounded;
-    forEachSubIndex< 2 >( alpha, 0, total_degree, [&]( auto bi, auto gi, int ) {
-        from_bounded.insert( { bi, gi } );
-    } );
+    forEachSubIndex< 2 >( alpha, 0, total_degree,
+                          [&]( auto bi, auto gi, int ) { from_bounded.insert( { bi, gi } ); } );
 
     EXPECT_EQ( from_unbounded, from_bounded );
 }

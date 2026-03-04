@@ -1,7 +1,8 @@
 #include "testUtils.hpp"
 
-using InDA = TEn< 3, 2 >;          // order 3, 2 spatial vars (x, y)
-using OutDA = TruncatedTaylorExpansionT< InDA, 4, 1 >;  // order 4 in time, coefficients are spatial DAs
+using InDA = TEn< 3, 2 >;  // order 3, 2 spatial vars (x, y)
+using OutDA =
+    TruncatedTaylorExpansionT< InDA, 4, 1 >;  // order 4 in time, coefficients are spatial DAs
 
 // =============================================================================
 // Basic construction and arithmetic

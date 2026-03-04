@@ -9,8 +9,7 @@ TEST( FMA, Constants )
     TE< 4 > a{ 2.0 }, b{ 3.0 }, c{ 5.0 };
     TE< 4 > r = fma( a, b, c );  // 2*3 + 5 = 11
     EXPECT_NEAR( r.value(), 11.0, kTol );
-    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k )
-        EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
+    for ( std::size_t k = 1; k < TE< 4 >::ncoef; ++k ) EXPECT_NEAR( r[k], 0.0, kTol ) << "k=" << k;
 }
 
 TEST( FMA, VariableTimesConstantPlusConstant )

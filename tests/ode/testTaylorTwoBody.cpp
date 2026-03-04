@@ -1,8 +1,8 @@
-#include "../testUtils.hpp"
-#include <tax/ode/taylor.hpp>
-
 #include <Eigen/Core>
 #include <cmath>
+#include <tax/ode/taylor.hpp>
+
+#include "../testUtils.hpp"
 
 using namespace tax;
 using namespace tax::ode;
@@ -10,8 +10,7 @@ using namespace tax::ode;
 namespace
 {
 
-auto kepler_rhs = []( auto /*t*/, auto y ) -> decltype( y )
-{
+auto kepler_rhs = []( auto /*t*/, auto y ) -> decltype( y ) {
     auto r2 = y( 0 ) * y( 0 ) + y( 1 ) * y( 1 );  // r^2
     auto r3 = r2 * sqrt( r2 );                    // r^3
 
@@ -32,8 +31,8 @@ TEST( TwoBody, SingleStep )
     Eigen::Vector4d y0{ 1.0, 0.0, 0.0, 1.0 };
     auto integrator = makeTaylorIntegrator< N >( kepler_rhs );
 
-    const double h  = 0.3;
-    auto         y1 = integrator.step( 0.0, y0, h );
+    const double h = 0.3;
+    auto y1 = integrator.step( 0.0, y0, h );
 
     EXPECT_NEAR( y1( 0 ), std::cos( h ), 1e-9 );
     EXPECT_NEAR( y1( 1 ), std::sin( h ), 1e-9 );
@@ -46,14 +45,14 @@ TEST( TwoBody, FullPeriod )
     constexpr int N = 16;
 
     Eigen::Vector4d y0{ 1.0, 0.0, 0.0, 1.0 };
-    const double    T = 2.0 * M_PI;
+    const double T = 2.0 * M_PI;
 
     TaylorIntegratorOptions options;
     options.atol = 1e-10;
     options.rtol = 1e-10;
 
     auto integrator = makeTaylorIntegrator< N >( kepler_rhs, options );
-    auto result     = integrator.integrate( 0.0, T, y0, 0.5 );
+    auto result = integrator.integrate( 0.0, T, y0, 0.5 );
 
     ASSERT_FALSE( result.t.empty() );
     EXPECT_NEAR( result.t.back(), T, 1e-12 );
@@ -70,7 +69,7 @@ TEST( TwoBody, ConservedQuantities )
     constexpr int N = 16;
 
     Eigen::Vector4d y0{ 1.0, 0.0, 0.0, 1.0 };
-    const double    T = 2.0 * M_PI;
+    const double T = 2.0 * M_PI;
 
     const double E0 = 0.5 * ( y0( 2 ) * y0( 2 ) + y0( 3 ) * y0( 3 ) ) -
                       1.0 / std::sqrt( y0( 0 ) * y0( 0 ) + y0( 1 ) * y0( 1 ) );
@@ -81,7 +80,7 @@ TEST( TwoBody, ConservedQuantities )
     options.rtol = 1e-10;
 
     auto integrator = makeTaylorIntegrator< N >( kepler_rhs, options );
-    auto result     = integrator.integrate( 0.0, T, y0, 0.5 );
+    auto result = integrator.integrate( 0.0, T, y0, 0.5 );
 
     for ( std::size_t k = 0; k < result.t.size(); ++k )
     {
