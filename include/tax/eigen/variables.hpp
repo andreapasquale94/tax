@@ -48,13 +48,13 @@ concept EigenDenseExpr = requires( const T& t ) {
 }  // namespace detail
 
 /**
- * @brief Create a TTE tensor from a compile-time-sized Eigen vector/matrix expansion point.
+ * @brief Create a TTE Eigen container from a compile-time-sized expansion point.
  * @tparam TTE The TruncatedTaylorExpansionT type (e.g., `TEn<2, 4>`). `M` must equal the input size.
  * @param x0 Eigen matrix/vector with `M` entries.
  * @return Eigen matrix of same shape with TTE variable entries.
  */
 template < typename TTE, typename Derived >
-[[nodiscard]] auto tensor( const Eigen::DenseBase< Derived >& x0 ) noexcept
+[[nodiscard]] auto vector( const Eigen::DenseBase< Derived >& x0 ) noexcept
     requires( detail::is_tte_v< TTE > &&
               std::convertible_to< typename Derived::Scalar,
                                    typename detail::expansion_traits< TTE >::scalar_type > )
@@ -64,9 +64,9 @@ template < typename TTE, typename Derived >
     constexpr int Rows = Derived::RowsAtCompileTime;
     constexpr int Cols = Derived::ColsAtCompileTime;
     static_assert( Rows != Eigen::Dynamic && Cols != Eigen::Dynamic,
-                   "tensor(x0) requires compile-time-sized Eigen inputs" );
-    static_assert( Rows >= 1 && Cols >= 1, "tensor(x0) requires non-empty Eigen inputs" );
-    static_assert( Rows * Cols == M, "tensor(x0) size must match number of variables M" );
+                   "vector(x0) requires compile-time-sized Eigen inputs" );
+    static_assert( Rows >= 1 && Cols >= 1, "vector(x0) requires non-empty Eigen inputs" );
+    static_assert( Rows * Cols == M, "vector(x0) size must match number of variables M" );
     using Out = detail::rebind_matrix_t< Derived, TTE >;
     typename TTE::Input p{};
     [&]< std::size_t... I >( std::index_sequence< I... > ) {

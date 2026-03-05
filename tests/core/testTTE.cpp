@@ -77,6 +77,17 @@ TEST( TTEVariable, Variables_StructuredBinding )
     EXPECT_NEAR( z.coeff( { 0, 0, 1 } ), 1.0, kTol );
 }
 
+TEST( TTEVariable, Variables_SplattedStructuredBinding )
+{
+    auto [x, y, z] = TEn< 2, 3 >::variables( 1.0, 2.0f, 3 );
+    EXPECT_NEAR( x.value(), 1.0, kTol );
+    EXPECT_NEAR( y.value(), 2.0, kTol );
+    EXPECT_NEAR( z.value(), 3.0, kTol );
+    EXPECT_NEAR( x.coeff( { 1, 0, 0 } ), 1.0, kTol );
+    EXPECT_NEAR( y.coeff( { 0, 1, 0 } ), 1.0, kTol );
+    EXPECT_NEAR( z.coeff( { 0, 0, 1 } ), 1.0, kTol );
+}
+
 TEST( TTEVariable, Constant )
 {
     auto c = TE< 5 >::constant( 7.0 );

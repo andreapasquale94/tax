@@ -1,11 +1,13 @@
 #pragma once
 
 #include <ostream>
+#include <concepts>
 #include <tax/expr/base.hpp>
 #include <tax/kernels.hpp>
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/streaming.hpp>
 #include <type_traits>
+#include <utility>
 
 namespace tax
 {
@@ -93,6 +95,18 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
         return [&]< std::size_t... I >( std::index_sequence< I... > ) {
             return std::tuple{ variable< int( I ) >( x0 )... };
         }( std::make_index_sequence< std::size_t( M ) >{} );
+    }
+
+    /**
+     * @brief Create all coordinate variables at splatted expansion-point values.
+     * @details Enabled only for multivariate TTE (`M > 1`) with exactly `M` scalar-like inputs.
+     */
+    template < typename... X0 >
+    [[nodiscard]] static constexpr auto variables( X0&&... x0 ) noexcept
+        requires( M > 1 && sizeof...( X0 ) == std::size_t( M ) &&
+                  ( std::convertible_to< X0, T > && ... ) )
+    {
+        return variables( Input{ static_cast< T >( std::forward< X0 >( x0 ) )... } );
     }
 
     /// @brief Create a constant polynomial with value `v`.

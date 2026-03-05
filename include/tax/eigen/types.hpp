@@ -20,10 +20,10 @@ using TEVec = VecT< TE< N >, Size >;
 template < int N, int Size >
 using TERowVec = RowVecT< TE< N >, Size >;
 
-template < int N, int M >
-using TEnVec = VecT< TEn< N, M >, M >;
+template < int N, int M, int Size = M >
+using TEnVec = VecT< TEn< N, M >, Size >;
 
-template < int N, int M >
-using TEnRowVec = RowVecT< TEn< N, M >, M >;
+template < int N, int M, int Size = M >
+using TEnRowVec = RowVecT< TEn< N, M >, Size >;
 
 }  // namespace tax

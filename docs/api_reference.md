@@ -85,6 +85,19 @@ Returns `std::tuple(x_0, ..., x_{M-1})` via structured bindings.
 auto [x, y, z] = TEn<3, 3>::variables({1.0, 2.0, 3.0});
 ```
 
+### `variables(x0, x1, ..., x_{M-1})` (splatted, multivariate)
+
+```cpp
+template <typename... X0>
+static constexpr auto variables(X0&&... x0) noexcept;   // requires M > 1 and sizeof...(X0) == M
+```
+
+Convenience overload equivalent to `variables(Input{...})`.
+
+```cpp
+auto [x, y, z] = TEn<3, 3>::variables(1.0, 2.0, 3.0);
+```
+
 ### `constant(T v)` / `zero()` / `one()`
 
 ```cpp
@@ -325,3 +338,120 @@ Prints the polynomial in human-readable form with Unicode superscripts and subsc
 ```
 3 + 4·δx + δx² + O(δx⁴)
 ```
+
+---
+
+## Eigen API
+
+Eigen integration is split across dedicated headers:
+
+- `tax/eigen/types.hpp`
+- `tax/eigen/variables.hpp`
+- `tax/eigen/value.hpp`
+- `tax/eigen/eval.hpp`
+- `tax/eigen/derivative.hpp`
+
+### Type Aliases (`tax/eigen/types.hpp`)
+
+```cpp
+template <typename T, int N, int M, int Rows, int Cols>
+using Mat = Eigen::Matrix<TruncatedTaylorExpansionT<T, N, M>, Rows, Cols>;
+
+template <typename Scalar, int Size>
+using VecT = Eigen::Matrix<Scalar, Size, 1>;
+
+template <typename Scalar, int Size>
+using RowVecT = Eigen::Matrix<Scalar, 1, Size>;
+
+template <int N, int Size> using TEVec = VecT<TE<N>, Size>;
+template <int N, int Size> using TERowVec = RowVecT<TE<N>, Size>;
+template <int N, int M, int Size = M> using TEnVec = VecT<TEn<N, M>, Size>;
+template <int N, int M, int Size = M> using TEnRowVec = RowVecT<TEn<N, M>, Size>;
+```
+
+### Variables from Eigen Inputs (`tax/eigen/variables.hpp`)
+
+```cpp
+template <typename TTE, typename Derived>
+auto vector(const Eigen::DenseBase<Derived>& x0) noexcept;
+
+template <typename TTE, typename Derived>
+auto variables(const Eigen::DenseBase<Derived>& x0) noexcept;
+```
+
+- `vector<TTE>(x0)` maps each input component to `TTE::variable<I>(...)` in a same-shaped Eigen container.
+- `variables<TTE>(x0)` returns `std::tuple(x0, ..., x_{M-1})` from an Eigen vector expression.
+
+### Value Extraction (`tax/eigen/value.hpp`)
+
+```cpp
+template <typename T, int N, int M>
+constexpr T value(const TruncatedTaylorExpansionT<T, N, M>& f) noexcept;
+
+template <typename Derived>
+auto value(const Eigen::DenseBase<Derived>& t);
+
+template <typename T, int N, int M, int Rank>
+auto value(const Eigen::Tensor<TruncatedTaylorExpansionT<T, N, M>, Rank>& t);
+```
+
+### Evaluation (`tax/eigen/eval.hpp`)
+
+```cpp
+template <typename T, int N, int M, typename Dx>
+constexpr T eval(const TruncatedTaylorExpansionT<T, N, M>& f, const Dx& dx) noexcept;
+
+template <typename T, int N, int M, typename Derived>
+T eval(const TruncatedTaylorExpansionT<T, N, M>& f, const Eigen::DenseBase<Derived>& dx) noexcept;
+
+template <typename Derived, typename Dx>
+auto eval(const Eigen::DenseBase<Derived>& f, const Dx& dx);
+
+template <typename T, int N, int M, int Rank, typename Dx>
+auto eval(const Eigen::Tensor<TruncatedTaylorExpansionT<T, N, M>, Rank>& t, const Dx& dx);
+
+template <typename T, int N, int Dim>
+Eigen::Matrix<T, Dim, 1> eval(
+    const Eigen::Matrix<TruncatedTaylorExpansionT<T, N, 1>, Dim, 1>& f, T dx) noexcept;
+```
+
+### Derivatives (`tax/eigen/derivative.hpp`)
+
+```cpp
+template <typename Derived, std::size_t M>
+auto derivative(const Eigen::DenseBase<Derived>& t, const std::array<int, M>& alpha);
+
+template <typename Derived>
+auto derivative(const Eigen::DenseBase<Derived>& t, int k);  // univariate only
+
+template <int... Alpha, typename Derived>
+auto derivative(const Eigen::DenseBase<Derived>& t);
+
+template <typename T, int N, int M, int Rank>
+auto derivative(
+    const Eigen::Tensor<TruncatedTaylorExpansionT<T, N, M>, Rank>& t,
+    const std::array<int, std::size_t(M)>& alpha);
+
+template <typename T, int N, int Rank>
+auto derivative(const Eigen::Tensor<TruncatedTaylorExpansionT<T, N, 1>, Rank>& t, int k);
+
+template <int... Alpha, typename T, int N, int M, int Rank>
+auto derivative(const Eigen::Tensor<TruncatedTaylorExpansionT<T, N, M>, Rank>& t);
+
+template <int K, typename T, int N, int M>
+auto derivative(const TruncatedTaylorExpansionT<T, N, M>& f);
+
+template <typename T, int N, int M>
+auto gradient(const TruncatedTaylorExpansionT<T, N, M>& f);
+
+template <typename Derived>
+auto jacobian(const Eigen::DenseBase<Derived>& vec);
+```
+
+For `derivative<K>(f)` on scalar multivariate TTE:
+- `K == 0`: returns scalar `T`
+- `K == 1`: returns `Eigen::Matrix<T, M, 1>`
+- `K == 2`: returns `Eigen::Matrix<T, M, M>`
+- `K >= 3`: returns `Eigen::Tensor<T, K, Eigen::RowMajor>`
+
+There is no runtime `derivative(order)` overload for scalar TTE objects, and no Eigen coefficient-tensor extraction API.

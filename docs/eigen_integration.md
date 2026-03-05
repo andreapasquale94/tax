@@ -1,9 +1,10 @@
 # Eigen Integration
 
-TAX provides adapters for working with Eigen vectors, matrices, and tensors of DA objects. Eigen is a required dependency.
+TAX provides Eigen helpers for working with vectors, matrices, and tensors of truncated Taylor expansions (TTE). Eigen is a required dependency.
 
 Core Eigen integration headers:
-- `tax/eigen/variables.hpp` for `tensor(...)` and `variables(...)`
+- `tax/eigen/types.hpp` for Eigen/TTE type aliases
+- `tax/eigen/variables.hpp` for `vector(...)` and `variables(...)`
 - `tax/eigen/value.hpp` for `value(...)`
 - `tax/eigen/derivative.hpp` for `derivative(...)`, `gradient(...)`, and `jacobian(...)`
 - `tax/eigen/eval.hpp` for `eval(...)`
@@ -26,22 +27,22 @@ using TEVec = VecT<TE<N>, Size>;
 template <int N, int Size>
 using TERowVec = RowVecT<TE<N>, Size>;
 
-template <int N, int M>
-using TEnVec = VecT<TEn<N, M>, M>;
+template <int N, int M, int Size = M>
+using TEnVec = VecT<TEn<N, M>, Size>;
 
-template <int N, int M>
-using TEnRowVec = RowVecT<TEn<N, M>, M>;
+template <int N, int M, int Size = M>
+using TEnRowVec = RowVecT<TEn<N, M>, Size>;
 ```
 
-## Creating DA Variables from Eigen Vectors
+## Creating TTE Variables from Eigen Vectors
 
-### `tax::tensor<DA>(x0)`
+### `tax::vector<TTE>(x0)`
 
-Converts an Eigen vector (or matrix) into a same-shaped Eigen container of DA variables:
+Converts an Eigen vector (or matrix) into a same-shaped Eigen container of TTE variables:
 
 ```cpp
 Eigen::Vector3d x0{1.0, 2.0, 3.0};
-auto vars = tax::tensor<TEn<2, 3>>(x0);
+auto vars = tax::vector<TEn<2, 3>>(x0);
 // vars is Eigen::Matrix<TEn<2,3>, 3, 1>
 // vars(0) = TEn<2,3>::variable<0>(x0)
 // vars(1) = TEn<2,3>::variable<1>(x0)
@@ -52,9 +53,9 @@ Requirements:
 - The input must be compile-time sized.
 - The total number of elements must equal $M$.
 
-### `tax::variables<DA>(x0)`
+### `tax::variables<TTE>(x0)`
 
-Returns a `std::tuple` of DA variables from an Eigen vector, for use with structured bindings:
+Returns a `std::tuple` of TTE variables from an Eigen vector, for use with structured bindings:
 
 ```cpp
 Eigen::Vector3d x0{1.0, 2.0, 3.0};
@@ -67,7 +68,7 @@ This is equivalent to calling `TEn<2,3>::variables(...)` but accepts an Eigen ve
 
 ### `tax::value(container)`
 
-Extracts the constant term from each DA element, returning a plain scalar Eigen container of the same shape:
+Extracts the constant term from each TTE element, returning a plain scalar Eigen container of the same shape:
 
 ```cpp
 Eigen::Matrix<TEn<2, 3>, 3, 1> f = /* ... */;
@@ -76,7 +77,7 @@ Eigen::Vector3d v = tax::value(f);   // v(i) = f(i).value()
 
 ### `tax::eval(container, dx)`
 
-Evaluates every DA element at a displacement, returning a scalar container:
+Evaluates every TTE element at a displacement, returning a scalar container:
 
 ```cpp
 Eigen::Vector3d dx{0.01, 0.02, 0.03};
@@ -84,13 +85,13 @@ Eigen::Vector3d result = tax::eval(f, dx);   // result(i) = f(i).eval(dx)
 ```
 
 The displacement `dx` can be:
-- A scalar `T` (univariate DA)
+- A scalar `T` (univariate TTE)
 - A `Input` (`std::array<T, M>`)
 - An Eigen vector (automatically converted)
 
-### `tax::eval(scalar_da, dx)`
+### `tax::eval(scalar_tte, dx)`
 
-For a single multivariate DA scalar (not in a container):
+For a single multivariate TTE scalar (not in a container):
 
 ```cpp
 TEn<2, 3> g = /* ... */;
@@ -102,7 +103,7 @@ double result = tax::eval(g, dx);
 
 ### `tax::derivative(container, alpha)` (runtime)
 
-Extracts a partial derivative from each DA element:
+Extracts a partial derivative from each TTE element:
 
 ```cpp
 Eigen::Vector3d df_dx = tax::derivative(f, std::array{1, 0, 0});
@@ -110,7 +111,7 @@ Eigen::Vector3d df_dx = tax::derivative(f, std::array{1, 0, 0});
 
 ### `tax::derivative(container, k)` (univariate shorthand)
 
-For univariate DA containers, pass a single integer:
+For univariate TTE containers, pass a single integer:
 
 ```cpp
 Eigen::VectorXd df = tax::derivative(f, 1);   // first derivatives
@@ -126,7 +127,7 @@ Eigen::Vector3d d2f_dxdy = tax::derivative<1, 1, 0>(f);
 
 ### `tax::gradient(f)`
 
-Computes the gradient of a scalar DA at its expansion point:
+Computes the gradient of a scalar TTE at its expansion point:
 
 ```cpp
 TEn<2, 3> f = /* scalar function of 3 variables */;
@@ -138,7 +139,7 @@ Requires $N \ge 1$.
 
 ### `tax::jacobian(vec)`
 
-Computes the Jacobian matrix of a vector-valued DA function:
+Computes the Jacobian matrix of a vector-valued TTE function:
 
 ```cpp
 Eigen::Matrix<TEn<2, 3>, 3, 1> F = /* vector field */;
@@ -146,11 +147,11 @@ Eigen::Matrix3d J = tax::jacobian(F);
 // J(i, j) = ∂Fᵢ/∂xⱼ
 ```
 
-Returns a $K \times M$ matrix where $K$ is the number of components in the DA vector and $M$ is the number of variables.
+Returns a $K \times M$ matrix where $K$ is the number of components in the TTE vector and $M$ is the number of variables.
 
 ## Derivative Objects
 
-For multivariate DA ($M > 1$), TAX can extract higher-order derivative information at the expansion point.
+For multivariate TTE ($M > 1$), TAX can extract higher-order derivative information at the expansion point.
 
 ### `tax::derivative<K>(f)` (compile-time order)
 
@@ -180,7 +181,7 @@ auto third = tax::derivative<3>(f);
 
 All mixed-partial tensors are symmetric, e.g. `hess(i, j) == hess(j, i)`.
 
-Requires `Eigen/CXX11/Tensor` (unsupported Eigen module).
+Requires `Eigen/CXX11/Tensor` (unsupported Eigen module) only for `K >= 3`.
 
 ## Complete Example
 
@@ -190,14 +191,14 @@ Requires `Eigen/CXX11/Tensor` (unsupported Eigen module).
 #include <iostream>
 
 int main() {
-    using DA3 = tax::TEn<3, 3>;
+    using TTE3 = tax::TEn<3, 3>;
 
     // Expansion point
     Eigen::Vector3d x0{1.0, 0.5, 2.0};
-    auto [x, y, z] = tax::variables<DA3>(x0);
+    auto [x, y, z] = tax::variables<TTE3>(x0);
 
     // Scalar function
-    DA3 f = tax::sin(x * y) + tax::exp(z);
+    TTE3 f = tax::sin(x * y) + tax::exp(z);
 
     // Gradient at expansion point
     Eigen::Vector3d grad = tax::gradient(f);
@@ -208,7 +209,7 @@ int main() {
     std::cout << "H(0,1) = " << H(0, 1) << "\n";
 
     // Vector field and its Jacobian
-    Eigen::Matrix<DA3, 3, 1> F;
+    Eigen::Matrix<TTE3, 3, 1> F;
     F(0) = x * x + y;
     F(1) = tax::sin(z);
     F(2) = x * y * z;
@@ -225,3 +226,5 @@ int main() {
 ## Tensor Overloads
 
 All functions above (`value`, `derivative`, `eval`) also work with `Eigen::Tensor<TruncatedTaylorExpansionT<T,N,M>, Rank>` containers (rank $\ge 1$). The interface is identical.
+
+No separate Eigen coefficient-tensor API is provided.

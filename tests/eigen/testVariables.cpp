@@ -2,12 +2,12 @@
 
 #include "../testUtils.hpp"
 
-TEST( EigenVariables, TensorFromStaticVector )
+TEST( EigenVariables, VectorFromStaticVector )
 {
     Eigen::Matrix< double, 3, 1 > x0;
     x0 << 1.0, 2.0, 3.0;
 
-    auto tx = tensor< TEn< 2, 3 > >( x0 );
+    auto tx = vector< TEn< 2, 3 > >( x0 );
     static_assert( decltype( tx )::RowsAtCompileTime == 3 );
     static_assert( decltype( tx )::ColsAtCompileTime == 1 );
 
@@ -21,12 +21,12 @@ TEST( EigenVariables, TensorFromStaticVector )
     EXPECT_NEAR( tx( 2, 0 ).derivative( tax::MultiIndex< 3 >{ 0, 0, 1 } ), 1.0, kTol );
 }
 
-TEST( EigenVariables, TensorFromStaticMatrix )
+TEST( EigenVariables, VectorFromStaticMatrix )
 {
     Eigen::Matrix< double, 2, 2 > x0;
     x0 << 1.0, 2.0, 3.0, 4.0;
 
-    auto tx = tensor< TEn< 2, 4 > >( x0 );
+    auto tx = vector< TEn< 2, 4 > >( x0 );
     static_assert( decltype( tx )::RowsAtCompileTime == 2 );
     static_assert( decltype( tx )::ColsAtCompileTime == 2 );
 

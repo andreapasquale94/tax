@@ -56,6 +56,8 @@ TEST( EigenTypes, ExplicitVectorAliases )
     static_assert( TEnVec< 2, 3 >::ColsAtCompileTime == 1 );
     static_assert( TEnRowVec< 2, 3 >::RowsAtCompileTime == 1 );
     static_assert( TEnRowVec< 2, 3 >::ColsAtCompileTime == 3 );
+    static_assert( TEnVec< 2, 3, 5 >::RowsAtCompileTime == 5 );
+    static_assert( TEnRowVec< 2, 3, 5 >::ColsAtCompileTime == 5 );
 
     TEVec< 3, 4 > v;
     v << TE< 3 >::variable( 1.0 ), TE< 3 >{ 2.0 }, TE< 3 >{ 3.0 }, TE< 3 >{ 4.0 };

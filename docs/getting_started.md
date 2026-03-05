@@ -80,6 +80,7 @@ The constant term is $x_0 = 1$ and the first-order coefficient is $1$ (the ident
 
 ```cpp
 auto [x, y] = TEn<3, 2>::variables({1.0, 2.0});   // expand at (1, 2)
+auto [u, v] = TEn<3, 2>::variables(1.0, 2.0);     // equivalent splatted form
 ```
 
 Each variable carries a unit perturbation in its own direction.
