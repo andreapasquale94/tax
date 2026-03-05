@@ -265,6 +265,41 @@ TEST( TTENorm, RuntimeOrderMustBePositive )
     EXPECT_THROW( (void)a.coeffsNorm( 0 ), std::invalid_argument );
 }
 
+TEST( TTENorm, NormEstimateUnivariateExponentialFit )
+{
+    constexpr int N = 5;
+    TE< N > a{};
+    for ( int k = 0; k <= N; ++k ) a[std::size_t( k )] = std::exp( 1.0 - 0.4 * double( k ) );
+
+    const auto est = a.coeffsNormEstimate( 0, 1, 8 );
+    ASSERT_EQ( est.size(), 9u );
+    for ( int k = 0; k <= 8; ++k )
+        EXPECT_NEAR( est[std::size_t( k )], std::exp( 1.0 - 0.4 * double( k ) ), 1e-12 );
+}
+
+TEST( TTENorm, NormEstimateGroupedByVariable )
+{
+    TEn< 2, 2 > a{};
+    a[0] = 1.0;   // (0,0): exponent x=0
+    a[1] = 0.1;   // (1,0): exponent x=1
+    a[2] = 1.0;   // (0,1): exponent x=0
+    a[3] = 0.01;  // (2,0): exponent x=2
+    a[4] = 0.1;   // (1,1): exponent x=1
+    a[5] = 1.0;   // (0,2): exponent x=0
+
+    const auto est = a.coeffsNormEstimate( 1, 0, 2 );
+    ASSERT_EQ( est.size(), 3u );
+    EXPECT_NEAR( est[0], 1.0, 1e-12 );
+    EXPECT_NEAR( est[1], 0.1, 1e-12 );
+    EXPECT_NEAR( est[2], 0.01, 1e-12 );
+}
+
+TEST( TTENorm, NormEstimateRejectsOutOfRangeVariableIndex )
+{
+    TEn< 2, 2 > a{};
+    EXPECT_THROW( (void)a.coeffsNormEstimate( 3, 0, 2 ), std::invalid_argument );
+}
+
 // =============================================================================
 // In-place operators
 // =============================================================================

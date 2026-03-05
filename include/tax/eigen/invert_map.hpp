@@ -24,20 +24,6 @@ template < typename DA >
     return out;
 }
 
-template < typename DA, typename Mat >
-[[nodiscard]] auto linearMap( const Mat& a, const Eigen::Matrix< DA, Mat::ColsAtCompileTime, 1 >& vars )
-{
-    using Map = Eigen::Matrix< DA, Mat::RowsAtCompileTime, 1 >;
-    Map out{};
-
-    for ( Eigen::Index i = 0; i < a.rows(); ++i )
-    {
-        out( i ) = DA::zero();
-        for ( Eigen::Index j = 0; j < a.cols(); ++j ) out( i ) += a( i, j ) * vars( j );
-    }
-    return out;
-}
-
 template < typename DA, typename Map >
 [[nodiscard]] auto composeOne( const DA& f, const Map& g )
 {
@@ -70,6 +56,21 @@ template < typename DA, typename Map >
 }
 
 }  // namespace detail
+
+template < typename DA, typename Mat >
+[[nodiscard]] auto linear( const Mat& a,
+                           const Eigen::Matrix< DA, Mat::ColsAtCompileTime, 1 >& vars )
+{
+    using Map = Eigen::Matrix< DA, Mat::RowsAtCompileTime, 1 >;
+    Map out{};
+
+    for ( Eigen::Index i = 0; i < a.rows(); ++i )
+    {
+        out( i ) = DA::zero();
+        for ( Eigen::Index j = 0; j < a.cols(); ++j ) out( i ) += a( i, j ) * vars( j );
+    }
+    return out;
+}
 
 /**
  * @brief Invert a square Taylor map represented as an Eigen vector of TTE components.
@@ -119,8 +120,8 @@ template < typename Derived >
         throw std::invalid_argument( "invert failed: linear part is singular" );
 
     const Mat Jinv = lu.inverse();
-    const Map Mlin = detail::linearMap< DA >( J, I );
-    const Map Minv = detail::linearMap< DA >( Jinv, I );
+    const Map Mlin = linear< DA >( J, I );
+    const Map Minv = linear< DA >( Jinv, I );
 
     Map nonlinear{};
     for ( int i = 0; i < M; ++i ) nonlinear( i ) = map( i ) - Mlin( i );

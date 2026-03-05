@@ -10,6 +10,7 @@
 #include <tax/utils/streaming.hpp>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace tax
 {
@@ -262,7 +263,8 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     {
         if ( p == 0 )
             throw std::invalid_argument(
-                "tax::TruncatedTaylorExpansionT::coeffsNorm(p) requires p > 0; use coeffsNormInf()." );
+                "tax::TruncatedTaylorExpansionT::coeffsNorm(p) requires p > 0; use "
+                "coeffsNormInf()." );
         if ( p == 1 ) return coeffsNorm< 1 >();
 
         using std::abs;
@@ -297,6 +299,98 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
             for ( const auto& coeff : c_ ) accum += pow( abs( coeff ), p );
             return pow( accum, T{ 1 } / p );
         }
+    }
+
+    /**
+     * @brief Estimate grouped coefficient norms with an exponential fit.
+     * @param var Group selector:
+     *   - `0`: group terms by total monomial degree.
+     *   - `1..M`: group terms by exponent of variable `var-1`.
+     * @param type Norm type per group:
+     *   - `0`: max norm
+     *   - `1`: sum norm
+     *   - `>1`: p-norm of order `type`
+     * @param nc Maximum group index for returned estimates.
+     * @return Vector of size `nc + 1` containing the estimated grouped norms.
+     * @throws std::invalid_argument if `var > M`.
+     * @note If the fit is not possible (fewer than 2 positive groups), all zeros are returned.
+     */
+    [[nodiscard]] std::vector< T > coeffsNormEstimate( unsigned int var = 0u,
+                                                       unsigned int type = 0u,
+                                                       unsigned int nc = unsigned( N ) ) const
+    {
+        if ( var > unsigned( M ) )
+            throw std::invalid_argument(
+                "tax::TruncatedTaylorExpansionT::coeffsNormEstimate(var,type,nc) requires var in "
+                "[0, M]." );
+
+        std::vector< T > out( std::size_t( nc + 1u ), T{} );
+        std::array< T, std::size_t( N + 1 ) > onorm{};
+
+        using std::abs;
+        using std::exp;
+        using std::log;
+        using std::pow;
+
+        for ( std::size_t i = 0; i < nCoefficients; ++i )
+        {
+            const auto alpha = detail::unflatIndex< M >( i );
+            const unsigned int j = var == 0u ? unsigned( detail::totalDegree< M >( alpha ) )
+                                             : unsigned( alpha[var - 1u] );
+            const T mag = abs( c_[i] );
+
+            if ( type == 0u )
+            {
+                if ( mag > onorm[j] ) onorm[j] = mag;
+            } else if ( type == 1u )
+            {
+                onorm[j] += mag;
+            } else
+            {
+                onorm[j] += pow( mag, T( type ) );
+            }
+        }
+
+        if ( type > 1u )
+        {
+            const T p = T( type );
+            for ( int i = 0; i <= N; ++i ) onorm[i] = pow( onorm[i], T{ 1 } / p );
+        }
+
+        T ai0{};
+        T ai1{};
+        T xtx00{};
+        T xtx01{};
+        T xtx11{};
+
+        for ( int i = 1; i <= N; ++i )
+        {
+            if ( !( onorm[i] > T{} ) ) continue;
+
+            const T ii = T( i );
+            xtx00 += ii * ii;
+            xtx01 -= ii;
+            xtx11 += T{ 1 };
+            ai0 += log( onorm[i] );
+            ai1 += ii * log( onorm[i] );
+        }
+
+        if ( xtx11 < T{ 2 } ) return out;
+
+        const T det = xtx00 * xtx11 - xtx01 * xtx01;
+        if ( det == T{} ) return out;
+
+        const T a0 = ( ai0 * xtx00 + ai1 * xtx01 ) / det;
+        const T a1 = ( ai0 * xtx01 + ai1 * xtx11 ) / det;
+        for ( unsigned int i = 0u; i <= nc; ++i ) out[i] = exp( a0 + a1 * T( i ) );
+        return out;
+    }
+
+    T radius( const T eps, unsigned int type = 1u ) const
+    {
+        using std::pow;
+        auto norms = coeffsNormEstimate( 0, type, N + 1 );
+        return pow( eps / norms[N + 1], 1.0 / ( N + 1 ) );
     }
 
     // -- Evaluation -----------------------------------------------------------
