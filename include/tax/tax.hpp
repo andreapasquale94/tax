@@ -22,6 +22,7 @@
 #include <tax/utils.hpp>
 #include <tax/eigen/derivative.hpp>
 #include <tax/eigen/eval.hpp>
+#include <tax/eigen/invert_map.hpp>
 #include <tax/eigen/types.hpp>
 #include <tax/eigen/value.hpp>
 #include <tax/eigen/variables.hpp>

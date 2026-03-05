@@ -44,6 +44,7 @@ set(TEST_SOURCES
     eigen/testEval.cpp
     eigen/testDerivative.cpp
     eigen/testTypes.cpp
+    eigen/testInvertMap.cpp
 )
 
 include(GoogleTest)
