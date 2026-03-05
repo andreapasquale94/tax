@@ -197,6 +197,39 @@ Returns all partial derivatives in flat grlex order: entry `i` equals the deriva
 
 ---
 
+## Norms
+
+### `coeffsNormInf()`
+
+```cpp
+constexpr T coeffsNormInf() const noexcept;
+```
+
+Returns the coefficient infinity norm (`L∞`): `max_i |c_i|`.
+
+### `coeffsNorm(p)`
+
+```cpp
+T coeffsNorm(unsigned int p) const;
+```
+
+Computes the coefficient-vector p-norm:
+- `p == 1`: $L^1$ norm
+- `p > 1`: $L^p$ norm
+- `p == 0`: invalid (use `coeffsNormInf()`)
+
+### `coeffsNorm<P>()`
+
+```cpp
+template <unsigned int P>
+T coeffsNorm() const noexcept;
+```
+
+Compile-time selected norm variant:
+- `P == 1`: $L^1$ norm
+- `P > 1`: $L^p$ norm
+- `P == 0`: invalid (use `coeffsNormInf()`)
+
 ## Evaluation
 
 ### `eval(T dx)` (univariate)

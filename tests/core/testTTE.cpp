@@ -200,6 +200,71 @@ TEST( TTEAccess, Coeffs_ReturnsArray )
     EXPECT_NEAR( c[2], 3.0, kTol );
 }
 
+TEST( TTENorm, MaxNormMatchesNormInf )
+{
+    TE< 3 > a{};
+    a[0] = 1.0;
+    a[1] = -2.5;
+    a[2] = 0.25;
+    a[3] = -4.0;
+
+    EXPECT_NEAR( a.coeffsNormInf(), 4.0, kTol );
+}
+
+TEST( TTENorm, L1Norm )
+{
+    TE< 3 > a{};
+    a[0] = 1.0;
+    a[1] = -2.5;
+    a[2] = 0.25;
+    a[3] = -4.0;
+
+    EXPECT_NEAR( a.coeffsNorm( 1 ), 7.75, kTol );
+}
+
+TEST( TTENorm, LPNorm )
+{
+    TE< 3 > a{};
+    a[0] = 1.0;
+    a[1] = -2.5;
+    a[2] = 0.25;
+    a[3] = -4.0;
+
+    const double expected = std::sqrt( 1.0 + 2.5 * 2.5 + 0.25 * 0.25 + 4.0 * 4.0 );
+    EXPECT_NEAR( a.coeffsNorm( 2 ), expected, kTol );
+}
+
+TEST( TTENorm, CompileTimeNormType )
+{
+    auto x = TE< 3 >::variable( 1.0 );
+    TE< 3 > y = 2.0 * x + 1.0;
+
+    EXPECT_NEAR( y.coeffsNormInf(), 3.0, kTol );
+    EXPECT_NEAR( y.coeffsNorm< 1 >(), 5.0, kTol );
+    EXPECT_NEAR( y.coeffsNorm< 2 >(), std::sqrt( 13.0 ), kTol );
+}
+
+TEST( TTENorm, MultivariateNorm )
+{
+    TEn< 2, 2 > a{};
+    a[0] = 1.0;
+    a[1] = -2.0;
+    a[2] = 3.0;
+    a[3] = 0.0;
+    a[4] = -4.0;
+    a[5] = 0.5;
+
+    EXPECT_NEAR( a.coeffsNormInf(), 4.0, kTol );
+    EXPECT_NEAR( a.coeffsNorm( 1 ), 10.5, kTol );
+}
+
+TEST( TTENorm, RuntimeOrderMustBePositive )
+{
+    TE< 3 > a{};
+    a[0] = 1.0;
+    EXPECT_THROW( (void)a.coeffsNorm( 0 ), std::invalid_argument );
+}
+
 // =============================================================================
 // In-place operators
 // =============================================================================

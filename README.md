@@ -144,6 +144,9 @@ f.value()            // f(x₀)
 f.coeff({2, 1})      // coefficient of δx²·δy
 f.derivative({2, 1}) // ∂³f/∂x²∂y at x₀
 f.derivatives()      // all partial derivatives
+f.coeffsNormInf()    // max |coefficient| (L-infinity norm)
+f.coeffsNorm(p)      // p > 0: 1=L1, >1=Lp
+f.coeffsNorm<2>()    // compile-time norm selector (P > 0)
 f.eval(dx)           // polynomial evaluated at x₀ + δx
 ```
 

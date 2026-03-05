@@ -1,6 +1,7 @@
 set(DACE_TEST_SOURCES
     testUnivariate.cpp
     testMultivariate.cpp
+    testNorm.cpp
 )
 
 set(_dace_target "")

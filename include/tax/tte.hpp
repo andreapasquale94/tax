@@ -1,7 +1,9 @@
 #pragma once
 
-#include <ostream>
+#include <cmath>
 #include <concepts>
+#include <ostream>
+#include <stdexcept>
 #include <tax/expr/base.hpp>
 #include <tax/kernels.hpp>
 #include <tax/utils/enumeration.hpp>
@@ -232,6 +234,69 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
         Data out{};
         for ( std::size_t i = 0; i < nCoefficients; ++i ) out[i] = c_[i] * f_[i];
         return out;
+    }
+
+    // -- Norms ---------------------------------------------------------------
+
+    /**
+     * @brief Infinity norm of the coefficient vector.
+     * @details Equivalent to `max_i |c_i|`.
+     */
+    [[nodiscard]] constexpr T coeffsNormInf() const noexcept
+    {
+        using std::abs;
+        T out{};
+        for ( const auto& coeff : c_ )
+        {
+            const T mag = abs( coeff );
+            if ( mag > out ) out = mag;
+        }
+        return out;
+    }
+
+    /**
+     * @brief Compute coefficient-vector p-norm.
+     * @param p Norm order. Must satisfy `p > 0`.
+     */
+    [[nodiscard]] T coeffsNorm( unsigned int p ) const
+    {
+        if ( p == 0 )
+            throw std::invalid_argument(
+                "tax::TruncatedTaylorExpansionT::coeffsNorm(p) requires p > 0; use coeffsNormInf()." );
+        if ( p == 1 ) return coeffsNorm< 1 >();
+
+        using std::abs;
+        using std::pow;
+        T accum{};
+        for ( const auto& coeff : c_ ) accum += pow( abs( coeff ), p );
+        return pow( accum, T{ 1 } / T( p ) );
+    }
+
+    /**
+     * @brief Compute a compile-time selected coefficient-vector norm.
+     * @tparam P Norm order. Must satisfy `P > 0`.
+     */
+    template < unsigned int P >
+    [[nodiscard]] T coeffsNorm() const noexcept
+    {
+        static_assert( P > 0,
+                       "coeffsNorm<P>() requires P > 0; use coeffsNormInf() for infinity norm" );
+
+        if constexpr ( P == 1 )
+        {
+            using std::abs;
+            T accum{};
+            for ( const auto& coeff : c_ ) accum += abs( coeff );
+            return accum;
+        } else
+        {
+            using std::abs;
+            using std::pow;
+            const T p = T{ P };
+            T accum{};
+            for ( const auto& coeff : c_ ) accum += pow( abs( coeff ), p );
+            return pow( accum, T{ 1 } / p );
+        }
     }
 
     // -- Evaluation -----------------------------------------------------------
