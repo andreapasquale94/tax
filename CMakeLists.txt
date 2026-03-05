@@ -104,8 +104,6 @@ if(TAX_BUILD_BENCHMARK)
     add_subdirectory(benchmarks)
 endif()
 
-add_subdirectory(examples)
-
 # -------------------------------
 # Installation
 # -------------------------------
