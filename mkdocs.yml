@@ -1,0 +1,81 @@
+site_name: tax
+site_description: Header-only C++23 library for Truncated Algebraic eXpansions
+site_url: https://andreapasquale94.github.io/tax
+repo_url: https://github.com/andreapasquale94/tax
+repo_name: andreapasquale94/tax
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - content.tabs.link
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.inlinehilite
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - Core:
+    - Overview: core/index.md
+    - Mathematical Foundations: core/math.md
+    - API Reference: core/api.md
+    - Examples: core/examples.md
+  - Vector (Eigen):
+    - Overview: vector/index.md
+    - Mathematical Foundations: vector/math.md
+    - API Reference: vector/api.md
+    - Examples: vector/examples.md
+  - Automatic Domain Splitting:
+    - Overview: ads/index.md
+    - Mathematical Foundations: ads/math.md
+    - API Reference: ads/api.md
+    - Examples: ads/examples.md
+  - Taylor Integrator:
+    - Overview: taylor/index.md
+    - Mathematical Foundations: taylor/math.md
+    - API Reference: taylor/api.md
+    - Examples: taylor/examples.md
