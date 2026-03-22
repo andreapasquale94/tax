@@ -47,6 +47,7 @@ set(TEST_SOURCES
     eigen/testInvertMap.cpp
     ads/testAdsTree.cpp
     ads/testAdsGaussian.cpp
+    ode/testTaylorIntegrator.cpp
 )
 
 include(GoogleTest)
