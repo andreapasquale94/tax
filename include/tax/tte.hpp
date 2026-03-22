@@ -393,6 +393,108 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
         return pow( eps / norms[N + 1], 1.0 / ( N + 1 ) );
     }
 
+    // -- Differentiation and integration --------------------------------------
+
+    /**
+     * @brief Partial derivative polynomial with respect to variable `I`.
+     * @tparam I Variable index (0-based, must be in `[0, M)`).
+     * @details For each term `c_alpha * x^alpha` with `alpha[I] > 0`, contributes
+     *          `c_alpha * alpha[I] * x^(alpha - e_I)` to the result.
+     *          Terms where `alpha[I] == 0` vanish. The constant of the result is always zero.
+     * @return New TTE representing `d/dx_I` of this polynomial.
+     */
+    template < int I >
+    [[nodiscard]] constexpr TruncatedTaylorExpansionT deriv() const noexcept
+    {
+        static_assert( I >= 0 && I < M, "Variable index out of range" );
+        Data out{};
+        for ( std::size_t i = 0; i < nCoefficients; ++i )
+        {
+            if ( c_[i] == T{} ) continue;
+            auto alpha = detail::unflatIndex< M >( i );
+            const int exp = alpha[I];
+            if ( exp == 0 ) continue;
+            alpha[I] = exp - 1;
+            out[detail::flatIndex< M >( alpha )] += c_[i] * T( exp );
+        }
+        return TruncatedTaylorExpansionT{ out };
+    }
+
+    /**
+     * @brief Partial derivative polynomial with respect to variable `var`.
+     * @param var Variable index (0-based, must be in `[0, M)`).
+     * @details Runtime-index overload of `deriv<I>()`.
+     * @return New TTE representing `d/dx_var` of this polynomial.
+     * @throws std::out_of_range if `var >= M`.
+     */
+    [[nodiscard]] constexpr TruncatedTaylorExpansionT deriv( int var ) const
+    {
+        if ( var < 0 || var >= M )
+            throw std::out_of_range(
+                "tax::TruncatedTaylorExpansionT::deriv(var): var must be in [0, M)" );
+        Data out{};
+        for ( std::size_t i = 0; i < nCoefficients; ++i )
+        {
+            if ( c_[i] == T{} ) continue;
+            auto alpha = detail::unflatIndex< M >( i );
+            const int exp = alpha[var];
+            if ( exp == 0 ) continue;
+            alpha[var] = exp - 1;
+            out[detail::flatIndex< M >( alpha )] += c_[i] * T( exp );
+        }
+        return TruncatedTaylorExpansionT{ out };
+    }
+
+    /**
+     * @brief Indefinite integral polynomial with respect to variable `I`.
+     * @tparam I Variable index (0-based, must be in `[0, M)`).
+     * @details For each term `c_alpha * x^alpha` with `|alpha| < N`, contributes
+     *          `c_alpha / (alpha[I] + 1) * x^(alpha + e_I)` to the result.
+     *          Terms of degree `N` are dropped (truncated). The constant of integration is zero.
+     * @return New TTE representing `integral ... dx_I` of this polynomial.
+     */
+    template < int I >
+    [[nodiscard]] constexpr TruncatedTaylorExpansionT integ() const noexcept
+    {
+        static_assert( I >= 0 && I < M, "Variable index out of range" );
+        Data out{};
+        for ( std::size_t i = 0; i < nCoefficients; ++i )
+        {
+            if ( c_[i] == T{} ) continue;
+            auto alpha = detail::unflatIndex< M >( i );
+            if ( detail::totalDegree< M >( alpha ) >= N ) continue;  // would exceed order N
+            const int exp = alpha[I];
+            alpha[I] = exp + 1;
+            out[detail::flatIndex< M >( alpha )] = c_[i] / T( exp + 1 );
+        }
+        return TruncatedTaylorExpansionT{ out };
+    }
+
+    /**
+     * @brief Indefinite integral polynomial with respect to variable `var`.
+     * @param var Variable index (0-based, must be in `[0, M)`).
+     * @details Runtime-index overload of `integ<I>()`.
+     * @return New TTE representing `integral ... dx_var` of this polynomial.
+     * @throws std::out_of_range if `var >= M`.
+     */
+    [[nodiscard]] constexpr TruncatedTaylorExpansionT integ( int var ) const
+    {
+        if ( var < 0 || var >= M )
+            throw std::out_of_range(
+                "tax::TruncatedTaylorExpansionT::integ(var): var must be in [0, M)" );
+        Data out{};
+        for ( std::size_t i = 0; i < nCoefficients; ++i )
+        {
+            if ( c_[i] == T{} ) continue;
+            auto alpha = detail::unflatIndex< M >( i );
+            if ( detail::totalDegree< M >( alpha ) >= N ) continue;  // would exceed order N
+            const int exp = alpha[var];
+            alpha[var] = exp + 1;
+            out[detail::flatIndex< M >( alpha )] = c_[i] / T( exp + 1 );
+        }
+        return TruncatedTaylorExpansionT{ out };
+    }
+
     // -- Evaluation -----------------------------------------------------------
 
     /**

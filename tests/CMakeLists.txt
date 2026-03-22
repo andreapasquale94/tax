@@ -27,6 +27,7 @@ set(TEST_SOURCES
     core/testTTE.cpp
     core/testNested.cpp
     core/testCompose.cpp
+    core/testDerivInteg.cpp
     expr/testExprAdd.cpp
     expr/testExprMul.cpp
     expr/testExprUnary.cpp
