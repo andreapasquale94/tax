@@ -27,6 +27,7 @@ set(TEST_SOURCES
     core/testTTE.cpp
     core/testNested.cpp
     core/testCompose.cpp
+    core/testDerivInteg.cpp
     expr/testExprAdd.cpp
     expr/testExprMul.cpp
     expr/testExprUnary.cpp
@@ -45,6 +46,8 @@ set(TEST_SOURCES
     eigen/testDerivative.cpp
     eigen/testTypes.cpp
     eigen/testInvertMap.cpp
+    ads/testAdsTree.cpp
+    ads/testAdsGaussian.cpp
 )
 
 include(GoogleTest)
