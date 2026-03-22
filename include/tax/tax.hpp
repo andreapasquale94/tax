@@ -26,3 +26,4 @@
 #include <tax/eigen/types.hpp>
 #include <tax/eigen/value.hpp>
 #include <tax/eigen/variables.hpp>
+#include <tax/ode/taylor_integrator.hpp>
