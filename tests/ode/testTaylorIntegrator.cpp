@@ -24,7 +24,7 @@ TEST( TaylorIntegratorScalar, ExponentialGrowth )
 
     auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return x; };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_GT( sol.t.size(), 1u );
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
@@ -42,7 +42,7 @@ TEST( TaylorIntegratorScalar, ExponentialDecay )
 
     auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return -x; };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
     EXPECT_NEAR( sol.x.back(), x0 * std::exp( -tmax ), 1e-14 );
@@ -62,7 +62,7 @@ TEST( TaylorIntegratorScalar, CosineForcing )
         return cos( t );
     };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
     EXPECT_NEAR( sol.x.back(), std::sin( tmax ), 1e-13 );
@@ -79,7 +79,7 @@ TEST( TaylorIntegratorScalar, Quadratic )
 
     auto f = []( [[maybe_unused]] const auto& x, const auto& t ) { return 2.0 * t; };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
     EXPECT_NEAR( sol.x.back(), tmax * tmax, 1e-12 );
@@ -96,7 +96,7 @@ TEST( TaylorIntegratorScalar, BackwardIntegration )
 
     auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return x; };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
     EXPECT_NEAR( sol.x.back(), 1.0, 1e-13 );
@@ -117,7 +117,7 @@ TEST( TaylorIntegratorScalar, ExponentialTrange )
 
     auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return x; };
 
-    auto sol = ode::taylorinteg< N >( f, x0, trange, abstol );
+    auto sol = ode::integrate< N >( f, x0, trange, abstol );
 
     ASSERT_EQ( sol.t.size(), trange.size() );
     ASSERT_EQ( sol.x.size(), trange.size() );
@@ -125,6 +125,33 @@ TEST( TaylorIntegratorScalar, ExponentialTrange )
     for ( std::size_t i = 0; i < trange.size(); ++i )
     {
         EXPECT_NEAR( sol.x[i], std::exp( trange[i] ), 1e-14 ) << "  at t=" << trange[i];
+    }
+}
+
+// =============================================================================
+// Dense output (scalar)
+// =============================================================================
+
+TEST( TaylorIntegratorScalar, DenseOutput )
+{
+    constexpr int N = 25;
+    const double x0 = 1.0;
+    const double t0 = 0.0;
+    const double tmax = 2.0;
+    const double abstol = 1e-20;
+
+    auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return x; };
+
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
+
+    // Polynomials should be stored
+    EXPECT_FALSE( sol.p.empty() );
+    EXPECT_EQ( sol.p.size(), sol.t.size() - 1 );
+
+    // Evaluate at arbitrary intermediate times via operator()
+    for ( double t = 0.0; t <= 2.0; t += 0.07 )
+    {
+        EXPECT_NEAR( sol( t ), std::exp( t ), 1e-13 ) << "  at t=" << t;
     }
 }
 
@@ -137,7 +164,6 @@ TEST( TaylorIntegratorScalar, ExponentialTrange )
 TEST( TaylorIntegratorVector, HarmonicOscillator )
 {
     constexpr int N = 25;
-    constexpr int D = 2;
     const double t0 = 0.0;
     const double tmax = 2.0 * std::numbers::pi;
     const double abstol = 1e-20;
@@ -149,11 +175,9 @@ TEST( TaylorIntegratorVector, HarmonicOscillator )
         dx( 1 ) = -x( 0 );
     };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
-    EXPECT_NEAR( sol.x.back()( 0 ), std::cos( tmax ), 1e-12 );
-    EXPECT_NEAR( sol.x.back()( 1 ), std::sin( tmax ) * ( -1.0 ), 1e-12 );
 
     // After a full period, should return to initial conditions
     EXPECT_NEAR( sol.x.back()( 0 ), 1.0, 1e-12 );
@@ -176,16 +200,15 @@ TEST( TaylorIntegratorVector, DecoupledExponentials )
         dx( 1 ) = -x( 1 );
     };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
     EXPECT_NEAR( sol.t.back(), tmax, 1e-14 );
     EXPECT_NEAR( sol.x.back()( 0 ), std::exp( tmax ), 1e-14 );
     EXPECT_NEAR( sol.x.back()( 1 ), std::exp( -tmax ), 1e-14 );
 }
 
-// Kepler problem (2D): two-body problem in Cartesian coordinates
-// dx/dt = vx, dy/dt = vy, dvx/dt = -x/r^3, dvy/dt = -y/r^3
-// Circular orbit: x0=(1,0,0,1), period = 2*pi
+// Kepler problem (2D): two-body in Cartesian coordinates
+// Circular orbit: x0=(1,0,0,1), period = 2π
 TEST( TaylorIntegratorVector, KeplerCircularOrbit )
 {
     constexpr int N = 25;
@@ -194,7 +217,7 @@ TEST( TaylorIntegratorVector, KeplerCircularOrbit )
     const double abstol = 1e-20;
 
     Eigen::Vector< double, 4 > x0;
-    x0 << 1.0, 0.0, 0.0, 1.0;  // x, y, vx, vy
+    x0 << 1.0, 0.0, 0.0, 1.0;
 
     auto f = []( auto& dx, const auto& x, [[maybe_unused]] const auto& t ) {
         using std::sqrt;
@@ -207,20 +230,19 @@ TEST( TaylorIntegratorVector, KeplerCircularOrbit )
         dx( 3 ) = -x( 1 ) / r3;
     };
 
-    auto sol = ode::taylorinteg< N >( f, x0, t0, tmax, abstol );
+    auto sol = ode::integrate< N >( f, x0, t0, tmax, abstol );
 
-    // After one full orbit, should return to initial conditions
+    // After one full orbit
     EXPECT_NEAR( sol.x.back()( 0 ), 1.0, 1e-10 );
     EXPECT_NEAR( sol.x.back()( 1 ), 0.0, 1e-10 );
     EXPECT_NEAR( sol.x.back()( 2 ), 0.0, 1e-10 );
     EXPECT_NEAR( sol.x.back()( 3 ), 1.0, 1e-10 );
 
-    // Check energy conservation: E = 0.5*v^2 - 1/r = -0.5
-    double r =
-        std::sqrt( sol.x.back()( 0 ) * sol.x.back()( 0 ) + sol.x.back()( 1 ) * sol.x.back()( 1 ) );
-    double v2 = sol.x.back()( 2 ) * sol.x.back()( 2 ) + sol.x.back()( 3 ) * sol.x.back()( 3 );
-    double energy = 0.5 * v2 - 1.0 / r;
-    EXPECT_NEAR( energy, -0.5, 1e-10 );
+    // Energy conservation: E = 0.5*v² - 1/r = -0.5
+    const auto& xf = sol.x.back();
+    double r = std::sqrt( xf( 0 ) * xf( 0 ) + xf( 1 ) * xf( 1 ) );
+    double v2 = xf( 2 ) * xf( 2 ) + xf( 3 ) * xf( 3 );
+    EXPECT_NEAR( 0.5 * v2 - 1.0 / r, -0.5, 1e-10 );
 }
 
 // =============================================================================
@@ -242,7 +264,7 @@ TEST( TaylorIntegratorVector, HarmonicOscillatorTrange )
         dx( 1 ) = -x( 0 );
     };
 
-    auto sol = ode::taylorinteg< N >( f, x0, trange, abstol );
+    auto sol = ode::integrate< N >( f, x0, trange, abstol );
 
     ASSERT_EQ( sol.x.size(), trange.size() );
 
@@ -254,53 +276,68 @@ TEST( TaylorIntegratorVector, HarmonicOscillatorTrange )
 }
 
 // =============================================================================
-// Lower-level API tests
+// Dense output (vector)
 // =============================================================================
 
-// Test jetcoeffs directly: dx/dt = x with x0 = 1 → x[k] = 1/k!
-TEST( TaylorIntegratorJetcoeffs, ScalarExponential )
+TEST( TaylorIntegratorVector, DenseOutput )
+{
+    constexpr int N = 25;
+    const double abstol = 1e-20;
+
+    Eigen::Vector2d x0( 1.0, 0.0 );
+
+    auto f = []( auto& dx, const auto& x, [[maybe_unused]] const auto& t ) {
+        dx( 0 ) = x( 1 );
+        dx( 1 ) = -x( 0 );
+    };
+
+    auto sol = ode::integrate< N >( f, x0, 0.0, 3.0, abstol );
+
+    EXPECT_FALSE( sol.p.empty() );
+
+    for ( double t = 0.0; t <= 3.0; t += 0.13 )
+    {
+        auto y = sol( t );
+        EXPECT_NEAR( y( 0 ), std::cos( t ), 1e-13 ) << "  x1 at t=" << t;
+        EXPECT_NEAR( y( 1 ), -std::sin( t ), 1e-13 ) << "  x2 at t=" << t;
+    }
+}
+
+// =============================================================================
+// Low-level API: step returns TTE
+// =============================================================================
+
+// step() should return a TTE whose coefficients are 1/k! for dx/dt = x
+TEST( TaylorIntegratorStep, ScalarReturnsPolynomial )
 {
     constexpr int N = 10;
-    using TTE = TE< N >;
-
-    TTE t_da{};
-    t_da[0] = 0.0;
-    t_da[1] = 1.0;
-
-    TTE x_da{};
-    x_da[0] = 1.0;
 
     auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return x; };
 
-    ode::jetcoeffs( x_da, t_da, f );
+    auto [p, h] = ode::step< N >( f, 1.0, 0.0, 1e-20 );
 
-    // x[k] should be 1/k!
+    // p[k] should be 1/k!
     double factorial = 1.0;
     for ( int k = 0; k <= N; ++k )
     {
         if ( k > 0 ) factorial *= k;
-        EXPECT_NEAR( x_da[k], 1.0 / factorial, 1e-15 ) << "  coeff k=" << k;
+        EXPECT_NEAR( p[k], 1.0 / factorial, 1e-15 ) << "  coeff k=" << k;
     }
+
+    // h should be positive and finite
+    EXPECT_GT( h, 0.0 );
+    EXPECT_LT( h, 100.0 );
 }
 
-// Test stepsize
-TEST( TaylorIntegratorStepsize, BasicStepsize )
+TEST( TaylorIntegratorStep, ScalarPolynomialEval )
 {
-    constexpr int N = 10;
-    using TTE = TE< N >;
-
-    TTE x_da{};
-    x_da[0] = 1.0;
+    constexpr int N = 25;
 
     auto f = []( const auto& x, [[maybe_unused]] const auto& t ) { return x; };
 
-    TTE t_da{};
-    t_da[0] = 0.0;
-    t_da[1] = 1.0;
+    auto [p, h] = ode::step< N >( f, 1.0, 0.0, 1e-20 );
 
-    ode::jetcoeffs( x_da, t_da, f );
-
-    double h = ode::stepsize( x_da, 1e-20 );
-    EXPECT_GT( h, 0.0 );
-    EXPECT_LT( h, 100.0 );  // Sanity check
+    // Evaluating the polynomial at h should give exp(h)
+    EXPECT_NEAR( p.eval( h ), std::exp( h ), 1e-14 );
+    EXPECT_NEAR( p.eval( 0.5 ), std::exp( 0.5 ), 1e-14 );
 }
