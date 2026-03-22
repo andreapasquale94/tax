@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <utility>
 #include <vector>
 
 #include <tax/ode/solution.hpp>
@@ -45,10 +46,9 @@ TaylorSolution< N, T, T > integrate( F&& f, T x0, T t0, T tmax, T abstol, int ma
         auto [p, h] = step< N >( f, xc, tc, abstol );
         if ( h <= T{} ) break;
 
-        sol.p.push_back( p );
-
         const T dt = sign * std::min( h, std::abs( tmax - tc ) );
         xc = p.eval( dt );
+        sol.p.push_back( std::move( p ) );
         tc += dt;
 
         sol.t.push_back( tc );
@@ -145,10 +145,9 @@ TaylorSolution< N, Eigen::Matrix< T, D, 1 >, T > integrate(
         auto [p, h] = step< N >( f, xc, tc, abstol );
         if ( h <= T{} ) break;
 
-        sol.p.push_back( p );
-
         const T dt = sign * std::min( h, std::abs( tmax - tc ) );
         xc = eval( p, dt );
+        sol.p.push_back( std::move( p ) );
         tc += dt;
 
         sol.t.push_back( tc );

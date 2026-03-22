@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <tax/ode/stepsize.hpp>
 #include <tax/eigen/eval.hpp>
 
@@ -53,7 +55,8 @@ step( F&& f, T x0, T tc, T abstol )
         x_da[k + 1] = dx[k] / T( k + 1 );
     }
 
-    return { x_da, stepsize( x_da, abstol ) };
+    auto h = stepsize( x_da, abstol );
+    return { std::move( x_da ), h };
 }
 
 // =============================================================================
@@ -99,7 +102,8 @@ step( F&& f, const Eigen::Matrix< T, D, 1 >& x0, T tc, T abstol )
         for ( Eigen::Index i = 0; i < dim; ++i ) x_da( i )[k + 1] = dx( i )[k] / T( k + 1 );
     }
 
-    return { x_da, stepsize( x_da, abstol ) };
+    auto h = stepsize( x_da, abstol );
+    return { std::move( x_da ), h };
 }
 
 }  // namespace tax::ode
