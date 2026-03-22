@@ -26,7 +26,8 @@ namespace tax::ode
  * @return TaylorSolution with dense-output polynomials.
  */
 template < int N, typename F, typename T = double >
-TaylorSolution< N, T, T > integrate( F&& f, T x0, T t0, T tmax, T abstol, int maxsteps = 500 )
+[[nodiscard]] TaylorSolution< N, T, T > integrate( F&& f, T x0, T t0, T tmax, T abstol,
+                                                    int maxsteps = 500 )
 {
     TaylorSolution< N, T, T > sol;
     sol.t.reserve( std::size_t( maxsteps + 1 ) );
@@ -67,8 +68,8 @@ TaylorSolution< N, T, T > integrate( F&& f, T x0, T t0, T tmax, T abstol, int ma
  * @param trange Monotonic sequence of output times (first element = t0).
  */
 template < int N, typename F, typename T = double >
-TaylorSolution< N, T, T > integrate( F&& f, T x0, const std::vector< T >& trange, T abstol,
-                                      int maxsteps = 500 )
+[[nodiscard]] TaylorSolution< N, T, T > integrate( F&& f, T x0, const std::vector< T >& trange,
+                                                    T abstol, int maxsteps = 500 )
 {
     const T t0 = trange.front();
     const T tmax = trange.back();
@@ -122,7 +123,7 @@ TaylorSolution< N, T, T > integrate( F&& f, T x0, const std::vector< T >& trange
  * @return TaylorSolution with dense-output polynomials.
  */
 template < int N, typename F, typename T, int D >
-TaylorSolution< N, Eigen::Matrix< T, D, 1 >, T > integrate(
+[[nodiscard]] TaylorSolution< N, Eigen::Matrix< T, D, 1 >, T > integrate(
     F&& f, const Eigen::Matrix< T, D, 1 >& x0, T t0, T tmax, T abstol, int maxsteps = 500 )
 {
     using Vec = Eigen::Matrix< T, D, 1 >;
@@ -166,7 +167,7 @@ TaylorSolution< N, Eigen::Matrix< T, D, 1 >, T > integrate(
  * @param trange Monotonic sequence of output times (first element = t0).
  */
 template < int N, typename F, typename T, int D >
-TaylorSolution< N, Eigen::Matrix< T, D, 1 >, T > integrate(
+[[nodiscard]] TaylorSolution< N, Eigen::Matrix< T, D, 1 >, T > integrate(
     F&& f, const Eigen::Matrix< T, D, 1 >& x0, const std::vector< T >& trange, T abstol,
     int maxsteps = 500 )
 {

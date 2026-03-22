@@ -18,20 +18,25 @@ tax/
 ├── include/tax/          # Header-only library (the entire library lives here)
 │   ├── tax.hpp           # Umbrella header — users include only this
 │   ├── tte.hpp           # Core TruncatedTaylorExpansionT<T,N,M> class
+│   ├── ads.hpp           # Facade: includes all ads/
 │   ├── kernels.hpp       # Facade: includes all kernels/
 │   ├── operators.hpp     # Facade: includes all operators/
 │   ├── utils.hpp         # Facade: includes all utils/
+│   ├── ads/              # Automatic Domain Splitting (ADS)
 │   ├── expr/             # Expression template nodes (lazy evaluation)
 │   ├── kernels/          # Series computation kernels (recurrence relations)
+│   ├── ode/              # Taylor ODE integrator
 │   ├── operators/        # Free-function operators and math functions
 │   ├── utils/            # Type traits, combinatorics, enumeration
 │   └── eigen/            # Eigen3 integration helpers
-├── tests/                # Google Test suite (27 test executables)
-│   ├── core/             # Basic TTE construction, nesting, composition
+├── tests/                # Google Test suite (29 test executables, 440 tests)
+│   ├── ads/              # ADS tree and runner tests
+│   ├── core/             # Basic TTE construction, nesting, composition, deriv/integ
 │   ├── expr/             # Expression template correctness
 │   ├── kernels/          # Kernel algorithm verification
 │   ├── foundation/       # Combinatorics and enumeration utilities
 │   ├── eigen/            # Eigen integration tests
+│   ├── ode/              # Taylor integrator and ADS-integrated ODE tests
 │   ├── dace/             # Optional DACE comparative tests
 │   ├── testUtils.hpp     # Shared test helpers and macros
 │   └── CMakeLists.txt
@@ -137,6 +142,30 @@ double d2f  = f.derivative(2);     // second derivative
 auto   p    = f.eval(dx);          // evaluate Taylor polynomial at x0+dx
 ```
 
+### Differentiation and Integration
+
+TTE objects support symbolic partial differentiation and integration:
+
+```cpp
+auto x = tax::TE<5>::variable(1.0);
+auto f = sin(x);
+
+// Compile-time variable index
+auto df = f.deriv<0>();       // d/dx sin(x) = cos(x)
+auto F  = f.integ<0>();       // integral of sin(x) dx
+
+// Runtime variable index
+auto df2 = f.deriv(0);       // equivalent to deriv<0>()
+auto F2  = f.integ(0);       // equivalent to integ<0>()
+
+// Multivariate
+auto [x, y] = tax::TEn<3, 2>::variables(1.0, 2.0);
+auto g = x * x * y;
+auto dg_dx = g.deriv<0>();   // partial derivative w.r.t. x
+auto dg_dy = g.deriv<1>();   // partial derivative w.r.t. y
+auto Gx    = g.integ<0>();   // integral w.r.t. x
+```
+
 ### Coefficient Storage
 
 - Coefficients stored in `std::array<T, nCoefficients>` (stack-allocated, no heap)
@@ -184,10 +213,15 @@ All mathematical operations are implemented as degree-by-degree recurrence relat
 | File | Operations |
 |------|-----------|
 | `algebra.hpp` | reciprocal, sqrt, cbrt, square, cube |
-| `cauchy.hpp` | Cauchy product (polynomial multiplication) |
+| `cauchy.hpp` | Cauchy product, self-product, accumulate |
 | `trigonometric.hpp` | sin, cos, tan, asin, acos, atan |
 | `transcendental.hpp` | exp, log, sinh, cosh, tanh, and inverses |
 | `ops.hpp` | Utility helpers |
+
+Kernel optimisations:
+- **Symmetry exploitation:** `cauchySelfProduct` enumerates unordered pairs for ~2x fewer multiplications
+- **Univariate fast-paths:** `if constexpr (M == 1)` branches avoid multi-index overhead
+- **Incremental `sq` tracking in `seriesCbrt`:** Maintains `out^2` degree-by-degree for O(N^2) instead of O(N^3)
 
 When adding a new mathematical function, implement the recurrence relation in the appropriate kernel file, then expose it via `operators/math_unary.hpp` or `operators/math_binary.hpp`.
 
@@ -220,29 +254,144 @@ Key helpers in `eigen/`:
 
 ---
 
+## Taylor ODE Integrator
+
+Located in `include/tax/ode/`. Provides adaptive Taylor-method integration for scalar and vector ODEs with optional Automatic Domain Splitting (ADS).
+
+### Scalar ODE
+
+```cpp
+#include <tax/tax.hpp>
+
+// dx/dt = x  →  x(t) = exp(t)
+auto f = [](const auto& x, [[maybe_unused]] const auto& t) { return x; };
+
+auto sol = tax::ode::integrate<25>(f, 1.0, 0.0, 2.0, 1e-16);
+// sol.t  — step times
+// sol.x  — state at each step time
+// sol(t) — dense output at any time via Taylor polynomial evaluation
+```
+
+### Vector ODE
+
+```cpp
+// Harmonic oscillator: dx/dt = v, dv/dt = -x
+auto f = [](auto& dx, const auto& x, [[maybe_unused]] const auto& t) {
+    dx(0) = x(1);
+    dx(1) = -x(0);
+};
+
+Eigen::Vector2d x0{1.0, 0.0};
+auto sol = tax::ode::integrate<25>(f, x0, 0.0, 2*M_PI, 1e-16);
+```
+
+### ADS-Integrated ODE Propagation
+
+Propagate a set of initial conditions with automatic domain splitting:
+
+```cpp
+// Propagate an initial-condition box with ADS
+tax::Box<double, 2> ic_box{
+    .center = {1.0, 0.0},
+    .half_width = {0.1, 0.1}
+};
+
+auto tree = tax::ode::integrate_ads<25, 6>(f, ic_box, 0.0, 10.0,
+    1e-16,   // step tolerance
+    1e-3,    // ADS splitting tolerance
+    30,      // max split depth
+    500      // max steps per subdomain
+);
+
+// Iterate results
+for (int i : tree.done_leaves()) {
+    const auto& leaf = tree.node(i).leaf();
+    // leaf.tte.state — DA polynomial flow map
+    // leaf.box       — subdomain of initial conditions
+}
+```
+
+### Key Files in `ode/`
+
+| File | Purpose |
+|------|---------|
+| `taylor_integrator.hpp` | Umbrella header |
+| `step.hpp` | Single Taylor step (scalar + vector) |
+| `stepsize.hpp` | Jorba-Zou adaptive step-size control |
+| `integrate.hpp` | Full integration loop with dense output |
+| `solution.hpp` | `TaylorSolution` container with `operator()` dense output |
+| `integrate_ads.hpp` | ADS-integrated ODE propagation with `FlowMap` |
+
+---
+
+## Automatic Domain Splitting (ADS)
+
+Located in `include/tax/ads/`. Implements the algorithm from Wittig et al. (2015) for adaptive polynomial approximation over large domains.
+
+### Standalone Function Approximation
+
+```cpp
+#include <tax/ads.hpp>
+
+// Approximate f(x) = exp(-x^2) on [-3, 3]
+auto f = [](const auto& x) { return exp(-x * x); };
+
+tax::Box<double, 1> domain{.center = {0.0}, .half_width = {3.0}};
+auto runner = tax::make_ads_runner<10, 1>(f, 1e-5);
+auto tree = runner.run(domain);
+
+// Each done leaf contains a polynomial valid on its subdomain
+for (int i : tree.done_leaves()) {
+    const auto& leaf = tree.node(i).leaf();
+    // leaf.tte — polynomial approximation
+    // leaf.box — subdomain
+}
+
+// Point lookup: O(depth) binary tree walk
+int idx = tree.find_leaf({1.5});
+```
+
+### Key Files in `ads/`
+
+| File | Purpose |
+|------|---------|
+| `box.hpp` | `Box<T,M>` axis-aligned hyperrectangle |
+| `ads_node.hpp` | `AdsNode<TTE>` — leaf/internal variant node |
+| `ads_tree.hpp` | `AdsTree<TTE>` — arena-based binary tree with work queue |
+| `ads_runner.hpp` | `AdsRunner<N,M,F>` — the ADS algorithm driver |
+
+### Architecture
+
+- **Arena-based tree:** All nodes live in a contiguous `std::vector`, referenced by index (no pointer invalidation)
+- **Work queue:** BFS processing via `std::deque`
+- **O(1) leaf removal:** Swap-and-pop in the leaf list
+- **Split-dimension selection:** Variable contributing most to degree-N truncation error
+
+---
+
 ## Code Conventions
 
 ### Naming
 
 | Category | Convention | Examples |
 |----------|-----------|---------|
-| Types/Classes | `PascalCase` | `TruncatedTaylorExpansionT`, `MultiIndex` |
-| Template params | `UPPERCASE` or short | `T`, `N`, `M`, `Derived` |
-| Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()` |
-| Local variables | `snake_case` | `n_coeff`, `dx` |
-| Namespaces | `lowercase` | `tax`, `tax::detail` |
+| Types/Classes | `PascalCase` | `TruncatedTaylorExpansionT`, `MultiIndex`, `AdsTree`, `TaylorSolution` |
+| Template params | `UPPERCASE` or short | `T`, `N`, `M`, `P`, `D`, `Derived` |
+| Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()`, `deriv()`, `integ()` |
+| Local variables | `snake_case` | `n_coeff`, `dx`, `half_width`, `split_dim` |
+| Namespaces | `lowercase` | `tax`, `tax::detail`, `tax::ode` |
 | Op tags | `PascalCase` with prefix | `OpAdd`, `OpSub`, `OpMul` |
 | Type aliases | Short uppercase | `TE<N>`, `TEn<N,M>` |
 
 ### C++ Patterns
 
 - **`constexpr` everywhere:** All size calculations, index mappings, and coefficient operations must be `constexpr`
-- **`noexcept` on all operations:** For zero-overhead guarantees
-- **No heap allocation:** Use `std::array` for fixed-size storage, never `std::vector`
+- **`noexcept` on all operations:** For zero-overhead guarantees (exception: methods that `throw`, e.g. runtime-index `deriv(int)`)
+- **No heap allocation in core library:** Use `std::array` for fixed-size storage; `std::vector` is acceptable only in ODE/ADS modules for variable-length solutions and dynamic tree growth
 - **Concepts:** Use `tax::Scalar` concept (wraps `std::floating_point`) for scalar template parameters
 - **`if constexpr`:** Used for compile-time branching between univariate (M=1) and multivariate cases
-- **`[[nodiscard]]`:** Applied to accessor methods (value, coeff, derivative)
-- **Internal details in `tax::detail`:** Do not expose implementation internals in `tax::`
+- **`[[nodiscard]]`:** Applied to accessor methods, computation results, and expensive operations
+- **Internal details in `tax::detail`:** Do not expose implementation internals in `tax::`; ODE internals use `tax::ode::detail_da`
 
 ### Formatting
 
@@ -266,11 +415,13 @@ clang-format -i include/tax/**/*.hpp
 Tests are organized by feature, one `.cpp` per concern. Each produces a standalone test executable:
 
 ```
-tests/core/        — TTE constructors, variable factories, composition
+tests/core/        — TTE constructors, variable factories, composition, deriv/integ
 tests/expr/        — One file per math function (sin, exp, log, pow, etc.)
 tests/kernels/     — Direct kernel algorithm verification
 tests/foundation/  — Combinatorics and enumeration
 tests/eigen/       — Eigen integration
+tests/ads/         — ADS tree structure and runner (Gaussian approximation)
+tests/ode/         — Taylor integrator (scalar, vector, ADS-integrated)
 tests/dace/        — Comparative tests against DACE (optional)
 ```
 
@@ -299,7 +450,7 @@ TEST(ExprSin, UnivariateOrder3) {
 ```bash
 ctest --test-dir build --output-on-failure
 # Or run a single test executable:
-./build/tests/expr/testExprSin
+./build/tests/testExprTrig
 ```
 
 ---
@@ -321,11 +472,12 @@ ctest --test-dir build --output-on-failure
 
 ### Before Submitting a PR
 
-1. All 27 test executables pass locally
+1. All 29 test executables pass locally (440 individual tests)
 2. Code is formatted with `clang-format`
-3. No new dynamic allocations introduced
+3. No new dynamic allocations introduced in core library
 4. New math operations have kernel tests AND expression tests
 5. Eigen helpers have tests in `tests/eigen/`
+6. ODE/ADS changes have tests in `tests/ode/` or `tests/ads/`
 
 ---
 
@@ -342,12 +494,13 @@ ctest --test-dir build --output-on-failure
 
 ## Common Pitfalls
 
-- **Do not use `std::vector` or `new`:** The library must remain allocation-free
+- **Do not use `std::vector` or `new` in core library:** The core TTE type must remain allocation-free; `std::vector` is only acceptable in ODE/ADS modules
 - **Do not break `constexpr`:** All index arithmetic must stay compile-time
 - **graded-lex ordering is sacred:** The coefficient order (`flatIndex`) is used everywhere — never change it
 - **M=0 is invalid:** Always assert or static_assert that M ≥ 1
 - **Concepts vs. SFINAE:** Prefer C++20 concepts (`requires`, `Scalar` concept) over SFINAE
 - **Include the umbrella header in tests:** Use `#include <tax/tax.hpp>`, not individual sub-headers
+- **Expression templates store references:** When using ADS or ODE with expression-returning callables, arguments must be taken by `const&` — by-value copies dangle once the function returns its lazy expression
 
 ---
 

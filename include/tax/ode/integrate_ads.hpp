@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <utility>
@@ -259,7 +260,7 @@ propagate_box( F&& f, const Box< double, D >& box, double t0, double tmax,
  */
 template < int P, int D >
 [[nodiscard]] double truncation_error_da(
-    const Eigen::Matrix< TEn< P, D >, D, 1 >& state )
+    const Eigen::Matrix< TEn< P, D >, D, 1 >& state ) noexcept
 {
     double err = 0.0;
     for ( Eigen::Index i = 0; i < state.size(); ++i )
@@ -281,7 +282,7 @@ template < int P, int D >
  */
 template < int P, int D >
 [[nodiscard]] int best_split_dim_da(
-    const Eigen::Matrix< TEn< P, D >, D, 1 >& state )
+    const Eigen::Matrix< TEn< P, D >, D, 1 >& state ) noexcept
 {
     std::array< double, D > scores{};
     for ( Eigen::Index i = 0; i < state.size(); ++i )

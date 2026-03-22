@@ -137,7 +137,7 @@ private:
      * These are the highest-order terms retained in the polynomial; their
      * magnitude indicates how quickly the series is (or is not) converging.
      */
-    static double truncation_error( const TTE& tte )
+    static double truncation_error( const TTE& tte ) noexcept
     {
         double err = 0.0;
         for ( std::size_t i = 0; i < TTE::nCoefficients; ++i )
@@ -154,7 +154,7 @@ private:
      * have the largest combined absolute value, i.e. the variable that
      * "most affects" the truncation error (Wittig et al. 2015).
      */
-    static int best_split_dim( const TTE& tte )
+    static int best_split_dim( const TTE& tte ) noexcept
     {
         std::array< double, M > scores{};
         for ( std::size_t i = 0; i < TTE::nCoefficients; ++i )
