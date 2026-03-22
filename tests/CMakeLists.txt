@@ -46,6 +46,7 @@ set(TEST_SOURCES
     eigen/testTypes.cpp
     eigen/testInvertMap.cpp
     ads/testAdsTree.cpp
+    ads/testAdsGaussian.cpp
 )
 
 include(GoogleTest)
