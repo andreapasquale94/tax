@@ -173,7 +173,7 @@ constexpr void seriesErf( std::array< T, numMonomials( N, M ) >& out,
 
     // h = (2/√π) · exp(-a²)
     std::array< T, S > asq{}, neg_asq{}, e{}, h{};
-    cauchyProduct< T, N, M >( asq, a, a );
+    cauchySelfProduct< T, N, M >( asq, a );
     neg_asq = asq;
     negateInPlace< T, S >( neg_asq );
     seriesExp< T, N, M >( e, neg_asq );
@@ -215,7 +215,7 @@ constexpr void seriesAsin( std::array< T, numMonomials( N, M ) >& out,
 
     // h = sqrt(1 - a²)
     std::array< T, S > asq{}, omf{}, h{};
-    cauchyProduct< T, N, M >( asq, a, a );
+    cauchySelfProduct< T, N, M >( asq, a );
     omf = {};
     omf[0] = T{ 1 };
     subInPlace< T, S >( omf, asq );
@@ -267,7 +267,7 @@ constexpr void seriesAtan( std::array< T, numMonomials( N, M ) >& out,
 
     // h = 1 + a²
     std::array< T, S > h{};
-    cauchyProduct< T, N, M >( h, a, a );
+    cauchySelfProduct< T, N, M >( h, a );
     h[0] += T{ 1 };
 
     out = {};
@@ -307,9 +307,9 @@ constexpr void seriesAtan2( std::array< T, numMonomials( N, M ) >& out,
 
     // h = x² + y²
     std::array< T, S > h{};
-    cauchyProduct< T, N, M >( h, x, x );
+    cauchySelfProduct< T, N, M >( h, x );
     std::array< T, S > ysq{};
-    cauchyProduct< T, N, M >( ysq, y, y );
+    cauchySelfProduct< T, N, M >( ysq, y );
     addInPlace< T, S >( h, ysq );
 
     out = {};
@@ -353,7 +353,7 @@ constexpr void seriesAsinh( std::array< T, numMonomials( N, M ) >& out,
 
     // h = sqrt(1 + a²)
     std::array< T, S > asq{}, opf{}, h{};
-    cauchyProduct< T, N, M >( asq, a, a );
+    cauchySelfProduct< T, N, M >( asq, a );
     opf = {};
     opf[0] = T{ 1 };
     addInPlace< T, S >( opf, asq );
@@ -399,7 +399,7 @@ constexpr void seriesAcosh( std::array< T, numMonomials( N, M ) >& out,
 
     // h = sqrt(a² - 1)
     std::array< T, S > asq{}, amf{}, h{};
-    cauchyProduct< T, N, M >( asq, a, a );
+    cauchySelfProduct< T, N, M >( asq, a );
     amf = asq;
     amf[0] -= T{ 1 };
     seriesSqrt< T, N, M >( h, amf );
@@ -444,7 +444,7 @@ constexpr void seriesAtanh( std::array< T, numMonomials( N, M ) >& out,
 
     // h = 1 - a²
     std::array< T, S > h{};
-    cauchyProduct< T, N, M >( h, a, a );
+    cauchySelfProduct< T, N, M >( h, a );
     negateInPlace< T, S >( h );
     h[0] += T{ 1 };
 
