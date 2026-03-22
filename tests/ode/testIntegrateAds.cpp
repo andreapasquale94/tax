@@ -11,7 +11,7 @@
 using namespace tax;
 
 // =============================================================================
-// step_da: verify Taylor coefficients for a single DA step
+// stepDa: verify Taylor coefficients for a single DA step
 // =============================================================================
 
 // dx/dt = v, dv/dt = -x  (harmonic oscillator)
@@ -25,14 +25,14 @@ TEST( IntegrateAds, StepDaHarmonicOscillator )
     using DA = TEn< P, D >;
 
     Box< double, D > box{ { 1.0, 0.0 }, { 0.1, 0.1 } };
-    auto x0 = ode::make_da_state< P, D >( box );
+    auto x0 = ode::makeDaState< P, D >( box );
 
     auto f = []( auto& dx, const auto& x, [[maybe_unused]] const auto& t ) {
         dx( 0 ) = x( 1 );
         dx( 1 ) = -x( 0 );
     };
 
-    auto [p, h] = ode::step_da< N, P, D >( f, x0, 0.0, 1e-16 );
+    auto [p, h] = ode::stepDa< N, P, D >( f, x0, 0.0, 1e-16 );
 
     EXPECT_GT( h, 0.0 );
 
@@ -52,7 +52,7 @@ TEST( IntegrateAds, StepDaHarmonicOscillator )
 }
 
 // =============================================================================
-// propagate_box: linear ODE, P=1 should give exact flow map
+// propagateBox: linear ODE, P=1 should give exact flow map
 // =============================================================================
 
 // Harmonic oscillator: solution is linear in initial conditions.
@@ -74,7 +74,7 @@ TEST( IntegrateAds, PropagateBoxLinearHarmonicOscillator )
     };
 
     const double tmax = std::numbers::pi / 2.0;
-    auto xf = ode::propagate_box< N, P, D >( f, box, 0.0, tmax, 1e-16 );
+    auto xf = ode::propagateBox< N, P, D >( f, box, 0.0, tmax, 1e-16 );
 
     // At center (δ=0): x(π/2) = cos(π/2) = 0, v(π/2) = -sin(π/2) = -1
     EXPECT_NEAR( xf( 0 ).value(), 0.0, 1e-10 );
@@ -94,7 +94,7 @@ TEST( IntegrateAds, PropagateBoxLinearHarmonicOscillator )
 }
 
 // =============================================================================
-// propagate_box: verify point evaluation matches direct integration
+// propagateBox: verify point evaluation matches direct integration
 // =============================================================================
 
 TEST( IntegrateAds, PropagateBoxPointEvaluation )
@@ -113,7 +113,7 @@ TEST( IntegrateAds, PropagateBoxPointEvaluation )
     };
 
     const double tmax = 1.0;
-    auto xf_da = ode::propagate_box< N, P, D >( f, box, 0.0, tmax, 1e-16 );
+    auto xf_da = ode::propagateBox< N, P, D >( f, box, 0.0, tmax, 1e-16 );
 
     // Evaluate at δ = (0.5, -0.3) → x0 = 1.05, v0 = -0.03
     DA::Input delta{ 0.5, -0.3 };
@@ -131,7 +131,7 @@ TEST( IntegrateAds, PropagateBoxPointEvaluation )
 }
 
 // =============================================================================
-// integrate_ads: no splitting needed for a linear system
+// integrateAds: no splitting needed for a linear system
 // =============================================================================
 
 TEST( IntegrateAds, NoSplitLinearSystem )
@@ -147,15 +147,15 @@ TEST( IntegrateAds, NoSplitLinearSystem )
         dx( 1 ) = -x( 0 );
     };
 
-    auto tree = ode::integrate_ads< N, P >( f, box, 0.0, 1.0, 1e-16, 1e-6 );
+    auto tree = ode::integrateAds< N, P >( f, box, 0.0, 1.0, 1e-16, 1e-6 );
 
     // For a linear system, a single subdomain with P>=1 should suffice.
-    EXPECT_EQ( tree.num_done(), 1 );
+    EXPECT_EQ( tree.numDone(), 1 );
     EXPECT_TRUE( tree.empty() );
 }
 
 // =============================================================================
-// integrate_ads: nonlinear ODE triggers splitting
+// integrateAds: nonlinear ODE triggers splitting
 // =============================================================================
 
 // Duffing-like oscillator: dv/dt = -x - x^3  (cubic nonlinearity)
@@ -173,15 +173,15 @@ TEST( IntegrateAds, SplitsNonlinearODE )
         dx( 1 ) = -x( 0 ) - x( 0 ) * x( 0 ) * x( 0 );
     };
 
-    auto tree = ode::integrate_ads< N, P >( f, box, 0.0, 3.0, 1e-12, 1e-4, 6 );
+    auto tree = ode::integrateAds< N, P >( f, box, 0.0, 3.0, 1e-12, 1e-4, 6 );
 
     // With a strong nonlinearity and large domain, ADS should split.
-    EXPECT_GT( tree.num_done(), 1 );
+    EXPECT_GT( tree.numDone(), 1 );
     EXPECT_TRUE( tree.empty() );
 }
 
 // =============================================================================
-// integrate_ads: point accuracy across subdomains
+// integrateAds: point accuracy across subdomains
 // =============================================================================
 
 TEST( IntegrateAds, PointAccuracyAcrossSubdomains )
@@ -198,7 +198,7 @@ TEST( IntegrateAds, PointAccuracyAcrossSubdomains )
     };
 
     const double tmax = 2.0;
-    auto tree = ode::integrate_ads< N, P >( f_rhs, box, 0.0, tmax, 1e-12, 1e-4, 8 );
+    auto tree = ode::integrateAds< N, P >( f_rhs, box, 0.0, tmax, 1e-12, 1e-4, 8 );
 
     // Test a few sample points by comparing ADS result to direct integration.
     const std::array< std::array< double, 2 >, 3 > test_points = {
@@ -211,7 +211,7 @@ TEST( IntegrateAds, PointAccuracyAcrossSubdomains )
         // Normalise to δ coordinates.
         std::array< double, D > delta;
         for ( int k = 0; k < D; ++k )
-            delta[k] = ( pt[k] - box.center[k] ) / box.half_width[k];
+            delta[k] = ( pt[k] - box.center[k] ) / box.halfWidth[k];
 
         // Check it's within the domain.
         bool in_domain = true;
@@ -220,14 +220,14 @@ TEST( IntegrateAds, PointAccuracyAcrossSubdomains )
         ASSERT_TRUE( in_domain );
 
         // Find the leaf in the ADS tree.
-        int idx = tree.find_leaf( { pt[0], pt[1] } );
+        int idx = tree.findLeaf( { pt[0], pt[1] } );
         ASSERT_GE( idx, 0 );
 
         const auto& leaf = tree.node( idx ).leaf();
         // Normalise to the leaf's local box.
         std::array< double, D > local_delta;
         for ( int k = 0; k < D; ++k )
-            local_delta[k] = ( pt[k] - leaf.box.center[k] ) / leaf.box.half_width[k];
+            local_delta[k] = ( pt[k] - leaf.box.center[k] ) / leaf.box.halfWidth[k];
 
         double x_ads = leaf.tte.state( 0 ).eval( local_delta );
         double v_ads = leaf.tte.state( 1 ).eval( local_delta );
@@ -274,10 +274,10 @@ TEST( IntegrateAds, KeplerOrbitSplits )
     };
 
     const double tmax = std::numbers::pi;  // half orbit
-    auto tree = ode::integrate_ads< N, P >( f, box, 0.0, tmax, 1e-14, 1e-3, 4 );
+    auto tree = ode::integrateAds< N, P >( f, box, 0.0, tmax, 1e-14, 1e-3, 4 );
 
     EXPECT_TRUE( tree.empty() );
-    EXPECT_GE( tree.num_done(), 1 );
+    EXPECT_GE( tree.numDone(), 1 );
 
     // Evaluate at the center point and compare with direct integration.
     Eigen::Vector< double, D > x0c;
@@ -286,9 +286,9 @@ TEST( IntegrateAds, KeplerOrbitSplits )
     auto sol_ref = ode::integrate< N >( f, x0c, 0.0, tmax, 1e-16 );
 
     // Find the leaf containing the center — search done leaves directly
-    // to handle boundary cases where find_leaf may pick a neighbour.
+    // to handle boundary cases where findLeaf may pick a neighbour.
     bool found = false;
-    for ( int di : tree.done_leaves() )
+    for ( int di : tree.doneLeaves() )
     {
         const auto& leaf = tree.node( di ).leaf();
         if ( !leaf.box.contains( box.center ) ) continue;
@@ -296,7 +296,7 @@ TEST( IntegrateAds, KeplerOrbitSplits )
         std::array< double, D > local_delta{};
         for ( int k = 0; k < D; ++k )
             local_delta[k] =
-                ( box.center[k] - leaf.box.center[k] ) / leaf.box.half_width[k];
+                ( box.center[k] - leaf.box.center[k] ) / leaf.box.halfWidth[k];
 
         for ( int k = 0; k < D; ++k )
         {

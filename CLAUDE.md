@@ -293,10 +293,10 @@ Propagate a set of initial conditions with automatic domain splitting:
 // Propagate an initial-condition box with ADS
 tax::Box<double, 2> ic_box{
     .center = {1.0, 0.0},
-    .half_width = {0.1, 0.1}
+    .halfWidth = {0.1, 0.1}
 };
 
-auto tree = tax::ode::integrate_ads<25, 6>(f, ic_box, 0.0, 10.0,
+auto tree = tax::ode::integrateAds<25, 6>(f, ic_box, 0.0, 10.0,
     1e-16,   // step tolerance
     1e-3,    // ADS splitting tolerance
     30,      // max split depth
@@ -304,7 +304,7 @@ auto tree = tax::ode::integrate_ads<25, 6>(f, ic_box, 0.0, 10.0,
 );
 
 // Iterate results
-for (int i : tree.done_leaves()) {
+for (int i : tree.doneLeaves()) {
     const auto& leaf = tree.node(i).leaf();
     // leaf.tte.state — DA polynomial flow map
     // leaf.box       — subdomain of initial conditions
@@ -320,7 +320,7 @@ for (int i : tree.done_leaves()) {
 | `stepsize.hpp` | Jorba-Zou adaptive step-size control |
 | `integrate.hpp` | Full integration loop with dense output |
 | `solution.hpp` | `TaylorSolution` container with `operator()` dense output |
-| `integrate_ads.hpp` | ADS-integrated ODE propagation with `FlowMap` |
+| `integrate_ads.hpp` | ADS-integrated ODE propagation (`integrateAds`, `propagateBox`, `stepDa`, `makeDaState`) |
 
 ---
 
@@ -336,19 +336,19 @@ Located in `include/tax/ads/`. Implements the algorithm from Wittig et al. (2015
 // Approximate f(x) = exp(-x^2) on [-3, 3]
 auto f = [](const auto& x) { return exp(-x * x); };
 
-tax::Box<double, 1> domain{.center = {0.0}, .half_width = {3.0}};
-auto runner = tax::make_ads_runner<10, 1>(f, 1e-5);
+tax::Box<double, 1> domain{.center = {0.0}, .halfWidth = {3.0}};
+auto runner = tax::makeAdsRunner<10, 1>(f, 1e-5);
 auto tree = runner.run(domain);
 
 // Each done leaf contains a polynomial valid on its subdomain
-for (int i : tree.done_leaves()) {
+for (int i : tree.doneLeaves()) {
     const auto& leaf = tree.node(i).leaf();
     // leaf.tte — polynomial approximation
     // leaf.box — subdomain
 }
 
 // Point lookup: O(depth) binary tree walk
-int idx = tree.find_leaf({1.5});
+int idx = tree.findLeaf({1.5});
 ```
 
 ### Key Files in `ads/`
@@ -375,10 +375,10 @@ int idx = tree.find_leaf({1.5});
 
 | Category | Convention | Examples |
 |----------|-----------|---------|
-| Types/Classes | `PascalCase` | `TruncatedTaylorExpansionT`, `MultiIndex`, `AdsTree`, `TaylorSolution` |
+| Types/Classes | `PascalCase` | `TruncatedTaylorExpansionT`, `MultiIndex`, `AdsTree`, `AdsRunner`, `AdsNode`, `FlowMap`, `TaylorSolution` |
 | Template params | `UPPERCASE` or short | `T`, `N`, `M`, `P`, `D`, `Derived` |
-| Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()`, `deriv()`, `integ()` |
-| Local variables | `snake_case` | `n_coeff`, `dx`, `half_width`, `split_dim` |
+| Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()`, `deriv()`, `integ()`, `findLeaf()`, `addLeaf()`, `markDone()`, `integrateAds()`, `makeAdsRunner()` |
+| Local variables | `snake_case` | `n_coeff`, `dx`, `half_width` |
 | Namespaces | `lowercase` | `tax`, `tax::detail`, `tax::ode` |
 | Op tags | `PascalCase` with prefix | `OpAdd`, `OpSub`, `OpMul` |
 | Type aliases | Short uppercase | `TE<N>`, `TEn<N,M>` |
@@ -391,7 +391,7 @@ int idx = tree.find_leaf({1.5});
 - **Concepts:** Use `tax::Scalar` concept (wraps `std::floating_point`) for scalar template parameters
 - **`if constexpr`:** Used for compile-time branching between univariate (M=1) and multivariate cases
 - **`[[nodiscard]]`:** Applied to accessor methods, computation results, and expensive operations
-- **Internal details in `tax::detail`:** Do not expose implementation internals in `tax::`; ODE internals use `tax::ode::detail_da`
+- **Internal details in `tax::detail`:** Do not expose implementation internals in `tax::`; ODE internals use `tax::ode::detail`
 
 ### Formatting
 

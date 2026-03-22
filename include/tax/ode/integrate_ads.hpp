@@ -43,12 +43,12 @@ struct FlowMap
 // Internal helpers for DA-valued time-Taylor coefficients
 // =============================================================================
 
-namespace detail_da
+namespace detail
 {
 
 /// @brief Infinity norm of a DA polynomial (max absolute coefficient).
 template < typename T, int P, int M >
-[[nodiscard]] double inf_norm( const TruncatedTaylorExpansionT< T, P, M >& x ) noexcept
+[[nodiscard]] double infNorm( const TruncatedTaylorExpansionT< T, P, M >& x ) noexcept
 {
     double n = 0.0;
     for ( std::size_t i = 0; i < TruncatedTaylorExpansionT< T, P, M >::nCoefficients; ++i )
@@ -60,18 +60,18 @@ template < typename T, int P, int M >
 /// Generalises the Jorba–Zou (2005) criterion to polynomial-valued
 /// coefficients by replacing the scalar absolute value with the infinity norm.
 template < int P, int M, int N >
-[[nodiscard]] double stepsize_da(
+[[nodiscard]] double stepsizeDa(
     const TruncatedTaylorExpansionT< TEn< P, M >, N, 1 >& x, double abstol ) noexcept
 {
     double h = std::numeric_limits< double >::infinity();
 
     if constexpr ( N >= 2 )
     {
-        const double c = inf_norm( x[N - 1] );
+        const double c = infNorm( x[N - 1] );
         if ( c > 0.0 ) h = std::min( h, std::pow( abstol / c, 1.0 / ( N - 1 ) ) );
     }
     {
-        const double c = inf_norm( x[N] );
+        const double c = infNorm( x[N] );
         if ( c > 0.0 ) h = std::min( h, std::pow( abstol / c, 1.0 / N ) );
     }
     return h;
@@ -79,13 +79,13 @@ template < int P, int M, int N >
 
 /// @brief Vector version: minimum step size across all state components.
 template < int P, int M, int N, int D >
-[[nodiscard]] double stepsize_da(
+[[nodiscard]] double stepsizeDa(
     const Eigen::Matrix< TruncatedTaylorExpansionT< TEn< P, M >, N, 1 >, D, 1 >& x,
     double abstol ) noexcept
 {
     double h = std::numeric_limits< double >::infinity();
     for ( Eigen::Index i = 0; i < x.size(); ++i )
-        h = std::min( h, stepsize_da< P, M, N >( x( i ), abstol ) );
+        h = std::min( h, stepsizeDa< P, M, N >( x( i ), abstol ) );
     return h;
 }
 
@@ -93,7 +93,7 @@ template < int P, int M, int N, int D >
 /// Each coefficient is a DA polynomial; the displacement is a plain double,
 /// so the computation is polynomial-scalar multiply + polynomial addition.
 template < typename DA, int N >
-[[nodiscard]] DA eval_at_scalar(
+[[nodiscard]] DA evalAtScalar(
     const TruncatedTaylorExpansionT< DA, N, 1 >& poly, double dt ) noexcept
 {
     DA result = poly[N];
@@ -107,17 +107,63 @@ template < typename DA, int N >
 
 /// @brief Vector version: evaluate each component at the same scalar dt.
 template < typename DA, int N, int D >
-[[nodiscard]] Eigen::Matrix< DA, D, 1 > eval_at_scalar(
+[[nodiscard]] Eigen::Matrix< DA, D, 1 > evalAtScalar(
     const Eigen::Matrix< TruncatedTaylorExpansionT< DA, N, 1 >, D, 1 >& poly,
     double dt ) noexcept
 {
     Eigen::Matrix< DA, D, 1 > result( poly.size() );
     for ( Eigen::Index i = 0; i < poly.size(); ++i )
-        result( i ) = eval_at_scalar< DA, N >( poly( i ), dt );
+        result( i ) = evalAtScalar< DA, N >( poly( i ), dt );
     return result;
 }
 
-}  // namespace detail_da
+/// @brief Truncation error of a DA state vector.
+///
+/// Returns the infinity norm of all degree-P coefficients across every
+/// component of the state.  Large values indicate that the polynomial
+/// approximation of the flow map is degrading.
+template < int P, int D >
+[[nodiscard]] double truncationError(
+    const Eigen::Matrix< TEn< P, D >, D, 1 >& state ) noexcept
+{
+    double err = 0.0;
+    for ( Eigen::Index i = 0; i < state.size(); ++i )
+    {
+        const auto& poly = state( i );
+        for ( std::size_t j = 0; j < TEn< P, D >::nCoefficients; ++j )
+        {
+            const auto alpha = tax::detail::unflatIndex< D >( j );
+            if ( tax::detail::totalDegree< D >( alpha ) == P )
+                err = std::max( err, std::abs( poly[j] ) );
+        }
+    }
+    return err;
+}
+
+/// @brief Choose the initial-condition variable that contributes most to the
+///        truncation error, following Wittig et al. (2015).
+template < int P, int D >
+[[nodiscard]] int bestSplitDim(
+    const Eigen::Matrix< TEn< P, D >, D, 1 >& state ) noexcept
+{
+    std::array< double, D > scores{};
+    for ( Eigen::Index i = 0; i < state.size(); ++i )
+    {
+        const auto& poly = state( i );
+        for ( std::size_t j = 0; j < TEn< P, D >::nCoefficients; ++j )
+        {
+            const auto alpha = tax::detail::unflatIndex< D >( j );
+            if ( tax::detail::totalDegree< D >( alpha ) == P )
+                for ( int k = 0; k < D; ++k )
+                    if ( alpha[k] > 0 )
+                        scores[k] += std::abs( poly[j] );
+        }
+    }
+    return static_cast< int >(
+        std::max_element( scores.begin(), scores.end() ) - scores.begin() );
+}
+
+}  // namespace detail
 
 // =============================================================================
 // Single Taylor step with DA-valued state
@@ -140,7 +186,7 @@ template < typename DA, int N, int D >
 template < int N, int P, int D, typename F >
 [[nodiscard]] StepResult<
     Eigen::Matrix< TruncatedTaylorExpansionT< TEn< P, D >, N, 1 >, D, 1 >, double >
-step_da( F&& f, const Eigen::Matrix< TEn< P, D >, D, 1 >& x0, double tc, double abstol )
+stepDa( F&& f, const Eigen::Matrix< TEn< P, D >, D, 1 >& x0, double tc, double abstol )
 {
     using DA     = TEn< P, D >;
     using TTE    = TruncatedTaylorExpansionT< DA, N, 1 >;
@@ -173,7 +219,7 @@ step_da( F&& f, const Eigen::Matrix< TEn< P, D >, D, 1 >& x0, double tc, double 
         }
     }
 
-    auto h = detail_da::stepsize_da< P, D, N >( x_da, abstol );
+    auto h = detail::stepsizeDa< P, D, N >( x_da, abstol );
     return { std::move( x_da ), h };
 }
 
@@ -184,12 +230,12 @@ step_da( F&& f, const Eigen::Matrix< TEn< P, D >, D, 1 >& x0, double tc, double 
 /**
  * @brief Create DA-expanded initial state from a box of initial conditions.
  *
- * Component `i` is the polynomial `center[i] + half_width[i] * δ_i`
+ * Component `i` is the polynomial `center[i] + halfWidth[i] * δ_i`
  * where δ ∈ [−1, 1]^D is the normalised deviation.
  */
 template < int P, int D >
 [[nodiscard]] Eigen::Matrix< TEn< P, D >, D, 1 >
-make_da_state( const Box< double, D >& box )
+makeDaState( const Box< double, D >& box )
 {
     using DA = TEn< P, D >;
 
@@ -202,7 +248,7 @@ make_da_state( const Box< double, D >& box )
         {
             MultiIndex< D > ei{};
             ei[i] = 1;
-            c[tax::detail::flatIndex< D >( ei )] = box.half_width[i];
+            c[tax::detail::flatIndex< D >( ei )] = box.halfWidth[i];
         }
         x0( i ) = DA{ c };
     }
@@ -225,10 +271,10 @@ make_da_state( const Box< double, D >& box )
  */
 template < int N, int P, int D, typename F >
 [[nodiscard]] Eigen::Matrix< TEn< P, D >, D, 1 >
-propagate_box( F&& f, const Box< double, D >& box, double t0, double tmax,
-               double abstol, int maxsteps = 500 )
+propagateBox( F&& f, const Box< double, D >& box, double t0, double tmax,
+              double abstol, int maxsteps = 500 )
 {
-    auto xc        = make_da_state< P, D >( box );
+    auto xc        = makeDaState< P, D >( box );
     double tc      = t0;
     const double s = tmax >= t0 ? 1.0 : -1.0;
 
@@ -236,69 +282,15 @@ propagate_box( F&& f, const Box< double, D >& box, double t0, double tmax,
     {
         if ( s * ( tmax - tc ) <= 0.0 ) break;
 
-        auto [p, h] = step_da< N, P, D >( f, xc, tc, abstol );
+        auto [p, h] = stepDa< N, P, D >( f, xc, tc, abstol );
         if ( h <= 0.0 ) break;
 
         const double dt = s * std::min( h, std::abs( tmax - tc ) );
-        xc = detail_da::eval_at_scalar< TEn< P, D >, N >( p, dt );
+        xc = detail::evalAtScalar< TEn< P, D >, N >( p, dt );
         tc += dt;
     }
 
     return xc;
-}
-
-// =============================================================================
-// Truncation-error estimate and split-dimension selection
-// =============================================================================
-
-/**
- * @brief Truncation error of a DA state vector.
- *
- * Returns the infinity norm of all degree-P coefficients across every
- * component of the state.  Large values indicate that the polynomial
- * approximation of the flow map is degrading.
- */
-template < int P, int D >
-[[nodiscard]] double truncation_error_da(
-    const Eigen::Matrix< TEn< P, D >, D, 1 >& state ) noexcept
-{
-    double err = 0.0;
-    for ( Eigen::Index i = 0; i < state.size(); ++i )
-    {
-        const auto& poly = state( i );
-        for ( std::size_t j = 0; j < TEn< P, D >::nCoefficients; ++j )
-        {
-            const auto alpha = tax::detail::unflatIndex< D >( j );
-            if ( tax::detail::totalDegree< D >( alpha ) == P )
-                err = std::max( err, std::abs( poly[j] ) );
-        }
-    }
-    return err;
-}
-
-/**
- * @brief Choose the initial-condition variable that contributes most to the
- *        truncation error, following Wittig et al. (2015).
- */
-template < int P, int D >
-[[nodiscard]] int best_split_dim_da(
-    const Eigen::Matrix< TEn< P, D >, D, 1 >& state ) noexcept
-{
-    std::array< double, D > scores{};
-    for ( Eigen::Index i = 0; i < state.size(); ++i )
-    {
-        const auto& poly = state( i );
-        for ( std::size_t j = 0; j < TEn< P, D >::nCoefficients; ++j )
-        {
-            const auto alpha = tax::detail::unflatIndex< D >( j );
-            if ( tax::detail::totalDegree< D >( alpha ) == P )
-                for ( int k = 0; k < D; ++k )
-                    if ( alpha[k] > 0 )
-                        scores[k] += std::abs( poly[j] );
-        }
-    }
-    return static_cast< int >(
-        std::max_element( scores.begin(), scores.end() ) - scores.begin() );
 }
 
 // =============================================================================
@@ -328,7 +320,7 @@ template < int P, int D >
  * @return ADS tree whose done leaves contain the piecewise flow map.
  */
 template < int N, int P, typename F, int D >
-[[nodiscard]] AdsTree< FlowMap< P, D > > integrate_ads(
+[[nodiscard]] AdsTree< FlowMap< P, D > > integrateAds(
     F&& f, const Box< double, D >& x0_box, double t0, double tmax,
     double step_tol, double ads_tol, int ads_max_depth = 30, int maxsteps = 500 )
 {
@@ -336,11 +328,11 @@ template < int N, int P, typename F, int D >
     using Tree = AdsTree< FM >;
 
     auto evaluate_box = [&]( const Box< double, D >& box ) -> FM {
-        return FM{ propagate_box< N, P, D >( f, box, t0, tmax, step_tol, maxsteps ) };
+        return FM{ propagateBox< N, P, D >( f, box, t0, tmax, step_tol, maxsteps ) };
     };
 
     Tree tree;
-    tree.add_leaf( evaluate_box( x0_box ), x0_box );
+    tree.addLeaf( evaluate_box( x0_box ), x0_box );
 
     std::vector< int > depth( 1, 0 );
 
@@ -348,16 +340,16 @@ template < int N, int P, typename F, int D >
     {
         const int    idx = tree.pop();
         const auto&  lf  = tree.node( idx ).leaf();
-        const double err = truncation_error_da< P, D >( lf.tte.state );
+        const double err = detail::truncationError< P, D >( lf.tte.state );
         const int    d   = depth[idx];
 
         if ( err < ads_tol || d >= ads_max_depth )
         {
-            tree.mark_done( idx );
+            tree.markDone( idx );
         }
         else
         {
-            const int dim = best_split_dim_da< P, D >( lf.tte.state );
+            const int dim = detail::bestSplitDim< P, D >( lf.tte.state );
             auto [lb, rb] = lf.box.split( dim );
             auto lt        = evaluate_box( lb );
             auto rt        = evaluate_box( rb );

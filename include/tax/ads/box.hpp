@@ -11,7 +11,7 @@ namespace tax
  * @brief Axis-aligned hyperrectangle in M dimensions.
  *
  * Represented as the Cartesian product of closed intervals
- *   [center[i] - half_width[i],  center[i] + half_width[i]]
+ *   [center[i] - halfWidth[i],  center[i] + halfWidth[i]]
  * for each dimension i.
  *
  * @tparam T  Scalar type.
@@ -23,14 +23,14 @@ struct Box
     static_assert( M >= 1, "Box dimension must be at least 1" );
 
     std::array< T, M > center{};
-    std::array< T, M > half_width{};
+    std::array< T, M > halfWidth{};
 
     /// Returns true if @p pt lies inside (or on the boundary of) this box.
     [[nodiscard]] bool contains( const std::array< T, M >& pt ) const noexcept
     {
         using std::abs;
         for ( int i = 0; i < M; ++i )
-            if ( abs( pt[i] - center[i] ) > half_width[i] )
+            if ( abs( pt[i] - center[i] ) > halfWidth[i] )
                 return false;
         return true;
     }
@@ -45,16 +45,16 @@ struct Box
     {
         Box left  = *this;
         Box right = *this;
-        const T hw        = half_width[dim] * T{ 0.5 };
-        left.half_width[dim]  = hw;
-        right.half_width[dim] = hw;
+        const T hw         = halfWidth[dim] * T{ 0.5 };
+        left.halfWidth[dim]  = hw;
+        right.halfWidth[dim] = hw;
         left.center[dim]  -= hw;
         right.center[dim] += hw;
         return { left, right };
     }
 
     /// Returns the split boundary value for @p dim (i.e. center[dim]).
-    [[nodiscard]] T split_value( int dim ) const noexcept { return center[dim]; }
+    [[nodiscard]] T splitValue( int dim ) const noexcept { return center[dim]; }
 };
 
 }  // namespace tax

@@ -31,10 +31,10 @@ static auto gaussian = []( const auto& x ) { return exp( -x * x ); };
 // Save the ADS result to a CSV file for visualisation.
 //
 // Format (one row per done leaf):
-//   center, half_width, c0, c1, ..., c10
+//   center, halfWidth, c0, c1, ..., c10
 //
 // The polynomial approximates f(x) as:
-//   f(x) ≈ sum_{k=0}^{N} c_k * delta^k,   delta = (x - center) / half_width
+//   f(x) ≈ sum_{k=0}^{N} c_k * delta^k,   delta = (x - center) / halfWidth
 // ---------------------------------------------------------------------------
 static void save_csv( const Tree& tree, const std::string& path )
 {
@@ -46,22 +46,22 @@ static void save_csv( const Tree& tree, const std::string& path )
     }
 
     // Header
-    out << "center,half_width";
+    out << "center,halfWidth";
     for ( int i = 0; i <= N; ++i )
         out << ",c" << i;
     out << "\n";
 
     // One row per subdomain
-    for ( int idx : tree.done_leaves() )
+    for ( int idx : tree.doneLeaves() )
     {
         const auto& lf = tree.node( idx ).leaf();
-        out << lf.box.center[0] << "," << lf.box.half_width[0];
+        out << lf.box.center[0] << "," << lf.box.halfWidth[0];
         for ( std::size_t i = 0; i < TTE1::nCoefficients; ++i )
             out << "," << lf.tte[i];
         out << "\n";
     }
 
-    std::cout << "[ADS] Written " << tree.num_done() << " subdomains to " << path << "\n";
+    std::cout << "[ADS] Written " << tree.numDone() << " subdomains to " << path << "\n";
 }
 
 // ---------------------------------------------------------------------------
@@ -70,20 +70,20 @@ static void save_csv( const Tree& tree, const std::string& path )
 
 TEST( AdsGaussian, SplitsIntoMultipleSubdomains )
 {
-    AdsRunner< N, M, decltype( gaussian ) > runner( gaussian, TOL, /*max_depth=*/60 );
+    AdsRunner< N, M, decltype( gaussian ) > runner( gaussian, TOL, /*maxDepth=*/60 );
     auto tree = runner.run( Box< double, M >{ { 0.0 }, { 3.0 } } );
 
     // The initial domain [-3,3] is too wide for a 10th-order polynomial to
     // achieve 1e-5 accuracy, so the runner must have split it.
-    EXPECT_GT( tree.num_done(), 1 );
+    EXPECT_GT( tree.numDone(), 1 );
 
     // All active leaves should be empty (propagation finished).
-    EXPECT_EQ( tree.num_active(), 0 );
+    EXPECT_EQ( tree.numActive(), 0 );
 }
 
 TEST( AdsGaussian, PointAccuracy )
 {
-    AdsRunner< N, M, decltype( gaussian ) > runner( gaussian, TOL, /*max_depth=*/60 );
+    AdsRunner< N, M, decltype( gaussian ) > runner( gaussian, TOL, /*maxDepth=*/60 );
     auto tree = runner.run( Box< double, M >{ { 0.0 }, { 3.0 } } );
 
     // For each test point, find the containing subdomain and evaluate the
@@ -92,12 +92,12 @@ TEST( AdsGaussian, PointAccuracy )
 
     for ( double x : { -2.9, -2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0, 2.9 } )
     {
-        const int idx = tree.find_leaf( { x } );
+        const int idx = tree.findLeaf( { x } );
         ASSERT_GE( idx, 0 ) << "No leaf found for x = " << x;
 
         const auto& lf    = tree.node( idx ).leaf();
         const double c    = lf.box.center[0];
-        const double h    = lf.box.half_width[0];
+        const double h    = lf.box.halfWidth[0];
         const double delta = ( x - c ) / h;  // normalised variable
 
         const double approx = lf.tte.eval( delta );
@@ -110,7 +110,7 @@ TEST( AdsGaussian, PointAccuracy )
 
 TEST( AdsGaussian, SaveCsv )
 {
-    AdsRunner< N, M, decltype( gaussian ) > runner( gaussian, TOL, /*max_depth=*/60 );
+    AdsRunner< N, M, decltype( gaussian ) > runner( gaussian, TOL, /*maxDepth=*/60 );
     auto tree = runner.run( Box< double, M >{ { 0.0 }, { 3.0 } } );
 
     save_csv( tree, "gaussian_ads.csv" );
