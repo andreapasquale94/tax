@@ -15,7 +15,7 @@ using Box2 = tax::Box< double, 2 >;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// Unit box: center={0,0}, half_width={1,1}  →  [-1,1]^2
+/// Unit box: center={0,0}, halfWidth={1,1}  →  [-1,1]^2
 static Box2 unit_box() { return Box2{ { 0.0, 0.0 }, { 1.0, 1.0 } }; }
 
 /// Constant TTE (all non-constant coefficients zero).
@@ -29,53 +29,53 @@ TEST( AdsTree, EmptyOnConstruction )
 {
     Tree t;
     EXPECT_TRUE( t.empty() );
-    EXPECT_EQ( t.num_nodes(), 0 );
-    EXPECT_EQ( t.num_leaves(), 0 );
-    EXPECT_EQ( t.num_done(), 0 );
-    EXPECT_EQ( t.num_active(), 0 );
+    EXPECT_EQ( t.numNodes(), 0 );
+    EXPECT_EQ( t.numLeaves(), 0 );
+    EXPECT_EQ( t.numDone(), 0 );
+    EXPECT_EQ( t.numActive(), 0 );
 }
 
 TEST( AdsTree, AddLeafOneNode )
 {
     Tree t;
-    const int idx = t.add_leaf( const_tte( 1.0 ), unit_box() );
+    const int idx = t.addLeaf( const_tte( 1.0 ), unit_box() );
     EXPECT_EQ( idx, 0 );
     EXPECT_FALSE( t.empty() );
-    EXPECT_EQ( t.num_nodes(), 1 );
-    EXPECT_EQ( t.num_leaves(), 1 );
-    EXPECT_EQ( t.num_active(), 1 );
-    EXPECT_TRUE( t.node( 0 ).is_leaf() );
-    EXPECT_FALSE( t.node( 0 ).is_internal() );
+    EXPECT_EQ( t.numNodes(), 1 );
+    EXPECT_EQ( t.numLeaves(), 1 );
+    EXPECT_EQ( t.numActive(), 1 );
+    EXPECT_TRUE( t.node( 0 ).isLeaf() );
+    EXPECT_FALSE( t.node( 0 ).isInternal() );
 }
 
 // ===========================================================================
-// Work-queue: pop / mark_done
+// Work-queue: pop / markDone
 // ===========================================================================
 
 TEST( AdsTree, PopReturnsFront )
 {
     Tree t;
-    t.add_leaf( const_tte( 1.0 ), unit_box() );
+    t.addLeaf( const_tte( 1.0 ), unit_box() );
     EXPECT_EQ( t.front(), 0 );
     const int idx = t.pop();
     EXPECT_EQ( idx, 0 );
     EXPECT_TRUE( t.empty() );
     // The node still lives in the arena.
-    EXPECT_EQ( t.num_nodes(), 1 );
+    EXPECT_EQ( t.numNodes(), 1 );
 }
 
 TEST( AdsTree, MarkDone )
 {
     Tree t;
-    t.add_leaf( const_tte( 2.0 ), unit_box() );
+    t.addLeaf( const_tte( 2.0 ), unit_box() );
     const int idx = t.pop();
-    t.mark_done( idx );
+    t.markDone( idx );
 
-    EXPECT_EQ( t.num_done(), 1 );
-    EXPECT_EQ( t.done_leaves().front(), 0 );
+    EXPECT_EQ( t.numDone(), 1 );
+    EXPECT_EQ( t.doneLeaves().front(), 0 );
     EXPECT_TRUE( t.node( 0 ).leaf().done );
-    // Leaf remains in leaf_list_.
-    EXPECT_EQ( t.num_leaves(), 1 );
+    // Leaf remains in leafList_.
+    EXPECT_EQ( t.numLeaves(), 1 );
 }
 
 // ===========================================================================
@@ -85,7 +85,7 @@ TEST( AdsTree, MarkDone )
 TEST( AdsTree, SplitCreatesChildren )
 {
     Tree t;
-    t.add_leaf( const_tte( 1.0 ), unit_box() );
+    t.addLeaf( const_tte( 1.0 ), unit_box() );
     const int idx         = t.pop();
     const auto [li, ri] = t.split( idx, 0, const_tte( 1.0 ), const_tte( 1.0 ) );
 
@@ -93,64 +93,64 @@ TEST( AdsTree, SplitCreatesChildren )
     EXPECT_EQ( ri, 2 );
 
     // Root converted to Internal.
-    EXPECT_TRUE( t.node( 0 ).is_internal() );
-    EXPECT_EQ( t.node( 0 ).internal().split_dim, 0 );
+    EXPECT_TRUE( t.node( 0 ).isInternal() );
+    EXPECT_EQ( t.node( 0 ).internal().splitDim, 0 );
 
     // Children are Leaves.
-    EXPECT_TRUE( t.node( 1 ).is_leaf() );
-    EXPECT_TRUE( t.node( 2 ).is_leaf() );
-    EXPECT_EQ( t.node( 1 ).parent_idx, 0 );
-    EXPECT_EQ( t.node( 2 ).parent_idx, 0 );
+    EXPECT_TRUE( t.node( 1 ).isLeaf() );
+    EXPECT_TRUE( t.node( 2 ).isLeaf() );
+    EXPECT_EQ( t.node( 1 ).parentIdx, 0 );
+    EXPECT_EQ( t.node( 2 ).parentIdx, 0 );
 
-    EXPECT_EQ( t.num_nodes(), 3 );
-    EXPECT_EQ( t.num_leaves(), 2 );   // leaf_list_ = {1, 2}
-    EXPECT_EQ( t.num_active(), 2 );   // both children enqueued
+    EXPECT_EQ( t.numNodes(), 3 );
+    EXPECT_EQ( t.numLeaves(), 2 );   // leafList_ = {1, 2}
+    EXPECT_EQ( t.numActive(), 2 );   // both children enqueued
 }
 
 TEST( AdsTree, SplitBoxGeometry )
 {
     Tree t;
-    // Box: center={0,0}, half_width={1,1}  →  x ∈ [-1,1], y ∈ [-1,1]
-    t.add_leaf( const_tte( 0.0 ), unit_box() );
+    // Box: center={0,0}, halfWidth={1,1}  →  x ∈ [-1,1], y ∈ [-1,1]
+    t.addLeaf( const_tte( 0.0 ), unit_box() );
     const int idx         = t.pop();
     const auto [li, ri] = t.split( idx, 0, const_tte( 0.0 ), const_tte( 0.0 ) );
 
     const auto& lb = t.node( li ).leaf().box;
     const auto& rb = t.node( ri ).leaf().box;
 
-    // Left:  center=(-0.5, 0), half_width=(0.5, 1)  →  x ∈ [-1, 0]
-    EXPECT_DOUBLE_EQ( lb.center[0],     -0.5 );
-    EXPECT_DOUBLE_EQ( lb.center[1],      0.0 );
-    EXPECT_DOUBLE_EQ( lb.half_width[0],  0.5 );
-    EXPECT_DOUBLE_EQ( lb.half_width[1],  1.0 );
+    // Left:  center=(-0.5, 0), halfWidth=(0.5, 1)  →  x ∈ [-1, 0]
+    EXPECT_DOUBLE_EQ( lb.center[0],    -0.5 );
+    EXPECT_DOUBLE_EQ( lb.center[1],     0.0 );
+    EXPECT_DOUBLE_EQ( lb.halfWidth[0],  0.5 );
+    EXPECT_DOUBLE_EQ( lb.halfWidth[1],  1.0 );
 
-    // Right: center=(+0.5, 0), half_width=(0.5, 1)  →  x ∈ [0, 1]
-    EXPECT_DOUBLE_EQ( rb.center[0],     +0.5 );
-    EXPECT_DOUBLE_EQ( rb.center[1],      0.0 );
-    EXPECT_DOUBLE_EQ( rb.half_width[0],  0.5 );
-    EXPECT_DOUBLE_EQ( rb.half_width[1],  1.0 );
+    // Right: center=(+0.5, 0), halfWidth=(0.5, 1)  →  x ∈ [0, 1]
+    EXPECT_DOUBLE_EQ( rb.center[0],    +0.5 );
+    EXPECT_DOUBLE_EQ( rb.center[1],     0.0 );
+    EXPECT_DOUBLE_EQ( rb.halfWidth[0],  0.5 );
+    EXPECT_DOUBLE_EQ( rb.halfWidth[1],  1.0 );
 }
 
 TEST( AdsTree, SplitInternalSplitValue )
 {
     Tree t;
-    t.add_leaf( const_tte( 0.0 ), unit_box() );
+    t.addLeaf( const_tte( 0.0 ), unit_box() );
     const int idx = t.pop();
     t.split( idx, 1, const_tte( 0.0 ), const_tte( 0.0 ) );
 
     // Split was along y (dim 1), boundary at center[1] = 0.
-    EXPECT_EQ( t.node( idx ).internal().split_dim, 1 );
-    EXPECT_DOUBLE_EQ( t.node( idx ).internal().split_value, 0.0 );
+    EXPECT_EQ( t.node( idx ).internal().splitDim, 1 );
+    EXPECT_DOUBLE_EQ( t.node( idx ).internal().splitValue, 0.0 );
 }
 
 // ===========================================================================
-// leaf_list_ consistency
+// leafList_ consistency
 // ===========================================================================
 
 TEST( AdsTree, LeafListAfterTwoSplits )
 {
     Tree t;
-    t.add_leaf( const_tte( 0.0 ), unit_box() );
+    t.addLeaf( const_tte( 0.0 ), unit_box() );
 
     const int root      = t.pop();
     const auto [l, r] = t.split( root, 0, const_tte( 0.0 ), const_tte( 0.0 ) );
@@ -163,7 +163,7 @@ TEST( AdsTree, LeafListAfterTwoSplits )
     t.pop();  // pop lr
 
     // Current leaves: {r, ll, lr}  (root and l are now internal)
-    auto span = t.leaf_list();
+    auto span = t.leafList();
     EXPECT_EQ( span.size(), 3u );
 
     std::vector< int > leaves( span.begin(), span.end() );
@@ -175,30 +175,30 @@ TEST( AdsTree, LeafListAfterTwoSplits )
 }
 
 // ===========================================================================
-// Point lookup: find_leaf
+// Point lookup: findLeaf
 // ===========================================================================
 
 TEST( AdsTree, FindLeafSingleSplit )
 {
     Tree t;
-    t.add_leaf( const_tte( 0.0 ), unit_box() );
+    t.addLeaf( const_tte( 0.0 ), unit_box() );
     const int root      = t.pop();
     const auto [li, ri] = t.split( root, 0, const_tte( 10.0 ), const_tte( 20.0 ) );
-    t.pop(); t.pop();  // drain work queue (find_leaf works regardless)
+    t.pop(); t.pop();  // drain work queue (findLeaf works regardless)
 
     // li covers x ∈ [-1, 0]
-    EXPECT_EQ( t.find_leaf( { -0.5, 0.0 } ), li );
-    EXPECT_DOUBLE_EQ( t.node( t.find_leaf( { -0.5, 0.0 } ) ).leaf().tte.value(), 10.0 );
+    EXPECT_EQ( t.findLeaf( { -0.5, 0.0 } ), li );
+    EXPECT_DOUBLE_EQ( t.node( t.findLeaf( { -0.5, 0.0 } ) ).leaf().tte.value(), 10.0 );
 
     // ri covers x ∈ [0, 1]
-    EXPECT_EQ( t.find_leaf( { +0.5, 0.0 } ), ri );
-    EXPECT_DOUBLE_EQ( t.node( t.find_leaf( { +0.5, 0.0 } ) ).leaf().tte.value(), 20.0 );
+    EXPECT_EQ( t.findLeaf( { +0.5, 0.0 } ), ri );
+    EXPECT_DOUBLE_EQ( t.node( t.findLeaf( { +0.5, 0.0 } ) ).leaf().tte.value(), 20.0 );
 }
 
 TEST( AdsTree, FindLeafTwoLevelTree )
 {
     Tree t;
-    t.add_leaf( const_tte( 0.0 ), unit_box() );
+    t.addLeaf( const_tte( 0.0 ), unit_box() );
     // Level 1: split root along x (dim 0).
     const int root      = t.pop();
     const auto [l, r] = t.split( root, 0, const_tte( 0.0 ), const_tte( 0.0 ) );
@@ -208,14 +208,14 @@ TEST( AdsTree, FindLeafTwoLevelTree )
     t.pop(); t.pop(); t.pop();  // drain
 
     // r  covers x ∈ [0,1],   y ∈ [-1,1]
-    EXPECT_EQ( t.find_leaf( { 0.7, 0.3 } ), r );
+    EXPECT_EQ( t.findLeaf( { 0.7, 0.3 } ), r );
 
     // ll covers x ∈ [-1,0],  y ∈ [-1,0]
-    EXPECT_EQ( t.find_leaf( { -0.5, -0.5 } ), ll );
+    EXPECT_EQ( t.findLeaf( { -0.5, -0.5 } ), ll );
     EXPECT_DOUBLE_EQ( t.node( ll ).leaf().tte.value(), 11.0 );
 
     // lr covers x ∈ [-1,0],  y ∈ [0,1]
-    EXPECT_EQ( t.find_leaf( { -0.5, +0.5 } ), lr );
+    EXPECT_EQ( t.findLeaf( { -0.5, +0.5 } ), lr );
     EXPECT_DOUBLE_EQ( t.node( lr ).leaf().tte.value(), 12.0 );
 }
 
@@ -223,10 +223,10 @@ TEST( AdsTree, FindLeafReturnsMinusOneWhenMissing )
 {
     Tree t;
     // Box only covers x ∈ [-1,0], y ∈ [-1,1]
-    t.add_leaf( const_tte( 1.0 ), Box2{ { -0.5, 0.0 }, { 0.5, 1.0 } } );
+    t.addLeaf( const_tte( 1.0 ), Box2{ { -0.5, 0.0 }, { 0.5, 1.0 } } );
 
     // Point outside the box.
-    EXPECT_EQ( t.find_leaf( { 0.5, 0.0 } ), -1 );
+    EXPECT_EQ( t.findLeaf( { 0.5, 0.0 } ), -1 );
 }
 
 // ===========================================================================
@@ -240,12 +240,12 @@ TEST( AdsTree, MultipleRoots )
     const Box2 left_box{ { -0.5, 0.0 }, { 0.5, 1.0 } };
     const Box2 right_box{ { +0.5, 0.0 }, { 0.5, 1.0 } };
 
-    const int r0 = t.add_leaf( const_tte( 1.0 ), left_box );
-    const int r1 = t.add_leaf( const_tte( 2.0 ), right_box );
+    const int r0 = t.addLeaf( const_tte( 1.0 ), left_box );
+    const int r1 = t.addLeaf( const_tte( 2.0 ), right_box );
     t.pop(); t.pop();  // drain
 
-    EXPECT_EQ( t.find_leaf( { -0.3, 0.5 } ), r0 );
-    EXPECT_EQ( t.find_leaf( { +0.7, 0.5 } ), r1 );
+    EXPECT_EQ( t.findLeaf( { -0.3, 0.5 } ), r0 );
+    EXPECT_EQ( t.findLeaf( { +0.7, 0.5 } ), r1 );
 }
 
 // ===========================================================================
@@ -258,7 +258,7 @@ TEST( AdsTree, PropagationLoop )
     // value.  Starting from 4.0:
     //   4.0 → {2.0, 2.0}  →  {1.0, 1.0, 1.0, 1.0}  →  done (all ≤ 1)
     Tree t;
-    t.add_leaf( const_tte( 4.0 ), unit_box() );
+    t.addLeaf( const_tte( 4.0 ), unit_box() );
 
     while ( !t.empty() )
     {
@@ -271,17 +271,17 @@ TEST( AdsTree, PropagationLoop )
         }
         else
         {
-            t.mark_done( idx );
+            t.markDone( idx );
         }
     }
 
-    EXPECT_EQ( t.num_done(), 4 );
-    for ( int i : t.done_leaves() )
+    EXPECT_EQ( t.numDone(), 4 );
+    for ( int i : t.doneLeaves() )
         EXPECT_LE( t.node( i ).leaf().tte.value(), 1.0 );
 
     // All nodes = 1 (root) + 2 + 4 = 7; internal = 3; leaves = 4.
-    EXPECT_EQ( t.num_nodes(), 7 );
-    EXPECT_EQ( t.num_leaves(), 4 );
+    EXPECT_EQ( t.numNodes(), 7 );
+    EXPECT_EQ( t.numLeaves(), 4 );
 }
 
 TEST( AdsTree, PropagationLoopAlternatingDim )
@@ -289,7 +289,7 @@ TEST( AdsTree, PropagationLoopAlternatingDim )
     // Same as above but split dim alternates: 0, 1, 0, 1, ...
     // Split 8.0 → 4.0 (×2) → 2.0 (×4) → 1.0 (×8): 3 levels deep.
     Tree t;
-    t.add_leaf( const_tte( 8.0 ), unit_box() );
+    t.addLeaf( const_tte( 8.0 ), unit_box() );
 
     int depth = 0;
     while ( !t.empty() )
@@ -305,11 +305,11 @@ TEST( AdsTree, PropagationLoopAlternatingDim )
         }
         else
         {
-            t.mark_done( idx );
+            t.markDone( idx );
         }
     }
 
-    EXPECT_EQ( t.num_done(), 8 );
-    for ( int i : t.done_leaves() )
+    EXPECT_EQ( t.numDone(), 8 );
+    for ( int i : t.doneLeaves() )
         EXPECT_LE( t.node( i ).leaf().tte.value(), 1.0 );
 }

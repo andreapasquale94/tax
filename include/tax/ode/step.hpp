@@ -80,7 +80,7 @@ template < int N, typename F, typename T, int D >
 step( F&& f, const Eigen::Matrix< T, D, 1 >& x0, T tc, T abstol )
 {
     using TTE = TruncatedTaylorExpansionT< T, N, 1 >;
-    using VecDA = Eigen::Matrix< TTE, D, 1 >;
+    using VecTTE = Eigen::Matrix< TTE, D, 1 >;
 
     const Eigen::Index dim = x0.size();
 
@@ -88,14 +88,14 @@ step( F&& f, const Eigen::Matrix< T, D, 1 >& x0, T tc, T abstol )
     t_da[0] = tc;
     if constexpr ( N >= 1 ) t_da[1] = T{ 1 };
 
-    VecDA x_da( dim );
+    VecTTE x_da( dim );
     for ( Eigen::Index i = 0; i < dim; ++i )
     {
         x_da( i ) = TTE{};
         x_da( i )[0] = x0( i );
     }
 
-    VecDA dx( dim );
+    VecTTE dx( dim );
     for ( int k = 0; k < N; ++k )
     {
         f( dx, x_da, t_da );

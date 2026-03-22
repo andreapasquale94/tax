@@ -29,8 +29,8 @@ struct AdsNode
     {
         TTE        tte;
         Box< T, M > box;
-        bool       done       = false;  ///< true once this leaf has been processed
-        int        leaves_pos = -1;     ///< index of this node in AdsTree::leaf_list_
+        bool       done      = false;  ///< true once this leaf has been processed
+        int        leavesPos = -1;     ///< index of this node in AdsTree::leafList_
     };
 
     // -------------------------------------------------------------------------
@@ -38,23 +38,23 @@ struct AdsNode
     // -------------------------------------------------------------------------
     struct Internal
     {
-        int split_dim;    ///< dimension that was split
-        T   split_value;  ///< boundary value (= center[dim] of the former leaf)
-        int left_idx;     ///< arena index of the left  (lower) child
-        int right_idx;    ///< arena index of the right (upper) child
+        int splitDim;    ///< dimension that was split
+        T   splitValue;  ///< boundary value (= center[dim] of the former leaf)
+        int leftIdx;     ///< arena index of the left  (lower) child
+        int rightIdx;    ///< arena index of the right (upper) child
     };
 
     // -------------------------------------------------------------------------
-    int                         parent_idx = -1;  ///< -1 for root nodes
+    int                         parentIdx = -1;  ///< -1 for root nodes
     std::variant< Leaf, Internal > data;
 
     // -- Type queries ---------------------------------------------------------
 
-    [[nodiscard]] bool is_leaf()     const noexcept
+    [[nodiscard]] bool isLeaf()     const noexcept
     {
         return std::holds_alternative< Leaf >( data );
     }
-    [[nodiscard]] bool is_internal() const noexcept
+    [[nodiscard]] bool isInternal() const noexcept
     {
         return std::holds_alternative< Internal >( data );
     }

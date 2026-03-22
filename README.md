@@ -160,12 +160,15 @@ f.eval(dx)           // polynomial evaluated at x₀ + δx
 
 ## Documentation
 
-| Document                                       | Description                                  |
-|------------------------------------------------|----------------------------------------------|
-| [Getting Started](docs/getting_started.md)     | Installation, core concepts, first examples  |
-| [API Reference](docs/api_reference.md)         | Types, factories, accessors, operations      |
-| [Eigen Integration](docs/eigen_integration.md) | Vectors, matrices, tensors, Jacobians        |
-| [Math Operations](docs/math_operations.md)     | Recurrence formulas for every operation      |
+Full documentation is available at [andreapasquale94.github.io/tax](https://andreapasquale94.github.io/tax).
+
+| Module | Description |
+|--------|-------------|
+| [Getting Started](docs/getting_started.md) | Installation and first examples |
+| [Core](docs/core/index.md) | TTE type, expression templates, mathematical functions |
+| [Vector (Eigen)](docs/vector/index.md) | Eigen integration, gradients, Jacobians, Hessians |
+| [Automatic Domain Splitting](docs/ads/index.md) | Adaptive polynomial approximation |
+| [Taylor Integrator](docs/taylor/index.md) | High-order ODE integration with DA flow maps |
 
 ## License
 

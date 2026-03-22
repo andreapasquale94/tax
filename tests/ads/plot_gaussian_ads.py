@@ -6,11 +6,11 @@ Usage (from the build directory after running the testAdsGaussian test):
     python3 <repo>/tests/ads/plot_gaussian_ads.py [gaussian_ads.csv]
 
 The CSV has columns:
-    center, half_width, c0, c1, ..., c10
+    center, halfWidth, c0, c1, ..., c10
 
 Each row describes a subdomain [center-hw, center+hw] and the coefficients
 of the degree-10 Taylor polynomial in the normalised variable
-    delta = (x - center) / half_width,  delta in [-1, 1].
+    delta = (x - center) / halfWidth,  delta in [-1, 1].
 
 So  f(x) ≈ sum_{k=0}^{10} c_k * delta^k  for x in [center-hw, center+hw].
 """
@@ -53,7 +53,7 @@ def read_csv(path):
         reader = csv.DictReader(f)
         for row in reader:
             center     = float(row["center"])
-            half_width = float(row["half_width"])
+            half_width = float(row["halfWidth"])
             # coefficient columns: c0, c1, ..., cN
             coeffs = []
             i = 0

@@ -48,17 +48,17 @@ public:
     /**
      * @param func      Function to approximate (takes M DA variables).
      * @param tolerance Maximum allowed truncation-error norm per subdomain.
-     * @param max_depth Maximum number of bisections from root to any leaf.
+     * @param maxDepth  Maximum number of bisections from root to any leaf.
      */
-    AdsRunner( F func, double tolerance, int max_depth = 30 )
-        : func_( std::move( func ) ), tol_( tolerance ), max_depth_( max_depth )
+    AdsRunner( F func, double tolerance, int maxDepth = 30 )
+        : func_( std::move( func ) ), tol_( tolerance ), maxDepth_( maxDepth )
     {
     }
 
     Tree run( Box< double, M > initial_box )
     {
         Tree tree;
-        tree.add_leaf( evaluate( initial_box ), initial_box );
+        tree.addLeaf( evaluate( initial_box ), initial_box );
 
         // depth[node_idx] = number of splits from the root to that node.
         std::vector< int > depth( 1, 0 );
@@ -66,17 +66,17 @@ public:
         while ( !tree.empty() )
         {
             const int    idx = tree.pop();
-            const double err = truncation_error( tree.node( idx ).leaf().tte );
+            const double err = truncationError( tree.node( idx ).leaf().tte );
             const int    d   = depth[idx];
 
-            if ( err < tol_ || d >= max_depth_ )
+            if ( err < tol_ || d >= maxDepth_ )
             {
-                tree.mark_done( idx );
+                tree.markDone( idx );
             }
             else
             {
                 const auto& box = tree.node( idx ).leaf().box;
-                const int   dim = best_split_dim( tree.node( idx ).leaf().tte );
+                const int   dim = bestSplitDim( tree.node( idx ).leaf().tte );
 
                 auto [lb, rb] = box.split( dim );
                 auto lt       = evaluate( lb );
@@ -96,18 +96,18 @@ public:
 private:
     F      func_;
     double tol_;
-    int    max_depth_;
+    int    maxDepth_;
 
     /**
      * Evaluate func_ on @p box by creating M scaled DA variables:
-     *   x_k = center_k + half_width_k * δ_k,  δ_k ∈ [−1, 1].
+     *   x_k = center_k + halfWidth_k * δ_k,  δ_k ∈ [−1, 1].
      *
      * Each variable is built directly from its coefficient array to avoid any
      * implicit scalar conversion in the expression-template layer.
      */
     TTE evaluate( const Box< double, M >& box )
     {
-        // Build x_k = center[k] + half_width[k]*δ_k for each k.
+        // Build x_k = center[k] + halfWidth[k]*δ_k for each k.
         auto make_var = [&]( std::size_t k ) -> TTE {
             typename TTE::Data c{};
             c[0] = box.center[k];
@@ -115,7 +115,7 @@ private:
             {
                 MultiIndex< M > ek{};
                 ek[k] = 1;
-                c[detail::flatIndex< M >( ek )] = box.half_width[k];
+                c[detail::flatIndex< M >( ek )] = box.halfWidth[k];
             }
             return TTE{ c };
         };
@@ -137,7 +137,7 @@ private:
      * These are the highest-order terms retained in the polynomial; their
      * magnitude indicates how quickly the series is (or is not) converging.
      */
-    static double truncation_error( const TTE& tte )
+    static double truncationError( const TTE& tte ) noexcept
     {
         double err = 0.0;
         for ( std::size_t i = 0; i < TTE::nCoefficients; ++i )
@@ -154,7 +154,7 @@ private:
      * have the largest combined absolute value, i.e. the variable that
      * "most affects" the truncation error (Wittig et al. 2015).
      */
-    static int best_split_dim( const TTE& tte )
+    static int bestSplitDim( const TTE& tte ) noexcept
     {
         std::array< double, M > scores{};
         for ( std::size_t i = 0; i < TTE::nCoefficients; ++i )
@@ -172,9 +172,9 @@ private:
 
 /// Convenience factory — deduces N, M, F from arguments.
 template < int N, int M, typename F >
-AdsRunner< N, M, F > make_ads_runner( F func, double tol, int max_depth = 30 )
+AdsRunner< N, M, F > makeAdsRunner( F func, double tol, int maxDepth = 30 )
 {
-    return AdsRunner< N, M, F >( std::move( func ), tol, max_depth );
+    return AdsRunner< N, M, F >( std::move( func ), tol, maxDepth );
 }
 
 }  // namespace tax
