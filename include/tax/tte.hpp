@@ -4,6 +4,7 @@
 #include <concepts>
 #include <ostream>
 #include <stdexcept>
+#include <tax/basis/basis.hpp>
 #include <tax/expr/base.hpp>
 #include <tax/kernels.hpp>
 #include <tax/utils/enumeration.hpp>
@@ -16,15 +17,20 @@ namespace tax
 {
 
 /**
- * @brief Materialized truncated Taylor polynomial in `M` variables up to order `N`.
+ * @brief Materialized truncated polynomial expansion in `M` variables up to order `N`.
  * @tparam T Scalar coefficient type.
  * @tparam N Maximum total polynomial order.
  * @tparam M Number of variables.
+ * @tparam Basis Polynomial basis tag (default: Taylor/monomial).
  * @details Coefficients are stored in graded-lex order as defined by `flatIndex`.
+ *          Expression template evaluation always operates in the monomial basis internally.
+ *          Non-Taylor bases convert at the boundary (evalTo converts to monomial,
+ *          constructor from expression converts from monomial).
  */
-template < typename T, int N, int M = 1 >
-class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, M >, T, N, M >,
-                                  public ExprLeaf
+template < typename T, int N, int M = 1, typename Basis = Taylor >
+class TruncatedTaylorExpansionT
+    : public Expr< TruncatedTaylorExpansionT< T, N, M, Basis >, T, N, M >,
+      public ExprLeaf
 {
    public:
     static_assert( N >= 0, "DA order must be non-negative" );
@@ -47,12 +53,23 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     /*implicit*/ constexpr TruncatedTaylorExpansionT( T val ) noexcept : c_{} { c_[0] = val; }
 
     /// @brief Materialize a compatible expression in one evaluation pass.
+    /// @details For non-Taylor bases, the expression tree produces monomial coefficients
+    ///          which are then converted to the target basis.
     template < typename Derived >
     /*implicit*/ constexpr TruncatedTaylorExpansionT(
         const Expr< Derived, T, N, M >& expr ) noexcept
         : c_{}
     {
-        expr.self().evalTo( c_ );
+        if constexpr ( std::is_same_v< Basis, Taylor > )
+        {
+            expr.self().evalTo( c_ );
+        }
+        else
+        {
+            Data mono{};
+            expr.self().evalTo( mono );
+            BasisTraits< Basis >::template fromMonomial< T, N, M >( c_, mono );
+        }
     }
 
     // -- Variable factories ---------------------------------------------------
@@ -133,27 +150,51 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     // -- evalTo / addTo / subTo -----------------------------------------------
 
     /**
-     * @brief Copy coefficients into `out`.
-     * @param out Destination coefficient array.
+     * @brief Copy coefficients into `out` (in monomial basis for expression evaluation).
+     * @param out Destination coefficient array (always monomial/Taylor coefficients).
      */
-    constexpr void evalTo( Data& out ) const noexcept { out = c_; }
-
-    /**
-     * @brief Add coefficients into `out`.
-     * @param out Destination updated as `out += coeffs()`.
-     */
-    constexpr void addTo( Data& out ) const noexcept
+    constexpr void evalTo( Data& out ) const noexcept
     {
-        detail::addInPlace< T, nCoefficients >( out, c_ );
+        if constexpr ( std::is_same_v< Basis, Taylor > )
+            out = c_;
+        else
+            BasisTraits< Basis >::template toMonomial< T, N, M >( out, c_ );
     }
 
     /**
-     * @brief Subtract coefficients from `out`.
-     * @param out Destination updated as `out -= coeffs()`.
+     * @brief Add coefficients into `out` (in monomial basis for expression evaluation).
+     * @param out Destination updated as `out += coeffs()` (monomial space).
+     */
+    constexpr void addTo( Data& out ) const noexcept
+    {
+        if constexpr ( std::is_same_v< Basis, Taylor > )
+        {
+            detail::addInPlace< T, nCoefficients >( out, c_ );
+        }
+        else
+        {
+            Data mono{};
+            BasisTraits< Basis >::template toMonomial< T, N, M >( mono, c_ );
+            detail::addInPlace< T, nCoefficients >( out, mono );
+        }
+    }
+
+    /**
+     * @brief Subtract coefficients from `out` (in monomial basis for expression evaluation).
+     * @param out Destination updated as `out -= coeffs()` (monomial space).
      */
     constexpr void subTo( Data& out ) const noexcept
     {
-        detail::subInPlace< T, nCoefficients >( out, c_ );
+        if constexpr ( std::is_same_v< Basis, Taylor > )
+        {
+            detail::subInPlace< T, nCoefficients >( out, c_ );
+        }
+        else
+        {
+            Data mono{};
+            BasisTraits< Basis >::template toMonomial< T, N, M >( mono, c_ );
+            detail::subInPlace< T, nCoefficients >( out, mono );
+        }
     }
 
     // -- Element access -------------------------------------------------------
@@ -202,8 +243,10 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     /**
      * @brief Partial derivative selected by `alpha` at expansion point.
      * @details Returns `coeff(alpha) * prod_i alpha[i]!`.
+     * @note Only available for the Taylor (monomial) basis.
      */
     [[nodiscard]] constexpr T derivative( const MultiIndex< M >& alpha ) const noexcept
+        requires( std::is_same_v< Basis, Taylor > )
     {
         const auto id = detail::flatIndex< M >( alpha );
         const auto factor = f_[id];
@@ -213,9 +256,11 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     /**
      * @brief Partial derivative selected by compile-time multi-index.
      * @tparam Alpha Derivative orders for each variable (size must be `M`).
+     * @note Only available for the Taylor (monomial) basis.
      */
     template < int... Alpha >
     [[nodiscard]] constexpr T derivative() const noexcept
+        requires( std::is_same_v< Basis, Taylor > )
     {
         static_assert( sizeof...( Alpha ) == M,
                        "Derivative multi-index arity must match number of variables" );
@@ -229,8 +274,10 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     /**
      * @brief All partial derivatives in flat monomial order.
      * @details Entry `i` equals `coeff[i] * prod_j alpha_j!` for the monomial at `i`.
+     * @note Only available for the Taylor (monomial) basis.
      */
     [[nodiscard]] constexpr Data derivatives() const noexcept
+        requires( std::is_same_v< Basis, Taylor > )
     {
         Data out{};
         for ( std::size_t i = 0; i < nCoefficients; ++i ) out[i] = c_[i] * f_[i];
@@ -398,33 +445,21 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     /**
      * @brief Partial derivative polynomial with respect to variable `I`.
      * @tparam I Variable index (0-based, must be in `[0, M)`).
-     * @details For each term `c_alpha * x^alpha` with `alpha[I] > 0`, contributes
-     *          `c_alpha * alpha[I] * x^(alpha - e_I)` to the result.
-     *          Terms where `alpha[I] == 0` vanish. The constant of the result is always zero.
-     * @return New TTE representing `d/dx_I` of this polynomial.
+     * @return New polynomial representing `d/dx_I` of this polynomial.
      */
     template < int I >
     [[nodiscard]] constexpr TruncatedTaylorExpansionT deriv() const noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         Data out{};
-        for ( std::size_t i = 0; i < nCoefficients; ++i )
-        {
-            if ( c_[i] == T{} ) continue;
-            auto alpha = detail::unflatIndex< M >( i );
-            const int exp = alpha[I];
-            if ( exp == 0 ) continue;
-            alpha[I] = exp - 1;
-            out[detail::flatIndex< M >( alpha )] += c_[i] * T( exp );
-        }
+        BasisTraits< Basis >::template differentiate< T, N, M >( out, c_, I );
         return TruncatedTaylorExpansionT{ out };
     }
 
     /**
      * @brief Partial derivative polynomial with respect to variable `var`.
      * @param var Variable index (0-based, must be in `[0, M)`).
-     * @details Runtime-index overload of `deriv<I>()`.
-     * @return New TTE representing `d/dx_var` of this polynomial.
+     * @return New polynomial representing `d/dx_var` of this polynomial.
      * @throws std::out_of_range if `var >= M`.
      */
     [[nodiscard]] constexpr TruncatedTaylorExpansionT deriv( int var ) const
@@ -433,48 +468,28 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
             throw std::out_of_range(
                 "tax::TruncatedTaylorExpansionT::deriv(var): var must be in [0, M)" );
         Data out{};
-        for ( std::size_t i = 0; i < nCoefficients; ++i )
-        {
-            if ( c_[i] == T{} ) continue;
-            auto alpha = detail::unflatIndex< M >( i );
-            const int exp = alpha[var];
-            if ( exp == 0 ) continue;
-            alpha[var] = exp - 1;
-            out[detail::flatIndex< M >( alpha )] += c_[i] * T( exp );
-        }
+        BasisTraits< Basis >::template differentiate< T, N, M >( out, c_, var );
         return TruncatedTaylorExpansionT{ out };
     }
 
     /**
      * @brief Indefinite integral polynomial with respect to variable `I`.
      * @tparam I Variable index (0-based, must be in `[0, M)`).
-     * @details For each term `c_alpha * x^alpha` with `|alpha| < N`, contributes
-     *          `c_alpha / (alpha[I] + 1) * x^(alpha + e_I)` to the result.
-     *          Terms of degree `N` are dropped (truncated). The constant of integration is zero.
-     * @return New TTE representing `integral ... dx_I` of this polynomial.
+     * @return New polynomial representing the integral w.r.t. `x_I`.
      */
     template < int I >
     [[nodiscard]] constexpr TruncatedTaylorExpansionT integ() const noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         Data out{};
-        for ( std::size_t i = 0; i < nCoefficients; ++i )
-        {
-            if ( c_[i] == T{} ) continue;
-            auto alpha = detail::unflatIndex< M >( i );
-            if ( detail::totalDegree< M >( alpha ) >= N ) continue;  // would exceed order N
-            const int exp = alpha[I];
-            alpha[I] = exp + 1;
-            out[detail::flatIndex< M >( alpha )] = c_[i] / T( exp + 1 );
-        }
+        BasisTraits< Basis >::template integrate< T, N, M >( out, c_, I );
         return TruncatedTaylorExpansionT{ out };
     }
 
     /**
      * @brief Indefinite integral polynomial with respect to variable `var`.
      * @param var Variable index (0-based, must be in `[0, M)`).
-     * @details Runtime-index overload of `integ<I>()`.
-     * @return New TTE representing `integral ... dx_var` of this polynomial.
+     * @return New polynomial representing the integral w.r.t. `x_var`.
      * @throws std::out_of_range if `var >= M`.
      */
     [[nodiscard]] constexpr TruncatedTaylorExpansionT integ( int var ) const
@@ -483,70 +498,32 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
             throw std::out_of_range(
                 "tax::TruncatedTaylorExpansionT::integ(var): var must be in [0, M)" );
         Data out{};
-        for ( std::size_t i = 0; i < nCoefficients; ++i )
-        {
-            if ( c_[i] == T{} ) continue;
-            auto alpha = detail::unflatIndex< M >( i );
-            if ( detail::totalDegree< M >( alpha ) >= N ) continue;  // would exceed order N
-            const int exp = alpha[var];
-            alpha[var] = exp + 1;
-            out[detail::flatIndex< M >( alpha )] = c_[i] / T( exp + 1 );
-        }
+        BasisTraits< Basis >::template integrate< T, N, M >( out, c_, var );
         return TruncatedTaylorExpansionT{ out };
     }
 
     // -- Evaluation -----------------------------------------------------------
 
     /**
-     * @brief Evaluate the polynomial at displacement `dx` from expansion point.
-     * @param dx Displacement value (univariate).
-     * @return f(x0 + dx) truncated to order N.
+     * @brief Evaluate the polynomial at point `dx`.
+     * @param dx Point value (univariate). For Taylor, this is a displacement from expansion point.
+     *           For Chebyshev, this is a point in [-1,1].
+     * @return Polynomial value at the given point.
      */
     [[nodiscard]] constexpr T eval( T dx ) const noexcept
         requires( M == 1 )
     {
-        // Horner's method: c[N]*dx + c[N-1] ... *dx + c[0]
-        T result = c_[N];
-        for ( int i = N - 1; i >= 0; --i ) result = result * dx + c_[i];
-        return result;
+        return BasisTraits< Basis >::template evaluate< T, N >( c_, dx );
     }
 
     /**
-     * @brief Evaluate the polynomial at displacement `dx` from expansion point.
-     * @param dx Displacement vector (multivariate).
-     * @return f(x0 + dx) truncated to order N.
+     * @brief Evaluate the polynomial at point `dx`.
+     * @param dx Point vector (multivariate).
+     * @return Polynomial value at the given point.
      */
     [[nodiscard]] constexpr T eval( const Input& dx ) const noexcept
     {
-        if constexpr ( M == 1 )
-        {
-            return eval( dx[0] );
-        } else
-        {
-            T result{};
-            MultiIndex< M > alpha{};
-
-            auto accumulate = [&]( auto& self, int var, int rem ) constexpr -> void {
-                if ( var == M - 1 )
-                {
-                    alpha[var] = rem;
-                    // Compute dx^alpha = product of dx[i]^alpha[i]
-                    T monomial{ 1 };
-                    for ( int i = 0; i < M; ++i )
-                        for ( int j = 0; j < alpha[i]; ++j ) monomial *= dx[i];
-                    result += c_[detail::flatIndex< M >( alpha )] * monomial;
-                    return;
-                }
-                for ( int k = rem; k >= 0; --k )
-                {
-                    alpha[var] = k;
-                    self( self, var + 1, rem - k );
-                }
-            };
-
-            for ( int d = 0; d <= N; ++d ) accumulate( accumulate, 0, d );
-            return result;
-        }
+        return BasisTraits< Basis >::template evaluate< T, N, M >( c_, dx );
     }
 
     // -- In-place operators ---------------------------------------------------
@@ -567,18 +544,40 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     /// @brief In-place addition from an expression node.
     constexpr TruncatedTaylorExpansionT& operator+=( const Expr< Derived, T, N, M >& e ) noexcept
     {
-        Data t{};
-        e.self().evalTo( t );
-        detail::addInPlace< T, nCoefficients >( c_, t );
+        if constexpr ( std::is_same_v< Basis, Taylor > )
+        {
+            Data t{};
+            e.self().evalTo( t );
+            detail::addInPlace< T, nCoefficients >( c_, t );
+        }
+        else
+        {
+            Data mono{};
+            e.self().evalTo( mono );
+            Data converted{};
+            BasisTraits< Basis >::template fromMonomial< T, N, M >( converted, mono );
+            detail::addInPlace< T, nCoefficients >( c_, converted );
+        }
         return *this;
     }
     template < typename Derived >
     /// @brief In-place subtraction from an expression node.
     constexpr TruncatedTaylorExpansionT& operator-=( const Expr< Derived, T, N, M >& e ) noexcept
     {
-        Data t{};
-        e.self().evalTo( t );
-        detail::subInPlace< T, nCoefficients >( c_, t );
+        if constexpr ( std::is_same_v< Basis, Taylor > )
+        {
+            Data t{};
+            e.self().evalTo( t );
+            detail::subInPlace< T, nCoefficients >( c_, t );
+        }
+        else
+        {
+            Data mono{};
+            e.self().evalTo( mono );
+            Data converted{};
+            BasisTraits< Basis >::template fromMonomial< T, N, M >( converted, mono );
+            detail::subInPlace< T, nCoefficients >( c_, converted );
+        }
         return *this;
     }
     /// @brief In-place scalar multiplication.
@@ -587,11 +586,11 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
         detail::scaleInPlace< T, nCoefficients >( c_, s );
         return *this;
     }
-    /// @brief In-place polynomial multiplication (Cauchy product).
+    /// @brief In-place polynomial multiplication.
     constexpr TruncatedTaylorExpansionT& operator*=( const TruncatedTaylorExpansionT& o ) noexcept
     {
         Data tmp{};
-        detail::cauchyProduct< T, N, M >( tmp, c_, o.c_ );
+        BasisTraits< Basis >::template multiply< T, N, M >( tmp, c_, o.c_ );
         c_ = tmp;
         return *this;
     }
@@ -605,9 +604,9 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     constexpr TruncatedTaylorExpansionT& operator/=( const TruncatedTaylorExpansionT& o ) noexcept
     {
         Data rec{};
-        detail::seriesReciprocal< T, N, M >( rec, o.c_ );
+        BasisTraits< Basis >::template reciprocal< T, N, M >( rec, o.c_ );
         Data tmp{};
-        detail::cauchyProduct< T, N, M >( tmp, c_, rec );
+        BasisTraits< Basis >::template multiply< T, N, M >( tmp, c_, rec );
         c_ = tmp;
         return *this;
     }
@@ -763,42 +762,62 @@ class TruncatedTaylorExpansionT : public Expr< TruncatedTaylorExpansionT< T, N, 
     }
 
    private:
-    [[nodiscard]] static constexpr Data makeDerivativeFactors() noexcept
+    /// @brief Precomputed factorial factors for Taylor derivative extraction.
+    struct DerivativeFactors
     {
-        Data factors{};
-        MultiIndex< M > alpha{};
+        [[nodiscard]] static constexpr Data compute() noexcept
+        {
+            Data factors{};
+            MultiIndex< M > alpha{};
 
-        auto fillAlpha = [&]( auto& self, int var, int rem ) constexpr -> void {
-            if ( var == M - 1 )
-            {
-                alpha[var] = rem;
-                std::size_t fac = 1;
-                for ( int i = 0; i < M; ++i )
-                    for ( int j = 1; j <= alpha[i]; ++j ) fac *= std::size_t( j );
-                factors[detail::flatIndex< M >( alpha )] = T( fac );
-                return;
-            }
-            for ( int k = rem; k >= 0; --k )
-            {
-                alpha[var] = k;
-                self( self, var + 1, rem - k );
-            }
-        };
+            auto fillAlpha = [&]( auto& self, int var, int rem ) constexpr -> void {
+                if ( var == M - 1 )
+                {
+                    alpha[var] = rem;
+                    std::size_t fac = 1;
+                    for ( int i = 0; i < M; ++i )
+                        for ( int j = 1; j <= alpha[i]; ++j ) fac *= std::size_t( j );
+                    factors[detail::flatIndex< M >( alpha )] = T( fac );
+                    return;
+                }
+                for ( int k = rem; k >= 0; --k )
+                {
+                    alpha[var] = k;
+                    self( self, var + 1, rem - k );
+                }
+            };
 
-        for ( int d = 0; d <= N; ++d ) fillAlpha( fillAlpha, 0, d );
-        return factors;
-    }
+            for ( int d = 0; d <= N; ++d ) fillAlpha( fillAlpha, 0, d );
+            return factors;
+        }
 
-    inline static constexpr Data f_ = makeDerivativeFactors();
+        inline static constexpr Data data = compute();
+    };
+
+    /// @brief Factorial lookup table (Taylor basis only).
+    static constexpr const Data& f_ = DerivativeFactors::data;
+
     Data c_;
 };
 
-/// @brief Univariate TE alias (`double`, order `N`, one variable).
+/// @brief Generic alias for multi-basis use.
+template < typename T, int N, int M = 1, typename Basis = Taylor >
+using TruncatedExpansionT = TruncatedTaylorExpansionT< T, N, M, Basis >;
+
+/// @brief Univariate TE alias (`double`, order `N`, one variable, Taylor basis).
 template < int N >
 using TE = TruncatedTaylorExpansionT< double, N, 1 >;
 
-/// @brief Multivariate TEn alias (`double`, order `N`, `M` variables).
+/// @brief Multivariate TEn alias (`double`, order `N`, `M` variables, Taylor basis).
 template < int N, int M >
 using TEn = TruncatedTaylorExpansionT< double, N, M >;
+
+/// @brief Univariate Chebyshev expansion alias.
+template < int N >
+using CE = TruncatedExpansionT< double, N, 1, Chebyshev >;
+
+/// @brief Multivariate Chebyshev expansion alias.
+template < int N, int M >
+using CEn = TruncatedExpansionT< double, N, M, Chebyshev >;
 
 }  // namespace tax
