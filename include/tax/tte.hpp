@@ -820,4 +820,20 @@ using CE = TruncatedExpansionT< double, N, 1, Chebyshev >;
 template < int N, int M >
 using CEn = TruncatedExpansionT< double, N, M, Chebyshev >;
 
+/// @brief Univariate Legendre expansion alias.
+template < int N >
+using LE = TruncatedExpansionT< double, N, 1, Legendre >;
+
+/// @brief Multivariate Legendre expansion alias.
+template < int N, int M >
+using LEn = TruncatedExpansionT< double, N, M, Legendre >;
+
+/// @brief Univariate probabilist's Hermite expansion alias.
+template < int N >
+using HE = TruncatedExpansionT< double, N, 1, Hermite >;
+
+/// @brief Multivariate probabilist's Hermite expansion alias.
+template < int N, int M >
+using HEn = TruncatedExpansionT< double, N, M, Hermite >;
+
 }  // namespace tax

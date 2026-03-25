@@ -51,6 +51,8 @@ set(TEST_SOURCES
     ode/testTaylorIntegrator.cpp
     ode/testIntegrateAds.cpp
     chebyshev/testChebyshevBasic.cpp
+    legendre/testLegendreBasic.cpp
+    hermite/testHermiteBasic.cpp
 )
 
 include(GoogleTest)

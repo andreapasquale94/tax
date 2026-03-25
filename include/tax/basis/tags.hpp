@@ -13,4 +13,14 @@ struct Chebyshev
 {
 };
 
+/// @brief Tag type for the Legendre polynomial basis.
+struct Legendre
+{
+};
+
+/// @brief Tag type for the probabilist's Hermite polynomial basis.
+struct Hermite
+{
+};
+
 }  // namespace tax
