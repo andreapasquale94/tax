@@ -21,7 +21,7 @@ struct BasisTraits< Legendre >
 {
     /// @brief Legendre polynomial multiplication via convert→Cauchy→convert back.
     template < typename T, int N, int M >
-    static constexpr void multiply(
+    static void multiply(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& a,
         const detail::CoeffArray< T, N, M >& b ) noexcept
@@ -36,7 +36,7 @@ struct BasisTraits< Legendre >
 
     /// @brief Legendre polynomial multiply-accumulate.
     template < typename T, int N, int M >
-    static constexpr void multiplyAccumulate(
+    static void multiplyAccumulate(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& a,
         const detail::CoeffArray< T, N, M >& b ) noexcept
@@ -49,7 +49,7 @@ struct BasisTraits< Legendre >
 
     /// @brief Multiplicative inverse via convert→seriesReciprocal→convert back.
     template < typename T, int N, int M >
-    static constexpr void reciprocal(
+    static void reciprocal(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& a ) noexcept
     {
@@ -131,7 +131,7 @@ struct BasisTraits< Legendre >
 
     /// @brief Partial derivative via convert→Taylor differentiate→convert back.
     template < typename T, int N, int M >
-    static constexpr void differentiate(
+    static void differentiate(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
@@ -144,7 +144,7 @@ struct BasisTraits< Legendre >
 
     /// @brief Indefinite integral via convert→Taylor integrate→convert back.
     template < typename T, int N, int M >
-    static constexpr void integrate(
+    static void integrate(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
@@ -157,7 +157,7 @@ struct BasisTraits< Legendre >
 
     /// @brief Convert Legendre coefficients to monomial (Taylor) coefficients.
     template < typename T, int N, int M >
-    static constexpr void toMonomial(
+    static void toMonomial(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& in ) noexcept
     {
@@ -166,7 +166,7 @@ struct BasisTraits< Legendre >
 
     /// @brief Convert monomial (Taylor) coefficients to Legendre coefficients.
     template < typename T, int N, int M >
-    static constexpr void fromMonomial(
+    static void fromMonomial(
         detail::CoeffArray< T, N, M >& out,
         const detail::CoeffArray< T, N, M >& in ) noexcept
     {

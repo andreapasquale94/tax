@@ -7,10 +7,10 @@ namespace tax
 {
 
 /**
- * @brief Evaluate scalar TTE at a displacement type accepted by `TruncatedTaylorExpansionT::eval`.
+ * @brief Evaluate scalar TTE at a displacement type accepted by `TruncatedExpansionT::eval`.
  */
 template < typename T, int N, int M, typename Dx >
-[[nodiscard]] constexpr T eval( const TruncatedTaylorExpansionT< T, N, M >& f,
+[[nodiscard]] constexpr T eval( const TruncatedExpansionT< T, N, M >& f,
                                 const Dx& dx ) noexcept
     requires( requires { f.eval( dx ); } )
 {
@@ -24,11 +24,11 @@ template < typename T, int N, int M, typename Dx >
  * @return `f(x0 + dx)` truncated to order `N`.
  */
 template < typename T, int N, int M, typename Derived >
-[[nodiscard]] T eval( const TruncatedTaylorExpansionT< T, N, M >& f,
+[[nodiscard]] T eval( const TruncatedExpansionT< T, N, M >& f,
                       const Eigen::DenseBase< Derived >& dx ) noexcept
     requires( M > 1 && std::convertible_to< typename Derived::Scalar, T > )
 {
-    typename TruncatedTaylorExpansionT< T, N, M >::Input p{};
+    typename TruncatedExpansionT< T, N, M >::Input p{};
     for ( int i = 0; i < M; ++i ) p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
     return f.eval( p );
 }
@@ -72,7 +72,7 @@ template < typename Derived, typename Dx >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank, typename Dx >
-[[nodiscard]] auto eval( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t,
+[[nodiscard]] auto eval( const Eigen::Tensor< TruncatedExpansionT< T, N, M >, Rank >& t,
                          const Dx& dx )
     requires( Rank >= 1 )
 {
@@ -80,7 +80,7 @@ template < typename T, int N, int M, int Rank, typename Dx >
 
     if constexpr ( detail::EigenDenseExpr< Dx > )
     {
-        typename TruncatedTaylorExpansionT< T, N, M >::Input p{};
+        typename TruncatedExpansionT< T, N, M >::Input p{};
         for ( int i = 0; i < M; ++i )
             p[std::size_t( i )] = static_cast< T >( dx( Eigen::Index( i ) ) );
         for ( Eigen::Index i = 0; i < t.size(); ++i ) out.data()[i] = t.data()[i].eval( p );
@@ -98,7 +98,7 @@ template < typename T, int N, int M, int Rank, typename Dx >
  */
 template < typename T, int N, int Dim >
 [[nodiscard]] Eigen::Matrix< T, Dim, 1 > eval(
-    const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, Dim, 1 >& f, T dx ) noexcept
+    const Eigen::Matrix< TruncatedExpansionT< T, N, 1 >, Dim, 1 >& f, T dx ) noexcept
 {
     constexpr int N1 = N + 1;
     const Eigen::Index dim = f.size();

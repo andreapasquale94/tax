@@ -39,25 +39,10 @@ class BinExpr : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, 
                 r_.addTo( out );
         } else
         {
-            if constexpr ( is_leaf_v< L > && is_leaf_v< R > )
-                Op::template apply< T >( out, l_.coeffs(), r_.coeffs() );
-            else if constexpr ( is_leaf_v< R > )
-            {
-                coeff_array la{};
-                l_.evalTo( la );
-                Op::template apply< T >( out, la, r_.coeffs() );
-            } else if constexpr ( is_leaf_v< L > )
-            {
-                coeff_array rb{};
-                r_.evalTo( rb );
-                Op::template apply< T >( out, l_.coeffs(), rb );
-            } else
-            {
-                coeff_array la{}, rb{};
-                l_.evalTo( la );
-                r_.evalTo( rb );
-                Op::template apply< T >( out, la, rb );
-            }
+            coeff_array la{}, rb{};
+            l_.evalTo( la );
+            r_.evalTo( rb );
+            Op::template apply< T >( out, la, rb );
         }
     }
 
@@ -76,25 +61,10 @@ class BinExpr : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, 
                 r_.addTo( out );
         } else if constexpr ( Op::is_convolution )
         {
-            if constexpr ( is_leaf_v< L > && is_leaf_v< R > )
-                cauchyAccumulate< T, N, M >( out, l_.coeffs(), r_.coeffs() );
-            else if constexpr ( is_leaf_v< R > )
-            {
-                coeff_array la{};
-                l_.evalTo( la );
-                cauchyAccumulate< T, N, M >( out, la, r_.coeffs() );
-            } else if constexpr ( is_leaf_v< L > )
-            {
-                coeff_array rb{};
-                r_.evalTo( rb );
-                cauchyAccumulate< T, N, M >( out, l_.coeffs(), rb );
-            } else
-            {
-                coeff_array la{}, rb{};
-                l_.evalTo( la );
-                r_.evalTo( rb );
-                cauchyAccumulate< T, N, M >( out, la, rb );
-            }
+            coeff_array la{}, rb{};
+            l_.evalTo( la );
+            r_.evalTo( rb );
+            cauchyAccumulate< T, N, M >( out, la, rb );
         } else
         {
             coeff_array tmp{};

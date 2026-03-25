@@ -8,7 +8,7 @@ namespace tax
 
 /// @brief Value at expansion point for scalar TTE.
 template < typename T, int N, int M >
-[[nodiscard]] constexpr T value( const TruncatedTaylorExpansionT< T, N, M >& f ) noexcept
+[[nodiscard]] constexpr T value( const TruncatedExpansionT< T, N, M >& f ) noexcept
 {
     return f.value();
 }
@@ -43,7 +43,7 @@ template < typename Derived >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank >
-[[nodiscard]] auto value( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
+[[nodiscard]] auto value( const Eigen::Tensor< TruncatedExpansionT< T, N, M >, Rank >& t )
     requires( Rank >= 1 )
 {
     Eigen::Tensor< T, Rank > out( t.dimensions() );

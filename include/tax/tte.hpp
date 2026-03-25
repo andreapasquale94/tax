@@ -28,8 +28,8 @@ namespace tax
  *          constructor from expression converts from monomial).
  */
 template < typename T, int N, int M = 1, typename Basis = Taylor >
-class TruncatedTaylorExpansionT
-    : public Expr< TruncatedTaylorExpansionT< T, N, M, Basis >, T, N, M >,
+class TruncatedExpansionT
+    : public Expr< TruncatedExpansionT< T, N, M, Basis >, T, N, M >,
       public ExprLeaf
 {
    public:
@@ -46,17 +46,17 @@ class TruncatedTaylorExpansionT
     // -- Constructors ---------------------------------------------------------
 
     /// @brief Construct zero polynomial.
-    constexpr TruncatedTaylorExpansionT() noexcept : c_{} {}
+    constexpr TruncatedExpansionT() noexcept : c_{} {}
     /// @brief Construct from a full coefficient array.
-    explicit constexpr TruncatedTaylorExpansionT( Data c ) noexcept : c_( std::move( c ) ) {}
+    explicit constexpr TruncatedExpansionT( Data c ) noexcept : c_( std::move( c ) ) {}
     /// @brief Construct constant polynomial with value `val`.
-    /*implicit*/ constexpr TruncatedTaylorExpansionT( T val ) noexcept : c_{} { c_[0] = val; }
+    /*implicit*/ constexpr TruncatedExpansionT( T val ) noexcept : c_{} { c_[0] = val; }
 
     /// @brief Materialize a compatible expression in one evaluation pass.
     /// @details For non-Taylor bases, the expression tree produces monomial coefficients
     ///          which are then converted to the target basis.
     template < typename Derived >
-    /*implicit*/ constexpr TruncatedTaylorExpansionT(
+    /*implicit*/ constexpr TruncatedExpansionT(
         const Expr< Derived, T, N, M >& expr ) noexcept
         : c_{}
     {
@@ -78,13 +78,13 @@ class TruncatedTaylorExpansionT
      * @brief Create the univariate variable expanded at `x0`.
      * @details Produces `x0 + 1*dx` (truncated to order `N`).
      */
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT variable( T x0 ) noexcept
+    [[nodiscard]] static constexpr TruncatedExpansionT variable( T x0 ) noexcept
         requires( M == 1 )
     {
         Data c{};
         c[0] = x0;
         if constexpr ( N >= 1 ) c[1] = T{ 1 };
-        return TruncatedTaylorExpansionT{ c };
+        return TruncatedExpansionT{ c };
     }
 
     /**
@@ -92,7 +92,7 @@ class TruncatedTaylorExpansionT
      * @details The constant term is `x0[I]` and the `e_I` coefficient is `1`.
      */
     template < int I >
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT variable( const Input& x0 ) noexcept
+    [[nodiscard]] static constexpr TruncatedExpansionT variable( const Input& x0 ) noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         Data c{};
@@ -103,7 +103,7 @@ class TruncatedTaylorExpansionT
             ei[I] = 1;
             c[detail::flatIndex< M >( ei )] = T{ 1 };
         }
-        return TruncatedTaylorExpansionT{ c };
+        return TruncatedExpansionT{ c };
     }
 
     /**
@@ -130,21 +130,21 @@ class TruncatedTaylorExpansionT
     }
 
     /// @brief Create a constant polynomial with value `v`.
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT constant( T v ) noexcept
+    [[nodiscard]] static constexpr TruncatedExpansionT constant( T v ) noexcept
     {
-        return TruncatedTaylorExpansionT{ v };
+        return TruncatedExpansionT{ v };
     }
 
     /// @brief Create a constant polynomial with value `0`.
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT zero() noexcept
+    [[nodiscard]] static constexpr TruncatedExpansionT zero() noexcept
     {
-        return TruncatedTaylorExpansionT{ 0 };
+        return TruncatedExpansionT{ 0 };
     }
 
     /// @brief Create a constant polynomial with value `1`.
-    [[nodiscard]] static constexpr TruncatedTaylorExpansionT one() noexcept
+    [[nodiscard]] static constexpr TruncatedExpansionT one() noexcept
     {
-        return TruncatedTaylorExpansionT{ 1 };
+        return TruncatedExpansionT{ 1 };
     }
 
     // -- evalTo / addTo / subTo -----------------------------------------------
@@ -310,7 +310,7 @@ class TruncatedTaylorExpansionT
     {
         if ( p == 0 )
             throw std::invalid_argument(
-                "tax::TruncatedTaylorExpansionT::coeffsNorm(p) requires p > 0; use "
+                "tax::TruncatedExpansionT::coeffsNorm(p) requires p > 0; use "
                 "coeffsNormInf()." );
         if ( p == 1 ) return coeffsNorm< 1 >();
 
@@ -368,7 +368,7 @@ class TruncatedTaylorExpansionT
     {
         if ( var > unsigned( M ) )
             throw std::invalid_argument(
-                "tax::TruncatedTaylorExpansionT::coeffsNormEstimate(var,type,nc) requires var in "
+                "tax::TruncatedExpansionT::coeffsNormEstimate(var,type,nc) requires var in "
                 "[0, M]." );
 
         std::vector< T > out( std::size_t( nc + 1u ), T{} );
@@ -448,12 +448,12 @@ class TruncatedTaylorExpansionT
      * @return New polynomial representing `d/dx_I` of this polynomial.
      */
     template < int I >
-    [[nodiscard]] constexpr TruncatedTaylorExpansionT deriv() const noexcept
+    [[nodiscard]] constexpr TruncatedExpansionT deriv() const noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         Data out{};
         BasisTraits< Basis >::template differentiate< T, N, M >( out, c_, I );
-        return TruncatedTaylorExpansionT{ out };
+        return TruncatedExpansionT{ out };
     }
 
     /**
@@ -462,14 +462,14 @@ class TruncatedTaylorExpansionT
      * @return New polynomial representing `d/dx_var` of this polynomial.
      * @throws std::out_of_range if `var >= M`.
      */
-    [[nodiscard]] constexpr TruncatedTaylorExpansionT deriv( int var ) const
+    [[nodiscard]] constexpr TruncatedExpansionT deriv( int var ) const
     {
         if ( var < 0 || var >= M )
             throw std::out_of_range(
-                "tax::TruncatedTaylorExpansionT::deriv(var): var must be in [0, M)" );
+                "tax::TruncatedExpansionT::deriv(var): var must be in [0, M)" );
         Data out{};
         BasisTraits< Basis >::template differentiate< T, N, M >( out, c_, var );
-        return TruncatedTaylorExpansionT{ out };
+        return TruncatedExpansionT{ out };
     }
 
     /**
@@ -478,12 +478,12 @@ class TruncatedTaylorExpansionT
      * @return New polynomial representing the integral w.r.t. `x_I`.
      */
     template < int I >
-    [[nodiscard]] constexpr TruncatedTaylorExpansionT integ() const noexcept
+    [[nodiscard]] constexpr TruncatedExpansionT integ() const noexcept
     {
         static_assert( I >= 0 && I < M, "Variable index out of range" );
         Data out{};
         BasisTraits< Basis >::template integrate< T, N, M >( out, c_, I );
-        return TruncatedTaylorExpansionT{ out };
+        return TruncatedExpansionT{ out };
     }
 
     /**
@@ -492,14 +492,14 @@ class TruncatedTaylorExpansionT
      * @return New polynomial representing the integral w.r.t. `x_var`.
      * @throws std::out_of_range if `var >= M`.
      */
-    [[nodiscard]] constexpr TruncatedTaylorExpansionT integ( int var ) const
+    [[nodiscard]] constexpr TruncatedExpansionT integ( int var ) const
     {
         if ( var < 0 || var >= M )
             throw std::out_of_range(
-                "tax::TruncatedTaylorExpansionT::integ(var): var must be in [0, M)" );
+                "tax::TruncatedExpansionT::integ(var): var must be in [0, M)" );
         Data out{};
         BasisTraits< Basis >::template integrate< T, N, M >( out, c_, var );
-        return TruncatedTaylorExpansionT{ out };
+        return TruncatedExpansionT{ out };
     }
 
     // -- Evaluation -----------------------------------------------------------
@@ -529,20 +529,20 @@ class TruncatedTaylorExpansionT
     // -- In-place operators ---------------------------------------------------
 
     /// @brief In-place polynomial addition.
-    constexpr TruncatedTaylorExpansionT& operator+=( const TruncatedTaylorExpansionT& o ) noexcept
+    constexpr TruncatedExpansionT& operator+=( const TruncatedExpansionT& o ) noexcept
     {
         detail::addInPlace< T, nCoefficients >( c_, o.c_ );
         return *this;
     }
     /// @brief In-place polynomial subtraction.
-    constexpr TruncatedTaylorExpansionT& operator-=( const TruncatedTaylorExpansionT& o ) noexcept
+    constexpr TruncatedExpansionT& operator-=( const TruncatedExpansionT& o ) noexcept
     {
         detail::subInPlace< T, nCoefficients >( c_, o.c_ );
         return *this;
     }
     template < typename Derived >
     /// @brief In-place addition from an expression node.
-    constexpr TruncatedTaylorExpansionT& operator+=( const Expr< Derived, T, N, M >& e ) noexcept
+    constexpr TruncatedExpansionT& operator+=( const Expr< Derived, T, N, M >& e ) noexcept
     {
         if constexpr ( std::is_same_v< Basis, Taylor > )
         {
@@ -562,7 +562,7 @@ class TruncatedTaylorExpansionT
     }
     template < typename Derived >
     /// @brief In-place subtraction from an expression node.
-    constexpr TruncatedTaylorExpansionT& operator-=( const Expr< Derived, T, N, M >& e ) noexcept
+    constexpr TruncatedExpansionT& operator-=( const Expr< Derived, T, N, M >& e ) noexcept
     {
         if constexpr ( std::is_same_v< Basis, Taylor > )
         {
@@ -581,13 +581,13 @@ class TruncatedTaylorExpansionT
         return *this;
     }
     /// @brief In-place scalar multiplication.
-    constexpr TruncatedTaylorExpansionT& operator*=( T s ) noexcept
+    constexpr TruncatedExpansionT& operator*=( T s ) noexcept
     {
         detail::scaleInPlace< T, nCoefficients >( c_, s );
         return *this;
     }
     /// @brief In-place polynomial multiplication.
-    constexpr TruncatedTaylorExpansionT& operator*=( const TruncatedTaylorExpansionT& o ) noexcept
+    constexpr TruncatedExpansionT& operator*=( const TruncatedExpansionT& o ) noexcept
     {
         Data tmp{};
         BasisTraits< Basis >::template multiply< T, N, M >( tmp, c_, o.c_ );
@@ -595,13 +595,13 @@ class TruncatedTaylorExpansionT
         return *this;
     }
     /// @brief In-place scalar division.
-    constexpr TruncatedTaylorExpansionT& operator/=( T s ) noexcept
+    constexpr TruncatedExpansionT& operator/=( T s ) noexcept
     {
         detail::scaleInPlace< T, nCoefficients >( c_, T{ 1 } / s );
         return *this;
     }
     /// @brief In-place polynomial division.
-    constexpr TruncatedTaylorExpansionT& operator/=( const TruncatedTaylorExpansionT& o ) noexcept
+    constexpr TruncatedExpansionT& operator/=( const TruncatedExpansionT& o ) noexcept
     {
         Data rec{};
         BasisTraits< Basis >::template reciprocal< T, N, M >( rec, o.c_ );
@@ -613,64 +613,64 @@ class TruncatedTaylorExpansionT
 
     // -- Comparison operators (on constant term) --------------------------------
 
-    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a,
-                                                    const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator==( const TruncatedExpansionT& a,
+                                                    const TruncatedExpansionT& b ) noexcept
     {
         return a.value() == b.value();
     }
-    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a,
-                                                    const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator!=( const TruncatedExpansionT& a,
+                                                    const TruncatedExpansionT& b ) noexcept
     {
         return a.value() != b.value();
     }
-    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a,
-                                                   const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator<( const TruncatedExpansionT& a,
+                                                   const TruncatedExpansionT& b ) noexcept
     {
         return a.value() < b.value();
     }
-    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a,
-                                                   const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator>( const TruncatedExpansionT& a,
+                                                   const TruncatedExpansionT& b ) noexcept
     {
         return a.value() > b.value();
     }
-    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a,
-                                                    const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator<=( const TruncatedExpansionT& a,
+                                                    const TruncatedExpansionT& b ) noexcept
     {
         return a.value() <= b.value();
     }
-    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a,
-                                                    const TruncatedTaylorExpansionT& b ) noexcept
+    [[nodiscard]] friend constexpr bool operator>=( const TruncatedExpansionT& a,
+                                                    const TruncatedExpansionT& b ) noexcept
     {
         return a.value() >= b.value();
     }
 
     // DA vs scalar (T)
-    [[nodiscard]] friend constexpr bool operator==( const TruncatedTaylorExpansionT& a,
+    [[nodiscard]] friend constexpr bool operator==( const TruncatedExpansionT& a,
                                                     const T& s ) noexcept
     {
         return a.value() == s;
     }
-    [[nodiscard]] friend constexpr bool operator!=( const TruncatedTaylorExpansionT& a,
+    [[nodiscard]] friend constexpr bool operator!=( const TruncatedExpansionT& a,
                                                     const T& s ) noexcept
     {
         return a.value() != s;
     }
-    [[nodiscard]] friend constexpr bool operator<( const TruncatedTaylorExpansionT& a,
+    [[nodiscard]] friend constexpr bool operator<( const TruncatedExpansionT& a,
                                                    const T& s ) noexcept
     {
         return a.value() < s;
     }
-    [[nodiscard]] friend constexpr bool operator>( const TruncatedTaylorExpansionT& a,
+    [[nodiscard]] friend constexpr bool operator>( const TruncatedExpansionT& a,
                                                    const T& s ) noexcept
     {
         return a.value() > s;
     }
-    [[nodiscard]] friend constexpr bool operator<=( const TruncatedTaylorExpansionT& a,
+    [[nodiscard]] friend constexpr bool operator<=( const TruncatedExpansionT& a,
                                                     const T& s ) noexcept
     {
         return a.value() <= s;
     }
-    [[nodiscard]] friend constexpr bool operator>=( const TruncatedTaylorExpansionT& a,
+    [[nodiscard]] friend constexpr bool operator>=( const TruncatedExpansionT& a,
                                                     const T& s ) noexcept
     {
         return a.value() >= s;
@@ -678,39 +678,39 @@ class TruncatedTaylorExpansionT
 
     // scalar (T) vs DA
     [[nodiscard]] friend constexpr bool operator==( const T& s,
-                                                    const TruncatedTaylorExpansionT& a ) noexcept
+                                                    const TruncatedExpansionT& a ) noexcept
     {
         return s == a.value();
     }
     [[nodiscard]] friend constexpr bool operator!=( const T& s,
-                                                    const TruncatedTaylorExpansionT& a ) noexcept
+                                                    const TruncatedExpansionT& a ) noexcept
     {
         return s != a.value();
     }
     [[nodiscard]] friend constexpr bool operator<( const T& s,
-                                                   const TruncatedTaylorExpansionT& a ) noexcept
+                                                   const TruncatedExpansionT& a ) noexcept
     {
         return s < a.value();
     }
     [[nodiscard]] friend constexpr bool operator>( const T& s,
-                                                   const TruncatedTaylorExpansionT& a ) noexcept
+                                                   const TruncatedExpansionT& a ) noexcept
     {
         return s > a.value();
     }
     [[nodiscard]] friend constexpr bool operator<=( const T& s,
-                                                    const TruncatedTaylorExpansionT& a ) noexcept
+                                                    const TruncatedExpansionT& a ) noexcept
     {
         return s <= a.value();
     }
     [[nodiscard]] friend constexpr bool operator>=( const T& s,
-                                                    const TruncatedTaylorExpansionT& a ) noexcept
+                                                    const TruncatedExpansionT& a ) noexcept
     {
         return s >= a.value();
     }
 
     /// @brief Stream as polynomial in `dx`, using superscripts for powers and subscripts for
     /// variable indices.
-    friend std::ostream& operator<<( std::ostream& os, const TruncatedTaylorExpansionT& a )
+    friend std::ostream& operator<<( std::ostream& os, const TruncatedExpansionT& a )
     {
         bool write = false;
         for ( int d = 0; d <= N; ++d )
@@ -800,17 +800,17 @@ class TruncatedTaylorExpansionT
     Data c_;
 };
 
-/// @brief Generic alias for multi-basis use.
+/// @brief Backward-compatible alias (old name).
 template < typename T, int N, int M = 1, typename Basis = Taylor >
-using TruncatedExpansionT = TruncatedTaylorExpansionT< T, N, M, Basis >;
+using TruncatedTaylorExpansionT = TruncatedExpansionT< T, N, M, Basis >;
 
 /// @brief Univariate TE alias (`double`, order `N`, one variable, Taylor basis).
 template < int N >
-using TE = TruncatedTaylorExpansionT< double, N, 1 >;
+using TE = TruncatedExpansionT< double, N, 1 >;
 
 /// @brief Multivariate TEn alias (`double`, order `N`, `M` variables, Taylor basis).
 template < int N, int M >
-using TEn = TruncatedTaylorExpansionT< double, N, M >;
+using TEn = TruncatedExpansionT< double, N, M >;
 
 /// @brief Univariate Chebyshev expansion alias.
 template < int N >

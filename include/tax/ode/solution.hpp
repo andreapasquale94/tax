@@ -19,13 +19,13 @@ namespace detail
 template < int N, typename State, typename T >
 struct poly_type
 {
-    using type = TruncatedTaylorExpansionT< T, N, 1 >;
+    using type = TruncatedExpansionT< T, N, 1 >;
 };
 
 template < int N, typename T, int D >
 struct poly_type< N, Eigen::Matrix< T, D, 1 >, T >
 {
-    using type = Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, D, 1 >;
+    using type = Eigen::Matrix< TruncatedExpansionT< T, N, 1 >, D, 1 >;
 };
 
 template < int N, typename State, typename T >
@@ -33,7 +33,7 @@ using poly_t = typename poly_type< N, State, T >::type;
 
 /// @brief Evaluate a polynomial at displacement τ (scalar specialisation).
 template < typename T, int N >
-[[nodiscard]] T eval_poly( const TruncatedTaylorExpansionT< T, N, 1 >& p, T tau ) noexcept
+[[nodiscard]] T eval_poly( const TruncatedExpansionT< T, N, 1 >& p, T tau ) noexcept
 {
     return p.eval( tau );
 }
@@ -41,7 +41,7 @@ template < typename T, int N >
 /// @brief Evaluate a polynomial vector at displacement τ (vector specialisation).
 template < typename T, int N, int D >
 [[nodiscard]] Eigen::Matrix< T, D, 1 > eval_poly(
-    const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, D, 1 >& p, T tau ) noexcept
+    const Eigen::Matrix< TruncatedExpansionT< T, N, 1 >, D, 1 >& p, T tau ) noexcept
 {
     return eval( p, tau );
 }
