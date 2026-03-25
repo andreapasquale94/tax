@@ -1,7 +1,9 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <array>
 #include <cmath>
+#include <tax/utils/aliases.hpp>
 #include <tax/utils/combinatorics.hpp>
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/fwd.hpp>
@@ -19,10 +21,10 @@ namespace tax::detail
  *          Uses the recurrence T_0=1, T_1=x, T_n = 2x*T_{n-1} - T_{n-2}.
  */
 template < typename T, int N >
-[[nodiscard]] static constexpr std::array< T, ( N + 1 ) * ( N + 1 ) > chebyshevToMonomialMatrix()
+[[nodiscard]] static constexpr TransformMatrix< T, N > chebyshevToMonomialMatrix()
 {
     constexpr int S = N + 1;
-    std::array< T, S * S > mat{};
+    TransformMatrix< T, N > mat{};
 
     // T_0(x) = 1
     mat[0 * S + 0] = T{ 1 };
@@ -50,7 +52,7 @@ template < typename T, int N >
  *          Computed by Gauss elimination (constexpr-compatible).
  */
 template < typename T, int N >
-[[nodiscard]] static constexpr std::array< T, ( N + 1 ) * ( N + 1 ) > monomialToChebyshevMatrix()
+[[nodiscard]] static constexpr TransformMatrix< T, N > monomialToChebyshevMatrix()
 {
     constexpr int S = N + 1;
 
@@ -113,7 +115,7 @@ template < typename T, int N >
     }
 
     // Extract inverse
-    std::array< T, S * S > inv{};
+    TransformMatrix< T, N > inv{};
     for ( int i = 0; i < S; ++i )
         for ( int j = 0; j < S; ++j ) inv[i * S + j] = aug[i * ( 2 * S ) + S + j];
 
@@ -130,10 +132,10 @@ template < typename T, int N >
  *          Uses the recurrence P_0=1, P_1=x, P_n = ((2n-1)/n)*x*P_{n-1} - ((n-1)/n)*P_{n-2}.
  */
 template < typename T, int N >
-[[nodiscard]] static constexpr std::array< T, ( N + 1 ) * ( N + 1 ) > legendreToMonomialMatrix()
+[[nodiscard]] static constexpr TransformMatrix< T, N > legendreToMonomialMatrix()
 {
     constexpr int S = N + 1;
-    std::array< T, S * S > mat{};
+    TransformMatrix< T, N > mat{};
 
     // P_0(x) = 1
     mat[0 * S + 0] = T{ 1 };
@@ -162,7 +164,7 @@ template < typename T, int N >
  * @details This is the inverse of legendreToMonomialMatrix.
  */
 template < typename T, int N >
-[[nodiscard]] static constexpr std::array< T, ( N + 1 ) * ( N + 1 ) > monomialToLegendreMatrix()
+[[nodiscard]] static constexpr TransformMatrix< T, N > monomialToLegendreMatrix()
 {
     constexpr int S = N + 1;
 
@@ -217,7 +219,7 @@ template < typename T, int N >
         }
     }
 
-    std::array< T, S * S > inv{};
+    TransformMatrix< T, N > inv{};
     for ( int i = 0; i < S; ++i )
         for ( int j = 0; j < S; ++j ) inv[i * S + j] = aug[i * ( 2 * S ) + S + j];
 
@@ -235,10 +237,10 @@ template < typename T, int N >
  *          Uses the recurrence He_0=1, He_1=x, He_n = x*He_{n-1} - (n-1)*He_{n-2}.
  */
 template < typename T, int N >
-[[nodiscard]] static constexpr std::array< T, ( N + 1 ) * ( N + 1 ) > hermiteToMonomialMatrix()
+[[nodiscard]] static constexpr TransformMatrix< T, N > hermiteToMonomialMatrix()
 {
     constexpr int S = N + 1;
-    std::array< T, S * S > mat{};
+    TransformMatrix< T, N > mat{};
 
     // He_0(x) = 1
     mat[0 * S + 0] = T{ 1 };
@@ -266,7 +268,7 @@ template < typename T, int N >
  * @details This is the inverse of hermiteToMonomialMatrix.
  */
 template < typename T, int N >
-[[nodiscard]] static constexpr std::array< T, ( N + 1 ) * ( N + 1 ) > monomialToHermiteMatrix()
+[[nodiscard]] static constexpr TransformMatrix< T, N > monomialToHermiteMatrix()
 {
     constexpr int S = N + 1;
 
@@ -321,7 +323,7 @@ template < typename T, int N >
         }
     }
 
-    std::array< T, S * S > inv{};
+    TransformMatrix< T, N > inv{};
     for ( int i = 0; i < S; ++i )
         for ( int j = 0; j < S; ++j ) inv[i * S + j] = aug[i * ( 2 * S ) + S + j];
 
@@ -334,17 +336,31 @@ template < typename T, int N >
 
 /**
  * @brief Apply a (N+1)x(N+1) matrix to a coefficient vector of length N+1.
+ * @details Uses Eigen::Map for matrix-vector multiply at runtime; falls back
+ *          to a manual loop in constexpr contexts.
  */
 template < typename T, int S >
 static constexpr void applyTransformMatrix( std::array< T, S >& out,
                                             const std::array< T, S >& in,
                                             const std::array< T, S * S >& mat ) noexcept
 {
-    for ( int i = 0; i < S; ++i )
+    if consteval
     {
-        T sum{};
-        for ( int j = 0; j < S; ++j ) sum += mat[i * S + j] * in[j];
-        out[i] = sum;
+        for ( int i = 0; i < S; ++i )
+        {
+            T sum{};
+            for ( int j = 0; j < S; ++j ) sum += mat[i * S + j] * in[j];
+            out[i] = sum;
+        }
+    }
+    else
+    {
+        using Vec = Eigen::Vector< T, S >;
+        using Mat = Eigen::Matrix< T, S, S, Eigen::RowMajor >;
+        Eigen::Map< Vec > out_map( out.data() );
+        Eigen::Map< const Vec > in_map( in.data() );
+        Eigen::Map< const Mat > mat_map( mat.data() );
+        out_map.noalias() = mat_map * in_map;
     }
 }
 
@@ -360,8 +376,7 @@ static constexpr void applyTransformMatrix( std::array< T, S >& out,
  */
 template < typename T, int N, int M >
 static constexpr void chebyshevToMonomial(
-    std::array< T, numMonomials( N, M ) >& out,
-    const std::array< T, numMonomials( N, M ) >& in ) noexcept
+    CoeffArray< T, N, M >& out, const CoeffArray< T, N, M >& in ) noexcept
 {
     constexpr auto nC = numMonomials( N, M );
 
@@ -421,8 +436,7 @@ static constexpr void chebyshevToMonomial(
  */
 template < typename T, int N, int M >
 static constexpr void monomialToChebyshev(
-    std::array< T, numMonomials( N, M ) >& out,
-    const std::array< T, numMonomials( N, M ) >& in ) noexcept
+    CoeffArray< T, N, M >& out, const CoeffArray< T, N, M >& in ) noexcept
 {
     constexpr auto nC = numMonomials( N, M );
 
@@ -475,8 +489,7 @@ static constexpr void monomialToChebyshev(
 
 template < typename T, int N, int M >
 static constexpr void legendreToMonomial(
-    std::array< T, numMonomials( N, M ) >& out,
-    const std::array< T, numMonomials( N, M ) >& in ) noexcept
+    CoeffArray< T, N, M >& out, const CoeffArray< T, N, M >& in ) noexcept
 {
     constexpr auto nC = numMonomials( N, M );
 
@@ -525,8 +538,7 @@ static constexpr void legendreToMonomial(
 
 template < typename T, int N, int M >
 static constexpr void monomialToLegendre(
-    std::array< T, numMonomials( N, M ) >& out,
-    const std::array< T, numMonomials( N, M ) >& in ) noexcept
+    CoeffArray< T, N, M >& out, const CoeffArray< T, N, M >& in ) noexcept
 {
     constexpr auto nC = numMonomials( N, M );
 
@@ -579,8 +591,7 @@ static constexpr void monomialToLegendre(
 
 template < typename T, int N, int M >
 static constexpr void hermiteToMonomial(
-    std::array< T, numMonomials( N, M ) >& out,
-    const std::array< T, numMonomials( N, M ) >& in ) noexcept
+    CoeffArray< T, N, M >& out, const CoeffArray< T, N, M >& in ) noexcept
 {
     constexpr auto nC = numMonomials( N, M );
 
@@ -629,8 +640,7 @@ static constexpr void hermiteToMonomial(
 
 template < typename T, int N, int M >
 static constexpr void monomialToHermite(
-    std::array< T, numMonomials( N, M ) >& out,
-    const std::array< T, numMonomials( N, M ) >& in ) noexcept
+    CoeffArray< T, N, M >& out, const CoeffArray< T, N, M >& in ) noexcept
 {
     constexpr auto nC = numMonomials( N, M );
 

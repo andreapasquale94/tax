@@ -2,6 +2,7 @@
 
 #include <tax/basis/traits.hpp>
 #include <tax/kernels.hpp>
+#include <tax/utils/aliases.hpp>
 #include <tax/utils/combinatorics.hpp>
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/fwd.hpp>
@@ -19,9 +20,9 @@ struct BasisTraits< Taylor >
     /// @brief Truncated polynomial multiplication (Cauchy product).
     template < typename T, int N, int M >
     static constexpr void multiply(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a,
-        const std::array< T, detail::numMonomials( N, M ) >& b ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a,
+        const detail::CoeffArray< T, N, M >& b ) noexcept
     {
         detail::cauchyProduct< T, N, M >( out, a, b );
     }
@@ -29,9 +30,9 @@ struct BasisTraits< Taylor >
     /// @brief Truncated polynomial multiply-accumulate.
     template < typename T, int N, int M >
     static constexpr void multiplyAccumulate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a,
-        const std::array< T, detail::numMonomials( N, M ) >& b ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a,
+        const detail::CoeffArray< T, N, M >& b ) noexcept
     {
         detail::cauchyAccumulate< T, N, M >( out, a, b );
     }
@@ -39,8 +40,8 @@ struct BasisTraits< Taylor >
     /// @brief Multiplicative inverse.
     template < typename T, int N, int M >
     static constexpr void reciprocal(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a ) noexcept
     {
         detail::seriesReciprocal< T, N, M >( out, a );
     }
@@ -48,7 +49,7 @@ struct BasisTraits< Taylor >
     /// @brief Evaluate univariate polynomial at displacement dx (Horner's method).
     template < typename T, int N >
     [[nodiscard]] static constexpr T evaluate(
-        const std::array< T, detail::numMonomials( N, 1 ) >& c, T dx ) noexcept
+        const detail::CoeffArray< T, N, 1 >& c, T dx ) noexcept
     {
         T result = c[N];
         for ( int i = N - 1; i >= 0; --i ) result = result * dx + c[i];
@@ -58,7 +59,7 @@ struct BasisTraits< Taylor >
     /// @brief Evaluate multivariate polynomial at displacement dx.
     template < typename T, int N, int M >
     [[nodiscard]] static constexpr T evaluate(
-        const std::array< T, detail::numMonomials( N, M ) >& c,
+        const detail::CoeffArray< T, N, M >& c,
         const std::array< T, M >& dx ) noexcept
     {
         if constexpr ( M == 1 )
@@ -95,8 +96,8 @@ struct BasisTraits< Taylor >
     /// @brief Partial derivative polynomial w.r.t. variable `var`.
     template < typename T, int N, int M >
     static constexpr void differentiate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in, int var ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         for ( std::size_t i = 0; i < nC; ++i ) out[i] = T{};
@@ -115,8 +116,8 @@ struct BasisTraits< Taylor >
     /// @brief Indefinite integral polynomial w.r.t. variable `var`.
     template < typename T, int N, int M >
     static constexpr void integrate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in, int var ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         for ( std::size_t i = 0; i < nC; ++i ) out[i] = T{};
@@ -135,8 +136,8 @@ struct BasisTraits< Taylor >
     /// @brief Identity transform (monomial IS the native basis for Taylor).
     template < typename T, int N, int M >
     static constexpr void toMonomial(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in ) noexcept
     {
         out = in;
     }
@@ -144,8 +145,8 @@ struct BasisTraits< Taylor >
     /// @brief Identity transform (monomial IS the native basis for Taylor).
     template < typename T, int N, int M >
     static constexpr void fromMonomial(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in ) noexcept
     {
         out = in;
     }

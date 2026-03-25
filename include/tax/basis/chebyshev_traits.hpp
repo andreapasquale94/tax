@@ -3,6 +3,7 @@
 #include <tax/basis/taylor_traits.hpp>
 #include <tax/basis/transforms.hpp>
 #include <tax/kernels.hpp>
+#include <tax/utils/aliases.hpp>
 #include <tax/utils/combinatorics.hpp>
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/fwd.hpp>
@@ -24,9 +25,9 @@ struct BasisTraits< Chebyshev >
     ///          generalized to multivariate via convert→Taylor→convert back.
     template < typename T, int N, int M >
     static constexpr void multiply(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a,
-        const std::array< T, detail::numMonomials( N, M ) >& b ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a,
+        const detail::CoeffArray< T, N, M >& b ) noexcept
     {
         if constexpr ( M == 1 )
         {
@@ -65,9 +66,9 @@ struct BasisTraits< Chebyshev >
     /// @brief Chebyshev polynomial multiply-accumulate.
     template < typename T, int N, int M >
     static constexpr void multiplyAccumulate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a,
-        const std::array< T, detail::numMonomials( N, M ) >& b ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a,
+        const detail::CoeffArray< T, N, M >& b ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > tmp{};
@@ -78,8 +79,8 @@ struct BasisTraits< Chebyshev >
     /// @brief Multiplicative inverse via convert→Taylor→convert back.
     template < typename T, int N, int M >
     static constexpr void reciprocal(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > ma{}, mo{};
@@ -91,7 +92,7 @@ struct BasisTraits< Chebyshev >
     /// @brief Evaluate univariate Chebyshev polynomial using Clenshaw algorithm.
     template < typename T, int N >
     [[nodiscard]] static constexpr T evaluate(
-        const std::array< T, detail::numMonomials( N, 1 ) >& c, T x ) noexcept
+        const detail::CoeffArray< T, N, 1 >& c, T x ) noexcept
     {
         // Clenshaw recurrence for Chebyshev:
         // b_{N+1} = b_{N+2} = 0
@@ -121,7 +122,7 @@ struct BasisTraits< Chebyshev >
     /// @brief Evaluate multivariate Chebyshev polynomial.
     template < typename T, int N, int M >
     [[nodiscard]] static constexpr T evaluate(
-        const std::array< T, detail::numMonomials( N, M ) >& c,
+        const detail::CoeffArray< T, N, M >& c,
         const std::array< T, M >& x ) noexcept
     {
         if constexpr ( M == 1 )
@@ -164,8 +165,8 @@ struct BasisTraits< Chebyshev >
     ///   c'_0 = 0.5*c'_2 + c_1
     template < typename T, int N, int M >
     static constexpr void differentiate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in, int var ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
 
@@ -207,8 +208,8 @@ struct BasisTraits< Chebyshev >
     ///          for n >= 2, with special cases for n=0 and n=1.
     template < typename T, int N, int M >
     static constexpr void integrate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in, int var ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
 
@@ -253,8 +254,8 @@ struct BasisTraits< Chebyshev >
     /// @brief Convert Chebyshev coefficients to monomial (Taylor) coefficients.
     template < typename T, int N, int M >
     static constexpr void toMonomial(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in ) noexcept
     {
         detail::chebyshevToMonomial< T, N, M >( out, in );
     }
@@ -262,8 +263,8 @@ struct BasisTraits< Chebyshev >
     /// @brief Convert monomial (Taylor) coefficients to Chebyshev coefficients.
     template < typename T, int N, int M >
     static constexpr void fromMonomial(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in ) noexcept
     {
         detail::monomialToChebyshev< T, N, M >( out, in );
     }

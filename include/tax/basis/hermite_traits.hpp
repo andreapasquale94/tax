@@ -3,6 +3,7 @@
 #include <tax/basis/taylor_traits.hpp>
 #include <tax/basis/transforms.hpp>
 #include <tax/kernels.hpp>
+#include <tax/utils/aliases.hpp>
 #include <tax/utils/combinatorics.hpp>
 #include <tax/utils/enumeration.hpp>
 #include <tax/utils/fwd.hpp>
@@ -21,9 +22,9 @@ struct BasisTraits< Hermite >
     /// @brief Hermite polynomial multiplication via convert→Cauchy→convert back.
     template < typename T, int N, int M >
     static constexpr void multiply(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a,
-        const std::array< T, detail::numMonomials( N, M ) >& b ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a,
+        const detail::CoeffArray< T, N, M >& b ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > ma{}, mb{}, mo{};
@@ -36,9 +37,9 @@ struct BasisTraits< Hermite >
     /// @brief Hermite polynomial multiply-accumulate.
     template < typename T, int N, int M >
     static constexpr void multiplyAccumulate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a,
-        const std::array< T, detail::numMonomials( N, M ) >& b ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a,
+        const detail::CoeffArray< T, N, M >& b ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > tmp{};
@@ -49,8 +50,8 @@ struct BasisTraits< Hermite >
     /// @brief Multiplicative inverse via convert→seriesReciprocal→convert back.
     template < typename T, int N, int M >
     static constexpr void reciprocal(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& a ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& a ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > ma{}, mo{};
@@ -66,7 +67,7 @@ struct BasisTraits< Hermite >
     ///          result = c_0 + x*b_1 - b_2
     template < typename T, int N >
     [[nodiscard]] static constexpr T evaluate(
-        const std::array< T, detail::numMonomials( N, 1 ) >& c, T x ) noexcept
+        const detail::CoeffArray< T, N, 1 >& c, T x ) noexcept
     {
         if constexpr ( N == 0 )
         {
@@ -91,7 +92,7 @@ struct BasisTraits< Hermite >
     /// @brief Evaluate multivariate Hermite polynomial.
     template < typename T, int N, int M >
     [[nodiscard]] static constexpr T evaluate(
-        const std::array< T, detail::numMonomials( N, M ) >& c,
+        const detail::CoeffArray< T, N, M >& c,
         const std::array< T, M >& x ) noexcept
     {
         if constexpr ( M == 1 )
@@ -129,8 +130,8 @@ struct BasisTraits< Hermite >
     /// @brief Partial derivative via convert→Taylor differentiate→convert back.
     template < typename T, int N, int M >
     static constexpr void differentiate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in, int var ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > mono_in{}, mono_out{};
@@ -142,8 +143,8 @@ struct BasisTraits< Hermite >
     /// @brief Indefinite integral via convert→Taylor integrate→convert back.
     template < typename T, int N, int M >
     static constexpr void integrate(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in, int var ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in, int var ) noexcept
     {
         constexpr auto nC = detail::numMonomials( N, M );
         std::array< T, nC > mono_in{}, mono_out{};
@@ -155,8 +156,8 @@ struct BasisTraits< Hermite >
     /// @brief Convert Hermite coefficients to monomial (Taylor) coefficients.
     template < typename T, int N, int M >
     static constexpr void toMonomial(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in ) noexcept
     {
         detail::hermiteToMonomial< T, N, M >( out, in );
     }
@@ -164,8 +165,8 @@ struct BasisTraits< Hermite >
     /// @brief Convert monomial (Taylor) coefficients to Hermite coefficients.
     template < typename T, int N, int M >
     static constexpr void fromMonomial(
-        std::array< T, detail::numMonomials( N, M ) >& out,
-        const std::array< T, detail::numMonomials( N, M ) >& in ) noexcept
+        detail::CoeffArray< T, N, M >& out,
+        const detail::CoeffArray< T, N, M >& in ) noexcept
     {
         detail::monomialToHermite< T, N, M >( out, in );
     }
