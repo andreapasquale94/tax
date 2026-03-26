@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <Eigen/LU>
 #include <array>
 #include <tax/utils/aliases.hpp>
 #include <tax/utils/combinatorics.hpp>
@@ -50,7 +51,8 @@ template < typename T, int N >
 template < typename T, int N >
 [[nodiscard]] static TransformMatrix< T, N > monomialToChebyshevMatrix()
 {
-    return chebyshevToMonomialMatrix< T, N >().inverse();
+    auto identity = TransformMatrix< T, N >::Identity();
+    return chebyshevToMonomialMatrix< T, N >().partialPivLu().solve( identity );
 }
 
 // =============================================================================
@@ -95,7 +97,8 @@ template < typename T, int N >
 template < typename T, int N >
 [[nodiscard]] static TransformMatrix< T, N > monomialToLegendreMatrix()
 {
-    return legendreToMonomialMatrix< T, N >().inverse();
+    auto identity = TransformMatrix< T, N >::Identity();
+    return legendreToMonomialMatrix< T, N >().partialPivLu().solve( identity );
 }
 
 // =============================================================================
@@ -140,7 +143,8 @@ template < typename T, int N >
 template < typename T, int N >
 [[nodiscard]] static TransformMatrix< T, N > monomialToHermiteMatrix()
 {
-    return hermiteToMonomialMatrix< T, N >().inverse();
+    auto identity = TransformMatrix< T, N >::Identity();
+    return hermiteToMonomialMatrix< T, N >().partialPivLu().solve( identity );
 }
 
 // =============================================================================

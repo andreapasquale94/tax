@@ -30,7 +30,7 @@ namespace tax
 template < typename T, int N, int M = 1, typename Basis = Taylor >
 class TruncatedExpansionT
     : public Expr< TruncatedExpansionT< T, N, M, Basis >, T, N, M >,
-      public ExprLeaf
+      public std::conditional_t< std::is_same_v< Basis, Taylor >, MonomialLeaf, ExprLeaf >
 {
    public:
     static_assert( N >= 0, "DA order must be non-negative" );

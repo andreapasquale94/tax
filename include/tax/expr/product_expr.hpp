@@ -50,10 +50,29 @@ class ProductExpr
     {
         if constexpr ( sizeof...( Es ) == 2 )
         {
-            coeff_array la{}, rb{};
-            std::get< 0 >( ops_ ).evalTo( la );
-            std::get< 1 >( ops_ ).evalTo( rb );
-            cauchyAccumulate< T, N, M >( out, la, rb );
+            using L = std::tuple_element_t< 0, std::tuple< Es... > >;
+            using R = std::tuple_element_t< 1, std::tuple< Es... > >;
+            const auto& lop = std::get< 0 >( ops_ );
+            const auto& rop = std::get< 1 >( ops_ );
+            if constexpr ( is_monomial_leaf_v< L > && is_monomial_leaf_v< R > )
+                cauchyAccumulate< T, N, M >( out, lop.coeffs(), rop.coeffs() );
+            else if constexpr ( is_monomial_leaf_v< R > )
+            {
+                coeff_array la{};
+                lop.evalTo( la );
+                cauchyAccumulate< T, N, M >( out, la, rop.coeffs() );
+            } else if constexpr ( is_monomial_leaf_v< L > )
+            {
+                coeff_array rb{};
+                rop.evalTo( rb );
+                cauchyAccumulate< T, N, M >( out, lop.coeffs(), rb );
+            } else
+            {
+                coeff_array la{}, rb{};
+                lop.evalTo( la );
+                rop.evalTo( rb );
+                cauchyAccumulate< T, N, M >( out, la, rb );
+            }
         } else
         {
             coeff_array tmp{};
@@ -75,7 +94,11 @@ class ProductExpr
 
     constexpr void seedAccumulator( coeff_array& a ) const noexcept
     {
-        std::get< 0 >( ops_ ).evalTo( a );
+        using E0 = std::tuple_element_t< 0, std::tuple< Es... > >;
+        if constexpr ( is_monomial_leaf_v< E0 > )
+            a = std::get< 0 >( ops_ ).coeffs();
+        else
+            std::get< 0 >( ops_ ).evalTo( a );
     }
 
     template < std::size_t Start >
@@ -89,9 +112,16 @@ class ProductExpr
     template < std::size_t I >
     constexpr void productStep( coeff_array& out, coeff_array& a ) const noexcept
     {
-        coeff_array b{};
-        std::get< I >( ops_ ).evalTo( b );
-        cauchyProduct< T, N, M >( out, a, b );
+        using Ei = std::tuple_element_t< I, std::tuple< Es... > >;
+        if constexpr ( is_monomial_leaf_v< Ei > )
+        {
+            cauchyProduct< T, N, M >( out, a, std::get< I >( ops_ ).coeffs() );
+        } else
+        {
+            coeff_array b{};
+            std::get< I >( ops_ ).evalTo( b );
+            cauchyProduct< T, N, M >( out, a, b );
+        }
         a = out;
     }
 };

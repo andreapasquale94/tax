@@ -15,8 +15,4 @@ using CoeffArray = std::array< T, numMonomials( N, M ) >;
 template < typename T, int N >
 using TransformMatrix = la::MatNT< T, N + 1 >;
 
-/// @brief Augmented matrix for Gauss-Jordan elimination: (N+1) x 2*(N+1).
-template < typename T, int N >
-using AugmentedMatrix = la::MatNMT< T, N + 1, 2 * ( N + 1 ) >;
-
 }  // namespace tax::detail
