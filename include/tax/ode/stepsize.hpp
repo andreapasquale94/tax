@@ -18,7 +18,7 @@ namespace tax::ode
  * @return Recommended step-size magnitude (always positive).
  */
 template < typename T, int N >
-[[nodiscard]] T stepsize( const TruncatedTaylorExpansionT< T, N, 1 >& x, T abstol ) noexcept
+[[nodiscard]] T stepsize( const TruncatedExpansionT< T, N, 1 >& x, T abstol ) noexcept
 {
     using std::abs;
     using std::min;
@@ -43,7 +43,7 @@ template < typename T, int N >
  */
 template < typename T, int N, int D >
 [[nodiscard]] T stepsize(
-    const Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, D, 1 >& x, T abstol ) noexcept
+    const Eigen::Matrix< TruncatedExpansionT< T, N, 1 >, D, 1 >& x, T abstol ) noexcept
 {
     T h = std::numeric_limits< T >::infinity();
     for ( Eigen::Index i = 0; i < x.size(); ++i ) h = std::min( h, stepsize( x( i ), abstol ) );

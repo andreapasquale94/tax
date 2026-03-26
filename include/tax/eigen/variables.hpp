@@ -13,24 +13,24 @@ namespace detail
 {
 
 /// @brief Traits for extracting scalar type, order, and number of variables from a
-/// TruncatedTaylorExpansionT type.
+/// TruncatedExpansionT type.
 template < typename >
 struct expansion_traits;
 
 template < typename T, int N, int M >
-struct expansion_traits< TruncatedTaylorExpansionT< T, N, M > >
+struct expansion_traits< TruncatedExpansionT< T, N, M > >
 {
     using scalar_type = T;
     static constexpr int order = N;
     static constexpr int vars = M;
 };
 
-/// @brief True if `TTE` is a `TruncatedTaylorExpansionT<T, N, M>` specialization.
+/// @brief True if `TTE` is a `TruncatedExpansionT<T, N, M>` specialization.
 template < typename >
 inline constexpr bool is_tte_v = false;
 
 template < typename T, int N, int M >
-inline constexpr bool is_tte_v< TruncatedTaylorExpansionT< T, N, M > > = true;
+inline constexpr bool is_tte_v< TruncatedExpansionT< T, N, M > > = true;
 
 /// @brief Rebind an Eigen matrix type to use a different scalar.
 template < typename Derived, typename Scalar >
@@ -49,7 +49,7 @@ concept EigenDenseExpr = requires( const T& t ) {
 
 /**
  * @brief Create a TTE Eigen container from a compile-time-sized expansion point.
- * @tparam TTE The TruncatedTaylorExpansionT type (e.g., `TEn<2, 4>`). `M` must equal the input size.
+ * @tparam TTE The TruncatedExpansionT type (e.g., `TEn<2, 4>`). `M` must equal the input size.
  * @param x0 Eigen matrix/vector with `M` entries.
  * @return Eigen matrix of same shape with TTE variable entries.
  */
@@ -94,7 +94,7 @@ template < typename TTE, typename Derived >
 
 /**
  * @brief Create all coordinate variables from an Eigen vector expansion point.
- * @tparam TTE The TruncatedTaylorExpansionT type (e.g., `TEn<2, 3>`). `M` must match the vector
+ * @tparam TTE The TruncatedExpansionT type (e.g., `TEn<2, 3>`). `M` must match the vector
  * size.
  * @param x0 Eigen vector with `M` entries.
  * @return Tuple `(x_0, ..., x_{M-1})` of TTE variables.

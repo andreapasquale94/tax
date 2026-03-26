@@ -24,10 +24,7 @@ class BinExpr : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, 
     /// @brief Construct from left/right operands.
     constexpr BinExpr( const L& l, const R& r ) noexcept : l_( l ), r_( r ) {}
 
-    /**
-     * @brief Evaluate operation result into `out`.
-     * @details Uses leaf fast paths to avoid materializing both operands.
-     */
+    /// @brief Evaluate operation result into `out`.
     constexpr void evalTo( coeff_array& out ) const noexcept
     {
         if constexpr ( Op::is_additive )
@@ -39,14 +36,16 @@ class BinExpr : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, 
                 r_.addTo( out );
         } else
         {
-            if constexpr ( is_leaf_v< L > && is_leaf_v< R > )
+            // Monomial leaves can use coeffs() directly (avoids a copy).
+            // Non-monomial leaves must go through evalTo() for basis conversion.
+            if constexpr ( is_monomial_leaf_v< L > && is_monomial_leaf_v< R > )
                 Op::template apply< T >( out, l_.coeffs(), r_.coeffs() );
-            else if constexpr ( is_leaf_v< R > )
+            else if constexpr ( is_monomial_leaf_v< R > )
             {
                 coeff_array la{};
                 l_.evalTo( la );
                 Op::template apply< T >( out, la, r_.coeffs() );
-            } else if constexpr ( is_leaf_v< L > )
+            } else if constexpr ( is_monomial_leaf_v< L > )
             {
                 coeff_array rb{};
                 r_.evalTo( rb );
@@ -76,14 +75,14 @@ class BinExpr : public tax::Expr< BinExpr< L, R, Op >, typename L::scalar_type, 
                 r_.addTo( out );
         } else if constexpr ( Op::is_convolution )
         {
-            if constexpr ( is_leaf_v< L > && is_leaf_v< R > )
+            if constexpr ( is_monomial_leaf_v< L > && is_monomial_leaf_v< R > )
                 cauchyAccumulate< T, N, M >( out, l_.coeffs(), r_.coeffs() );
-            else if constexpr ( is_leaf_v< R > )
+            else if constexpr ( is_monomial_leaf_v< R > )
             {
                 coeff_array la{};
                 l_.evalTo( la );
                 cauchyAccumulate< T, N, M >( out, la, r_.coeffs() );
-            } else if constexpr ( is_leaf_v< L > )
+            } else if constexpr ( is_monomial_leaf_v< L > )
             {
                 coeff_array rb{};
                 r_.evalTo( rb );

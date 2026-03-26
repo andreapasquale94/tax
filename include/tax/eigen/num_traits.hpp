@@ -7,12 +7,12 @@ namespace Eigen
 {
 
 template < typename T, int N, int M >
-struct NumTraits< tax::TruncatedTaylorExpansionT< T, N, M > > : NumTraits< T >
+struct NumTraits< tax::TruncatedExpansionT< T, N, M > > : NumTraits< T >
 {
-    using Real = tax::TruncatedTaylorExpansionT< T, N, M >;
-    using NonInteger = tax::TruncatedTaylorExpansionT< T, N, M >;
-    using Literal = tax::TruncatedTaylorExpansionT< T, N, M >;
-    using Nested = tax::TruncatedTaylorExpansionT< T, N, M >;
+    using Real = tax::TruncatedExpansionT< T, N, M >;
+    using NonInteger = tax::TruncatedExpansionT< T, N, M >;
+    using Literal = tax::TruncatedExpansionT< T, N, M >;
+    using Nested = tax::TruncatedExpansionT< T, N, M >;
 
     enum
     {

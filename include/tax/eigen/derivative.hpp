@@ -126,7 +126,7 @@ template < int... Alpha, typename Derived >
  * @returns Eigen column vector `[df/dx_0, ..., df/dx_{M-1}]`.
  */
 template < typename T, int N, int M >
-[[nodiscard]] auto gradient( const TruncatedTaylorExpansionT< T, N, M >& f )
+[[nodiscard]] auto gradient( const TruncatedExpansionT< T, N, M >& f )
 {
     static_assert( N >= 1, "gradient requires TTE order >= 1" );
     Eigen::Matrix< T, M, 1 > g;
@@ -176,7 +176,7 @@ template < typename Derived >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int M, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t,
+[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedExpansionT< T, N, M >, Rank >& t,
                                const std::array< int, std::size_t( M ) >& alpha )
     requires( Rank >= 1 )
 {
@@ -191,7 +191,7 @@ template < typename T, int N, int M, int Rank >
  * @returns Eigen::Tensor<T, Rank> with the same dimensions.
  */
 template < typename T, int N, int Rank >
-[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, 1 >, Rank >& t,
+[[nodiscard]] auto derivative( const Eigen::Tensor< TruncatedExpansionT< T, N, 1 >, Rank >& t,
                                int k )
     requires( Rank >= 1 )
 {
@@ -205,7 +205,7 @@ template < typename T, int N, int Rank >
  */
 template < int... Alpha, typename T, int N, int M, int Rank >
 [[nodiscard]] auto derivative(
-    const Eigen::Tensor< TruncatedTaylorExpansionT< T, N, M >, Rank >& t )
+    const Eigen::Tensor< TruncatedExpansionT< T, N, M >, Rank >& t )
     requires( Rank >= 1 )
 {
     static_assert( sizeof...( Alpha ) == M,
@@ -229,7 +229,7 @@ template < int... Alpha, typename T, int N, int M, int Rank >
  * - `K >= 3`: returns `Eigen::Tensor<T, K, Eigen::RowMajor>`.
  */
 template < int K, typename T, int N, int M >
-[[nodiscard]] auto derivative( const TruncatedTaylorExpansionT< T, N, M >& f )
+[[nodiscard]] auto derivative( const TruncatedExpansionT< T, N, M >& f )
 {
     static_assert( M > 1, "Eigen derivative objects are only provided for multivariate TTE (M > 1)" );
     static_assert( K >= 0, "Derivative order K must be non-negative" );
