@@ -1,0 +1,71 @@
+[build-system]
+requires = ["scikit-build-core>=0.8", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "tax"
+version = "0.1.0"
+description = "Runtime-dimensioned Truncated Algebraic eXpansions (Python bindings for the tax C++ library)"
+readme = "python/README.md"
+requires-python = ">=3.9"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "tax contributors" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "numpy>=1.22"]
+
+[tool.scikit-build]
+# The C++ library root is this directory; turn on the Python bindings only.
+cmake.source-dir = "."
+cmake.args = [
+    "-DTAX_BUILD_PYTHON=ON",
+    "-DTAX_BUILD_TEST=OFF",
+    "-DTAX_BUILD_BENCHMARK=OFF",
+]
+cmake.build-type = "Release"
+# Python source lives under python/tax; ship those files in the wheel.
+wheel.packages = ["python/tax"]
+wheel.install-dir = "tax"
+build-dir = "build/{wheel_tag}"
+
+# Ensure the sdist picks up everything the build needs (C++ headers,
+# tools, etc.), not just what's inside python/.
+sdist.include = [
+    "include/**",
+    "cmake/**",
+    "tools/install_eigen.sh",
+    "python/**",
+    "CMakeLists.txt",
+    "LICENSE",
+    "README.md",
+]
+
+[tool.scikit-build.cmake.define]
+CMAKE_POSITION_INDEPENDENT_CODE = "ON"
+
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
+skip = [
+    "*-musllinux_*",
+    "pp*",
+    "*-win32",
+    "*-manylinux_i686",
+]
+test-requires = ["pytest", "numpy"]
+test-command = "pytest {project}/python/tests -q"
+
+[tool.cibuildwheel.linux]
+before-all = "bash {project}/tools/install_eigen.sh 3.4.0"
+environment = { CMAKE_BUILD_PARALLEL_LEVEL = "2", CMAKE_PREFIX_PATH = "/tmp/eigen-install-3.4.0" }
+
+[tool.cibuildwheel.macos]
+before-all = "bash {project}/tools/install_eigen.sh 3.4.0"
+environment = { CMAKE_BUILD_PARALLEL_LEVEL = "2", MACOSX_DEPLOYMENT_TARGET = "11.0" }
