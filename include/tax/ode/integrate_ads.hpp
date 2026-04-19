@@ -48,10 +48,10 @@ namespace detail
 
 /// @brief Infinity norm of a DA polynomial (max absolute coefficient).
 template < typename T, int P, int M >
-[[nodiscard]] double infNorm( const TruncatedTaylorExpansionT< T, P, M >& x ) noexcept
+[[nodiscard]] double infNorm( const TruncatedExpansionT< T, P, M >& x ) noexcept
 {
     double n = 0.0;
-    for ( std::size_t i = 0; i < TruncatedTaylorExpansionT< T, P, M >::nCoefficients; ++i )
+    for ( std::size_t i = 0; i < TruncatedExpansionT< T, P, M >::nCoefficients; ++i )
         n = std::max( n, std::abs( x[i] ) );
     return n;
 }
@@ -61,7 +61,7 @@ template < typename T, int P, int M >
 /// coefficients by replacing the scalar absolute value with the infinity norm.
 template < int P, int M, int N >
 [[nodiscard]] double stepsizeDa(
-    const TruncatedTaylorExpansionT< TEn< P, M >, N, 1 >& x, double abstol ) noexcept
+    const TruncatedExpansionT< TEn< P, M >, N, 1 >& x, double abstol ) noexcept
 {
     double h = std::numeric_limits< double >::infinity();
 
@@ -80,7 +80,7 @@ template < int P, int M, int N >
 /// @brief Vector version: minimum step size across all state components.
 template < int P, int M, int N, int D >
 [[nodiscard]] double stepsizeDa(
-    const Eigen::Matrix< TruncatedTaylorExpansionT< TEn< P, M >, N, 1 >, D, 1 >& x,
+    const Eigen::Matrix< TruncatedExpansionT< TEn< P, M >, N, 1 >, D, 1 >& x,
     double abstol ) noexcept
 {
     double h = std::numeric_limits< double >::infinity();
@@ -94,7 +94,7 @@ template < int P, int M, int N, int D >
 /// so the computation is polynomial-scalar multiply + polynomial addition.
 template < typename DA, int N >
 [[nodiscard]] DA evalAtScalar(
-    const TruncatedTaylorExpansionT< DA, N, 1 >& poly, double dt ) noexcept
+    const TruncatedExpansionT< DA, N, 1 >& poly, double dt ) noexcept
 {
     DA result = poly[N];
     for ( int i = N - 1; i >= 0; --i )
@@ -108,7 +108,7 @@ template < typename DA, int N >
 /// @brief Vector version: evaluate each component at the same scalar dt.
 template < typename DA, int N, int D >
 [[nodiscard]] Eigen::Matrix< DA, D, 1 > evalAtScalar(
-    const Eigen::Matrix< TruncatedTaylorExpansionT< DA, N, 1 >, D, 1 >& poly,
+    const Eigen::Matrix< TruncatedExpansionT< DA, N, 1 >, D, 1 >& poly,
     double dt ) noexcept
 {
     Eigen::Matrix< DA, D, 1 > result( poly.size() );
@@ -185,11 +185,11 @@ template < int P, int D >
  */
 template < int N, int P, int D, typename F >
 [[nodiscard]] StepResult<
-    Eigen::Matrix< TruncatedTaylorExpansionT< TEn< P, D >, N, 1 >, D, 1 >, double >
+    Eigen::Matrix< TruncatedExpansionT< TEn< P, D >, N, 1 >, D, 1 >, double >
 stepDa( F&& f, const Eigen::Matrix< TEn< P, D >, D, 1 >& x0, double tc, double abstol )
 {
     using DA     = TEn< P, D >;
-    using TTE    = TruncatedTaylorExpansionT< DA, N, 1 >;
+    using TTE    = TruncatedExpansionT< DA, N, 1 >;
     using VecTTE = Eigen::Matrix< TTE, D, 1 >;
 
     const Eigen::Index dim = x0.size();

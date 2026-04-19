@@ -37,10 +37,10 @@ struct StepResult
  * @return StepResult with the solution polynomial and recommended step size.
  */
 template < int N, typename F, typename T = double >
-[[nodiscard]] StepResult< TruncatedTaylorExpansionT< T, N, 1 >, T >
+[[nodiscard]] StepResult< TruncatedExpansionT< T, N, 1 >, T >
 step( F&& f, T x0, T tc, T abstol )
 {
-    using TTE = TruncatedTaylorExpansionT< T, N, 1 >;
+    using TTE = TruncatedExpansionT< T, N, 1 >;
 
     TTE t_da{};
     t_da[0] = tc;
@@ -76,10 +76,10 @@ step( F&& f, T x0, T tc, T abstol )
  * @return StepResult with the solution polynomial vector and recommended step size.
  */
 template < int N, typename F, typename T, int D >
-[[nodiscard]] StepResult< Eigen::Matrix< TruncatedTaylorExpansionT< T, N, 1 >, D, 1 >, T >
+[[nodiscard]] StepResult< Eigen::Matrix< TruncatedExpansionT< T, N, 1 >, D, 1 >, T >
 step( F&& f, const Eigen::Matrix< T, D, 1 >& x0, T tc, T abstol )
 {
-    using TTE = TruncatedTaylorExpansionT< T, N, 1 >;
+    using TTE = TruncatedExpansionT< T, N, 1 >;
     using VecTTE = Eigen::Matrix< TTE, D, 1 >;
 
     const Eigen::Index dim = x0.size();

@@ -8,6 +8,10 @@ project(tax VERSION 0.1.0 LANGUAGES CXX)
 option(TAX_BUILD_TEST "Build and enable unittests" ON)
 option(TAX_BUILD_BENCHMARK "Build benchmark suite (Google Benchmark)" OFF)
 option(TAX_USE_DACE "Enable DACE integration (fetches dacelib/dace@v2.1.0) for tests and benchmarks" OFF)
+option(TAX_BUILD_PYTHON "Build Python bindings (pybind11)" OFF)
+set(TAX_PY_MAX_N 20 CACHE STRING "Max truncation order N compiled into Python bindings")
+set(TAX_PY_MAX_M 10 CACHE STRING "Max variable count M compiled into Python bindings")
+set(TAX_PY_MAX_COEFFS 10000 CACHE STRING "Max number of coefficients per precompiled (N,M) pair")
 
 # -------------------------------
 # Compiler settings
@@ -102,6 +106,10 @@ endif()
 
 if(TAX_BUILD_BENCHMARK)
     add_subdirectory(benchmarks)
+endif()
+
+if(TAX_BUILD_PYTHON)
+    add_subdirectory(python)
 endif()
 
 # add_subdirectory(examples)

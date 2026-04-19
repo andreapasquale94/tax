@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N.
+**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate polynomials that propagate complete series through arbitrary expressions. Supports multiple polynomial bases (Taylor/monomial, Chebyshev, Legendre, Hermite). In a single evaluation pass, it yields function values and all partial derivatives up to order N.
 
 - **Version:** 0.1.0
 - **License:** BSD 3-Clause
@@ -17,23 +17,28 @@
 tax/
 ├── include/tax/          # Header-only library (the entire library lives here)
 │   ├── tax.hpp           # Umbrella header — users include only this
-│   ├── tte.hpp           # Core TruncatedTaylorExpansionT<T,N,M> class
+│   ├── tte.hpp           # Core TruncatedExpansionT<T,N,M,Basis> class
 │   ├── ads.hpp           # Facade: includes all ads/
 │   ├── kernels.hpp       # Facade: includes all kernels/
 │   ├── operators.hpp     # Facade: includes all operators/
 │   ├── utils.hpp         # Facade: includes all utils/
 │   ├── ads/              # Automatic Domain Splitting (ADS)
+│   ├── basis/            # Polynomial basis infrastructure (tags, traits, transforms)
 │   ├── expr/             # Expression template nodes (lazy evaluation)
 │   ├── kernels/          # Series computation kernels (recurrence relations)
+│   ├── la/               # Linear algebra type aliases (Eigen matrix/vector wrappers)
 │   ├── ode/              # Taylor ODE integrator
 │   ├── operators/        # Free-function operators and math functions
 │   ├── utils/            # Type traits, combinatorics, enumeration
 │   └── eigen/            # Eigen3 integration helpers
-├── tests/                # Google Test suite (29 test executables, 440 tests)
+├── tests/                # Google Test suite (32 test executables, 505 tests)
 │   ├── ads/              # ADS tree and runner tests
+│   ├── chebyshev/        # Chebyshev basis tests
 │   ├── core/             # Basic TTE construction, nesting, composition, deriv/integ
 │   ├── expr/             # Expression template correctness
+│   ├── hermite/          # Hermite basis tests
 │   ├── kernels/          # Kernel algorithm verification
+│   ├── legendre/         # Legendre basis tests
 │   ├── foundation/       # Combinatorics and enumeration utilities
 │   ├── eigen/            # Eigen integration tests
 │   ├── ode/              # Taylor integrator and ADS-integrated ODE tests
@@ -106,17 +111,33 @@ gcovr --root . build-cov --filter "^include/tax/"
 ### The Main Type
 
 ```cpp
-tax::TruncatedTaylorExpansionT<T, N, M>
-// T = scalar type (double, float)
-// N = truncation order
-// M = number of variables
+tax::TruncatedExpansionT<T, N, M, Basis>
+// T     = scalar type (double, float)
+// N     = truncation order
+// M     = number of variables
+// Basis = polynomial basis tag (default: Taylor)
 ```
 
 Convenient aliases:
 ```cpp
-tax::TE<N>        // univariate: TruncatedTaylorExpansionT<double, N, 1>
-tax::TEn<N, M>    // multivariate: TruncatedTaylorExpansionT<double, N, M>
+// Taylor (monomial) basis — default
+tax::TE<N>        // TruncatedExpansionT<double, N, 1, Taylor>
+tax::TEn<N, M>    // TruncatedExpansionT<double, N, M, Taylor>
+
+// Chebyshev basis (first kind)
+tax::CE<N>        // TruncatedExpansionT<double, N, 1, Chebyshev>
+tax::CEn<N, M>    // TruncatedExpansionT<double, N, M, Chebyshev>
+
+// Legendre basis
+tax::LE<N>        // TruncatedExpansionT<double, N, 1, Legendre>
+tax::LEn<N, M>    // TruncatedExpansionT<double, N, M, Legendre>
+
+// Hermite basis (probabilist's)
+tax::HE<N>        // TruncatedExpansionT<double, N, 1, Hermite>
+tax::HEn<N, M>    // TruncatedExpansionT<double, N, M, Hermite>
 ```
+
+> **Note:** `TruncatedExpansionT` is a backward-compatible alias for `TruncatedExpansionT`.
 
 ### Creating Variables
 
@@ -127,6 +148,30 @@ auto x = tax::TE<3>::variable(x0);       // x = x0 + 1*dx
 // Multivariate (structured bindings)
 auto [x, y] = tax::TEn<3, 2>::variables(x0, y0);
 ```
+
+### Polynomial Bases
+
+The library supports four polynomial bases via tag dispatch:
+
+```cpp
+// Chebyshev expansion on [-1,1]
+auto x = tax::CE<10>::variable(0.0);
+auto f = sin(x);                    // all operations work identically
+double val = f.eval(0.5);           // Clenshaw evaluation
+
+// Legendre expansion
+auto x = tax::LE<8>::variable(0.0);
+auto f = exp(x);
+
+// Hermite expansion (probabilist's)
+auto x = tax::HE<8>::variable(0.0);
+auto f = cos(x);
+```
+
+**Architecture:** Expression templates always operate in the monomial basis internally. Non-Taylor bases convert at the I/O boundary:
+- On construction from expression: `evalTo()` produces monomial → `fromMonomial()` converts to target basis
+- On expression evaluation: `evalTo()` converts stored coefficients to monomial via `toMonomial()`
+- Leaf fast-paths (`coeffs()` directly) are only used for `MonomialLeaf` types (Taylor basis)
 
 ### Using the Library
 
@@ -182,14 +227,15 @@ The library uses lazy evaluation via expression templates to avoid materializing
 ```
 User writes:  sin(x * y + z)
 Builds tree:  UnaryExpr<sin, ProductExpr<x, y>, z>
-Evaluated:    Only when assigned to TruncatedTaylorExpansionT
+Evaluated:    Only when assigned to TruncatedExpansionT
 ```
 
 Key design choices:
 - **Sum flattening:** `a + b + c + d` → single `SumExpr<a,b,c,d>` (one pass)
 - **Product flattening:** `a * b * c` → single `ProductExpr<a,b,c>` (rolling Cauchy product)
-- **Leaf fast-paths:** Binary ops on materialized TTE objects take shortcuts
+- **Monomial-leaf fast-paths:** Binary ops on Taylor-basis leaves use `coeffs()` directly (zero-copy); non-Taylor leaves go through `evalTo()` for basis conversion
 - **CRTP base:** `Expr<Derived, T, N, M>` unifies all nodes
+- **Leaf tags:** `ExprLeaf` marks all materialized types; `MonomialLeaf` (subclass) marks leaves whose coefficients are already in monomial basis (Taylor basis only)
 
 ### Key Files in `expr/`
 
@@ -203,6 +249,60 @@ Key design choices:
 | `unary_expr.hpp` | Unary function applications |
 | `func_expr.hpp` | Generic function call nodes |
 | `math_ops.hpp` | High-level math wrappers |
+
+---
+
+## Polynomial Basis Infrastructure
+
+Located in `include/tax/basis/`. Provides the multi-basis framework via tag dispatch and `BasisTraits<>` specializations.
+
+### Key Files in `basis/`
+
+| File | Purpose |
+|------|---------|
+| `tags.hpp` | Basis tag types: `Taylor`, `Chebyshev`, `Legendre`, `Hermite` |
+| `traits.hpp` | Primary `BasisTraits<Basis>` template (must be specialized) |
+| `taylor_traits.hpp` | `BasisTraits<Taylor>` — delegates to existing kernels, fully `constexpr` |
+| `chebyshev_traits.hpp` | `BasisTraits<Chebyshev>` — Clenshaw eval, linearization multiply, convert-based ops |
+| `legendre_traits.hpp` | `BasisTraits<Legendre>` — Clenshaw eval, convert-based ops |
+| `hermite_traits.hpp` | `BasisTraits<Hermite>` — Clenshaw eval, convert-based ops |
+| `convert_ops.hpp` | Shared helpers: `convertMultiply`, `convertReciprocal`, `convertDifferentiate`, `convertIntegrate`, `evaluateMultivariate` |
+| `transforms.hpp` | Conversion matrices (Eigen) and multivariate transform application |
+| `basis.hpp` | Umbrella header including all traits |
+
+### Conversion Matrices
+
+Basis↔monomial conversion uses `(N+1)×(N+1)` Eigen matrices built via three-term recurrence. Inverse matrices use `Eigen::PartialPivLU::solve()`. Matrices are cached in `static const` locals for each `<T, N>` instantiation.
+
+### Adding a New Basis
+
+1. Add a tag type in `basis/tags.hpp`
+2. Specialize `BasisTraits<NewBasis>` — use `convert_ops.hpp` helpers for convert-based operations
+3. Add conversion matrix functions in `transforms.hpp` (forward + inverse via `partialPivLu().solve()`)
+4. Add `newBasisToMonomial` / `monomialToNewBasis` wrappers in `transforms.hpp`
+5. Include the new traits header in `basis/basis.hpp`
+6. Add aliases in `tte.hpp`
+7. Add tests in `tests/newbasis/`
+
+---
+
+## Linear Algebra Types
+
+Located in `include/tax/la/types.hpp`. Provides fixed-size Eigen type aliases:
+
+```cpp
+tax::la::MatNMT<T, N, M>  // Eigen::Matrix<T, N, M>
+tax::la::MatNT<T, N>      // Eigen::Matrix<T, N, N> (square)
+tax::la::VecNT<T, N>      // Eigen::Vector<T, N>
+tax::la::RowVecNT<T, N>   // Eigen::RowVector<T, N>
+
+// Double-precision convenience aliases
+tax::la::MatNM<N, M>, tax::la::MatN<N>, tax::la::VecN<N>, tax::la::RowVecN<N>
+```
+
+Internal aliases in `tax::detail`:
+- `CoeffArray<T, N, M>` = `std::array<T, numMonomials(N,M)>`
+- `TransformMatrix<T, N>` = `la::MatNT<T, N+1>`
 
 ---
 
@@ -375,13 +475,13 @@ int idx = tree.findLeaf({1.5});
 
 | Category | Convention | Examples |
 |----------|-----------|---------|
-| Types/Classes | `PascalCase` | `TruncatedTaylorExpansionT`, `MultiIndex`, `AdsTree`, `AdsRunner`, `AdsNode`, `FlowMap`, `TaylorSolution` |
+| Types/Classes | `PascalCase` | `TruncatedExpansionT`, `MultiIndex`, `AdsTree`, `AdsRunner`, `AdsNode`, `FlowMap`, `TaylorSolution`, `BasisTraits` |
 | Template params | `UPPERCASE` or short | `T`, `N`, `M`, `P`, `D`, `Derived` |
 | Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()`, `deriv()`, `integ()`, `findLeaf()`, `addLeaf()`, `markDone()`, `integrateAds()`, `makeAdsRunner()` |
 | Local variables | `snake_case` | `n_coeff`, `dx`, `half_width` |
-| Namespaces | `lowercase` | `tax`, `tax::detail`, `tax::ode` |
+| Namespaces | `lowercase` | `tax`, `tax::detail`, `tax::ode`, `tax::la` |
 | Op tags | `PascalCase` with prefix | `OpAdd`, `OpSub`, `OpMul` |
-| Type aliases | Short uppercase | `TE<N>`, `TEn<N,M>` |
+| Type aliases | Short uppercase | `TE<N>`, `TEn<N,M>`, `CE<N>`, `LE<N>`, `HE<N>` |
 
 ### C++ Patterns
 
@@ -415,9 +515,12 @@ clang-format -i include/tax/**/*.hpp
 Tests are organized by feature, one `.cpp` per concern. Each produces a standalone test executable:
 
 ```
+tests/chebyshev/   — Chebyshev basis: transforms, Clenshaw eval, expressions, deriv/integ
 tests/core/        — TTE constructors, variable factories, composition, deriv/integ
 tests/expr/        — One file per math function (sin, exp, log, pow, etc.)
 tests/kernels/     — Direct kernel algorithm verification
+tests/hermite/     — Hermite basis: transforms, Clenshaw eval, expressions, deriv/integ
+tests/legendre/    — Legendre basis: transforms, Clenshaw eval, expressions, deriv/integ
 tests/foundation/  — Combinatorics and enumeration
 tests/eigen/       — Eigen integration
 tests/ads/         — ADS tree structure and runner (Gaussian approximation)
@@ -472,7 +575,7 @@ ctest --test-dir build --output-on-failure
 
 ### Before Submitting a PR
 
-1. All 29 test executables pass locally (440 individual tests)
+1. All 32 test executables pass locally (505 individual tests)
 2. Code is formatted with `clang-format`
 3. No new dynamic allocations introduced in core library
 4. New math operations have kernel tests AND expression tests
@@ -501,6 +604,8 @@ ctest --test-dir build --output-on-failure
 - **Concepts vs. SFINAE:** Prefer C++20 concepts (`requires`, `Scalar` concept) over SFINAE
 - **Include the umbrella header in tests:** Use `#include <tax/tax.hpp>`, not individual sub-headers
 - **Expression templates store references:** When using ADS or ODE with expression-returning callables, arguments must be taken by `const&` — by-value copies dangle once the function returns its lazy expression
+- **Eigen aliasing at `-O3`:** When building conversion matrices via recurrence, do not use element-by-element loops that read and write the same Eigen matrix — use `col()` expressions or temporaries to avoid misoptimization
+- **Non-Taylor leaves need `evalTo()`:** Expression template fast-paths (`coeffs()` direct access) must only be used for `MonomialLeaf` types. Non-Taylor bases store coefficients in their native basis, which must be converted to monomial via `evalTo()` before kernel operations
 
 ---
 

@@ -54,14 +54,14 @@ class ProductExpr
             using R = std::tuple_element_t< 1, std::tuple< Es... > >;
             const auto& lop = std::get< 0 >( ops_ );
             const auto& rop = std::get< 1 >( ops_ );
-            if constexpr ( is_leaf_v< L > && is_leaf_v< R > )
+            if constexpr ( is_monomial_leaf_v< L > && is_monomial_leaf_v< R > )
                 cauchyAccumulate< T, N, M >( out, lop.coeffs(), rop.coeffs() );
-            else if constexpr ( is_leaf_v< R > )
+            else if constexpr ( is_monomial_leaf_v< R > )
             {
                 coeff_array la{};
                 lop.evalTo( la );
                 cauchyAccumulate< T, N, M >( out, la, rop.coeffs() );
-            } else if constexpr ( is_leaf_v< L > )
+            } else if constexpr ( is_monomial_leaf_v< L > )
             {
                 coeff_array rb{};
                 rop.evalTo( rb );
@@ -95,7 +95,7 @@ class ProductExpr
     constexpr void seedAccumulator( coeff_array& a ) const noexcept
     {
         using E0 = std::tuple_element_t< 0, std::tuple< Es... > >;
-        if constexpr ( is_leaf_v< E0 > )
+        if constexpr ( is_monomial_leaf_v< E0 > )
             a = std::get< 0 >( ops_ ).coeffs();
         else
             std::get< 0 >( ops_ ).evalTo( a );
@@ -113,7 +113,7 @@ class ProductExpr
     constexpr void productStep( coeff_array& out, coeff_array& a ) const noexcept
     {
         using Ei = std::tuple_element_t< I, std::tuple< Es... > >;
-        if constexpr ( is_leaf_v< Ei > )
+        if constexpr ( is_monomial_leaf_v< Ei > )
         {
             cauchyProduct< T, N, M >( out, a, std::get< I >( ops_ ).coeffs() );
         } else

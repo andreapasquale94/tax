@@ -4,7 +4,7 @@
  * @file
  * @brief Umbrella include for the full tax differential algebra API.
  * @details Includes utilities, kernels, expression nodes, the materialized
- * `TruncatedTaylorExpansionT` type, and operator overloads.
+ * `TruncatedExpansionT` type, and operator overloads.
  */
 
 #include <tax/tte.hpp>
