@@ -71,6 +71,10 @@ if(CAM_BUILD_APPS)
     add_executable(cam_state_back_prop apps/state_back_prop.cpp)
     target_link_libraries(cam_state_back_prop PRIVATE cam::cam)
     set_target_properties(cam_state_back_prop PROPERTIES OUTPUT_NAME state_back_prop)
+
+    add_executable(cam_scvx apps/scvx_main.cpp)
+    target_link_libraries(cam_scvx PRIVATE cam::cam)
+    set_target_properties(cam_scvx PROPERTIES OUTPUT_NAME scvx_main)
 endif()
 
 # Tests ----------------------------------------------------------------------
@@ -84,6 +88,10 @@ if(CAM_BUILD_TESTS)
     add_executable(test_tca tests/test_tca.cpp)
     target_link_libraries(test_tca PRIVATE cam::cam)
     add_test(NAME test_tca COMMAND test_tca)
+
+    add_executable(test_scvx tests/test_scvx.cpp)
+    target_link_libraries(test_scvx PRIVATE cam::cam)
+    add_test(NAME test_scvx COMMAND test_scvx)
 endif()
 
 # Install --------------------------------------------------------------------

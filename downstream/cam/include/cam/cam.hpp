@@ -15,5 +15,7 @@
 #include <cam/elements.hpp>
 #include <cam/frames.hpp>
 #include <cam/linalg.hpp>
+#include <cam/multi_impulse.hpp>
+#include <cam/optim/optim.hpp>
 #include <cam/propagator.hpp>
 #include <cam/tca.hpp>
