@@ -24,22 +24,22 @@ inline void sinCosComputeDegree( std::size_t d, std::size_t nvars, const U& u,
 {
     if ( d == 0 )
     {
-        const T u0 = static_cast< T >( u.degreeSlice( 0 ).coeff( 0 ) );
-        sin_obj.degreeSlice( 0 ).coeffRef( 0 ) = std::sin( u0 );
-        cos_obj.degreeSlice( 0 ).coeffRef( 0 ) = std::cos( u0 );
+        const T u0 = static_cast< T >( u.slice( 0 ).coeff( 0 ) );
+        sin_obj.slice( 0 ).coeffRef( 0 ) = std::sin( u0 );
+        cos_obj.slice( 0 ).coeffRef( 0 ) = std::cos( u0 );
         return;
     }
-    auto sin_d = sin_obj.degreeSlice( d );
-    auto cos_d = cos_obj.degreeSlice( d );
+    auto sin_d = sin_obj.slice( d );
+    auto cos_d = cos_obj.slice( d );
     sin_d.setZero();
     cos_d.setZero();
     const T inv_d = T{ 1 } / static_cast< T >( d );
     for ( std::size_t e = 1; e <= d; ++e )
     {
         const T scale = static_cast< T >( e ) * inv_d;
-        auto u_e = u.degreeSlice( e );
-        auto cos_de = cos_obj.degreeSlice( d - e );
-        auto sin_de = sin_obj.degreeSlice( d - e );
+        auto u_e = u.slice( e );
+        auto cos_de = cos_obj.slice( d - e );
+        auto sin_de = sin_obj.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, scale, u_e, cos_de, sin_d );
         cauchyAccumulateSlice< T >( e, d - e, nvars, -scale, u_e, sin_de, cos_d );
     }
@@ -52,22 +52,22 @@ inline void sinhCoshComputeDegree( std::size_t d, std::size_t nvars, const U& u,
 {
     if ( d == 0 )
     {
-        const T u0 = static_cast< T >( u.degreeSlice( 0 ).coeff( 0 ) );
-        sinh_obj.degreeSlice( 0 ).coeffRef( 0 ) = std::sinh( u0 );
-        cosh_obj.degreeSlice( 0 ).coeffRef( 0 ) = std::cosh( u0 );
+        const T u0 = static_cast< T >( u.slice( 0 ).coeff( 0 ) );
+        sinh_obj.slice( 0 ).coeffRef( 0 ) = std::sinh( u0 );
+        cosh_obj.slice( 0 ).coeffRef( 0 ) = std::cosh( u0 );
         return;
     }
-    auto sinh_d = sinh_obj.degreeSlice( d );
-    auto cosh_d = cosh_obj.degreeSlice( d );
+    auto sinh_d = sinh_obj.slice( d );
+    auto cosh_d = cosh_obj.slice( d );
     sinh_d.setZero();
     cosh_d.setZero();
     const T inv_d = T{ 1 } / static_cast< T >( d );
     for ( std::size_t e = 1; e <= d; ++e )
     {
         const T scale = static_cast< T >( e ) * inv_d;
-        auto u_e = u.degreeSlice( e );
-        auto cosh_de = cosh_obj.degreeSlice( d - e );
-        auto sinh_de = sinh_obj.degreeSlice( d - e );
+        auto u_e = u.slice( e );
+        auto cosh_de = cosh_obj.slice( d - e );
+        auto sinh_de = sinh_obj.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, scale, u_e, cosh_de, sinh_d );
         cauchyAccumulateSlice< T >( e, d - e, nvars, scale, u_e, sinh_de, cosh_d );
     }

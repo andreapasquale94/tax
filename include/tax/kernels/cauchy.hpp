@@ -73,7 +73,7 @@ inline void cauchyAccumulateSlice( std::size_t eA, std::size_t eB, std::size_t n
 }
 
 // out_d = sum_{e=0}^{d} A_e * B_{d-e}.  Caller supplies operand expressions
-// `a, b` providing `degreeSlice(e)` returning a coeff-readable view, and the
+// `a, b` providing `slice(e)` returning a coeff-readable view, and the
 // destination's degree-d slice `out_d` (writable).
 template < class T, class A, class B, class OutSlice >
 inline void cauchyMulComputeDegree( std::size_t d, std::size_t nvars,
@@ -82,8 +82,8 @@ inline void cauchyMulComputeDegree( std::size_t d, std::size_t nvars,
     out_d.setZero();
     for ( std::size_t e = 0; e <= d; ++e )
     {
-        auto a_e = a.degreeSlice( e );
-        auto b_de = b.degreeSlice( d - e );
+        auto a_e = a.slice( e );
+        auto b_de = b.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, T{ 1 }, a_e, b_de, out_d );
     }
 }
@@ -96,23 +96,23 @@ inline void squareComputeDegree( std::size_t d, std::size_t nvars, const A& a,
     out_d.setZero();
     for ( std::size_t e = 0; e <= d; ++e )
     {
-        auto a_e = a.degreeSlice( e );
-        auto a_de = a.degreeSlice( d - e );
+        auto a_e = a.slice( e );
+        auto a_de = a.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, T{ 1 }, a_e, a_de, out_d );
     }
 }
 
 // out = a / b, evaluated degree-by-degree via b * out = a:
 //   out_d = (a_d - sum_{e=1}^{d} b_e * out_{d-e}) / b_0
-// `out` is a slice-providing object (degreeSlice(e) returning a writable view
+// `out` is a slice-providing object (slice(e) returning a writable view
 // for e <= d) so the recurrence can read its own lower-degree slices.
 template < class T, class A, class B, class OutObj >
 inline void divComputeDegree( std::size_t d, std::size_t nvars, const A& a, const B& b,
                               const OutObj& out )
 {
     using namespace tax::util;
-    auto out_d = out.degreeSlice( d );
-    auto a_d = a.degreeSlice( d );
+    auto out_d = out.slice( d );
+    auto a_d = a.slice( d );
     const std::size_t dsize = degreeSize( d, nvars );
 
     for ( std::size_t i = 0; i < dsize; ++i )
@@ -123,12 +123,12 @@ inline void divComputeDegree( std::size_t d, std::size_t nvars, const A& a, cons
 
     for ( std::size_t e = 1; e <= d; ++e )
     {
-        auto b_e = b.degreeSlice( e );
-        auto out_de = out.degreeSlice( d - e );
+        auto b_e = b.slice( e );
+        auto out_de = out.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, T{ -1 }, b_e, out_de, out_d );
     }
 
-    const T b0 = static_cast< T >( b.degreeSlice( 0 ).coeff( 0 ) );
+    const T b0 = static_cast< T >( b.slice( 0 ).coeff( 0 ) );
     const T inv_b0 = T{ 1 } / b0;
     for ( std::size_t i = 0; i < dsize; ++i )
     {
@@ -144,19 +144,19 @@ inline void reciprocalComputeDegree( std::size_t d, std::size_t nvars, const B& 
     using namespace tax::util;
     if ( d == 0 )
     {
-        out.degreeSlice( 0 ).coeffRef( 0 ) =
-            T{ 1 } / static_cast< T >( b.degreeSlice( 0 ).coeff( 0 ) );
+        out.slice( 0 ).coeffRef( 0 ) =
+            T{ 1 } / static_cast< T >( b.slice( 0 ).coeff( 0 ) );
         return;
     }
-    auto out_d = out.degreeSlice( d );
+    auto out_d = out.slice( d );
     out_d.setZero();
     for ( std::size_t e = 1; e <= d; ++e )
     {
-        auto b_e = b.degreeSlice( e );
-        auto out_de = out.degreeSlice( d - e );
+        auto b_e = b.slice( e );
+        auto out_de = out.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, T{ -1 }, b_e, out_de, out_d );
     }
-    const T b0 = static_cast< T >( b.degreeSlice( 0 ).coeff( 0 ) );
+    const T b0 = static_cast< T >( b.slice( 0 ).coeff( 0 ) );
     const T inv_b0 = T{ 1 } / b0;
     const std::size_t dsize = degreeSize( d, nvars );
     for ( std::size_t i = 0; i < dsize; ++i )

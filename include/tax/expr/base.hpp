@@ -12,9 +12,9 @@
 //   void advanceTo(std::size_t d) const     // const for both view-like and
 //                                           // buffered nodes (latter use
 //                                           // mutable internal state)
-//   auto degreeSlice(std::size_t d) const   // const view (lazy or dense)
+//   auto slice(std::size_t d) const   // const view (lazy or dense)
 //
-// Buffered nodes additionally expose a non-const overload of degreeSlice
+// Buffered nodes additionally expose a non-const overload of slice
 // returning a writable Eigen::VectorBlock — that is what the kernels write
 // into when the buffered node fills its own d-slice.
 //

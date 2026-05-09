@@ -21,12 +21,12 @@ inline void sqrtComputeDegree( std::size_t d, std::size_t nvars, const U& u, con
     using namespace tax::util;
     if ( d == 0 )
     {
-        out.degreeSlice( 0 ).coeffRef( 0 ) =
-            std::sqrt( static_cast< T >( u.degreeSlice( 0 ).coeff( 0 ) ) );
+        out.slice( 0 ).coeffRef( 0 ) =
+            std::sqrt( static_cast< T >( u.slice( 0 ).coeff( 0 ) ) );
         return;
     }
-    auto out_d = out.degreeSlice( d );
-    auto u_d = u.degreeSlice( d );
+    auto out_d = out.slice( d );
+    auto u_d = u.slice( d );
     const std::size_t dsize = degreeSize( d, nvars );
     for ( std::size_t i = 0; i < dsize; ++i )
     {
@@ -35,11 +35,11 @@ inline void sqrtComputeDegree( std::size_t d, std::size_t nvars, const U& u, con
     }
     for ( std::size_t e = 1; e + 1 <= d; ++e )
     {
-        auto out_e = out.degreeSlice( e );
-        auto out_de = out.degreeSlice( d - e );
+        auto out_e = out.slice( e );
+        auto out_de = out.slice( d - e );
         cauchyAccumulateSlice< T >( e, d - e, nvars, T{ -1 }, out_e, out_de, out_d );
     }
-    const T out0 = static_cast< T >( out.degreeSlice( 0 ).coeff( 0 ) );
+    const T out0 = static_cast< T >( out.slice( 0 ).coeff( 0 ) );
     const T inv_2f0 = T{ 1 } / ( T{ 2 } * out0 );
     for ( std::size_t i = 0; i < dsize; ++i )
     {

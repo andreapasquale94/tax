@@ -225,12 +225,12 @@ class DynamicTaylorExpansion
         coeffs_( static_cast< Eigen::Index >( i ) ) = v;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) noexcept
+    [[nodiscard]] auto slice( std::size_t d ) noexcept
     {
         return coeffs_.segment( static_cast< Eigen::Index >( util::degreeOffset( d, nvars_ ) ),
                                 static_cast< Eigen::Index >( util::degreeSize( d, nvars_ ) ) );
     }
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment( static_cast< Eigen::Index >( util::degreeOffset( d, nvars_ ) ),
                                 static_cast< Eigen::Index >( util::degreeSize( d, nvars_ ) ) );

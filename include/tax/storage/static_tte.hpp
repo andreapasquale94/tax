@@ -257,12 +257,12 @@ class TruncatedTaylorExpansionT
     }
 
     // Degree slice as an Eigen vector view.
-    [[nodiscard]] auto degreeSlice( std::size_t d ) noexcept
+    [[nodiscard]] auto slice( std::size_t d ) noexcept
     {
         return coeffs_.segment( static_cast< Eigen::Index >( util::degreeOffset( d, Vars ) ),
                                 static_cast< Eigen::Index >( util::degreeSize( d, Vars ) ) );
     }
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment( static_cast< Eigen::Index >( util::degreeOffset( d, Vars ) ),
                                 static_cast< Eigen::Index >( util::degreeSize( d, Vars ) ) );

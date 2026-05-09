@@ -24,19 +24,6 @@
 namespace tax::expr
 {
 
-namespace detail
-{
-
-template < class E >
-[[nodiscard]] inline auto rawSlice( E& self, std::size_t d ) noexcept
-{
-    return self.coeffs_buffer().segment(
-        static_cast< Eigen::Index >( util::degreeOffset( d, self.nvars() ) ),
-        static_cast< Eigen::Index >( util::degreeSize( d, self.nvars() ) ) );
-}
-
-}  // namespace detail
-
 // ----------------------------------------------------------------------
 // MulExpr: Cauchy product.
 template < class L, class R >
@@ -74,13 +61,13 @@ class MulExpr : public Expr< MulExpr< L, R > >
         rhs_.advanceTo( d );
         for ( std::size_t e = next_; e <= d; ++e )
         {
-            auto out_e = degreeSlice( e );
+            auto out_e = slice( e );
             kernels::cauchyMulComputeDegree< Scalar >( e, nvars(), lhs_, rhs_, out_e );
         }
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment(
             static_cast< Eigen::Index >( util::degreeOffset( d, nvars() ) ),
@@ -136,7 +123,7 @@ class DivExpr : public Expr< DivExpr< L, R > >
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment(
             static_cast< Eigen::Index >( util::degreeOffset( d, nvars() ) ),
@@ -186,13 +173,13 @@ class SquareExpr : public Expr< SquareExpr< E > >
         inner_.advanceTo( d );
         for ( std::size_t e = next_; e <= d; ++e )
         {
-            auto out_e = degreeSlice( e );
+            auto out_e = slice( e );
             kernels::squareComputeDegree< Scalar >( e, nvars(), inner_, out_e );
         }
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment(
             static_cast< Eigen::Index >( util::degreeOffset( d, nvars() ) ),
@@ -246,7 +233,7 @@ class SqrtExpr : public Expr< SqrtExpr< E > >
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment(
             static_cast< Eigen::Index >( util::degreeOffset( d, nvars() ) ),
@@ -300,7 +287,7 @@ class ExpExpr : public Expr< ExpExpr< E > >
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment(
             static_cast< Eigen::Index >( util::degreeOffset( d, nvars() ) ),
@@ -354,7 +341,7 @@ class LogExpr : public Expr< LogExpr< E > >
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         return coeffs_.segment(
             static_cast< Eigen::Index >( util::degreeOffset( d, nvars() ) ),
@@ -414,7 +401,7 @@ class SinCosExpr : public Expr< SinCosExpr< E, ReturnSin > >
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         if constexpr ( ReturnSin )
         {
@@ -437,7 +424,7 @@ class SinCosExpr : public Expr< SinCosExpr< E, ReturnSin > >
     {
         Coeffs* buf;
         std::size_t nvars_v;
-        [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+        [[nodiscard]] auto slice( std::size_t d ) const noexcept
         {
             return buf->segment(
                 static_cast< Eigen::Index >( util::degreeOffset( d, nvars_v ) ),
@@ -509,7 +496,7 @@ class SinhCoshExpr : public Expr< SinhCoshExpr< E, ReturnSinh > >
         next_ = d + 1;
     }
 
-    [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] auto slice( std::size_t d ) const noexcept
     {
         if constexpr ( ReturnSinh )
         {
@@ -530,7 +517,7 @@ class SinhCoshExpr : public Expr< SinhCoshExpr< E, ReturnSinh > >
     {
         Coeffs* buf;
         std::size_t nvars_v;
-        [[nodiscard]] auto degreeSlice( std::size_t d ) const noexcept
+        [[nodiscard]] auto slice( std::size_t d ) const noexcept
         {
             return buf->segment(
                 static_cast< Eigen::Index >( util::degreeOffset( d, nvars_v ) ),

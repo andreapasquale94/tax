@@ -32,8 +32,8 @@ inline void streamingAssign( Dst& dst, const Expr& expr )
     for ( std::size_t d = 0; d <= order; ++d )
     {
         expr.advanceTo( d );
-        auto out_d = dst.degreeSlice( d );
-        auto in_d = expr.degreeSlice( d );
+        auto out_d = dst.slice( d );
+        auto in_d = expr.slice( d );
         const Eigen::Index n = static_cast< Eigen::Index >( util::degreeSize( d, nvars ) );
         for ( Eigen::Index i = 0; i < n; ++i )
         {

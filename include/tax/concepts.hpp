@@ -27,14 +27,14 @@ concept TaylorExpansion = requires( const E& e, std::span< const std::size_t > a
 
 // All ET nodes (and the storage types) advance their coefficient buffer
 // degree-by-degree.  The driver loop calls `advanceTo(d)` for d = 0, 1, ...
-// and then reads `degreeSlice(d)`.
+// and then reads `slice(d)`.
 template < class E >
 concept StreamingExpression = requires( E& e, std::size_t d ) {
     typename E::Scalar;
     { e.order() } -> std::convertible_to< std::size_t >;
     { e.nvars() } -> std::convertible_to< std::size_t >;
     e.advanceTo( d );
-    e.degreeSlice( d );
+    e.slice( d );
 };
 
 // Tag dispatching: distinguishing static vs. dynamic expressions so we can

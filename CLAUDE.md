@@ -94,6 +94,11 @@ tax/
 │   ├── expr/                # ET base + view-like + buffered nodes
 │   └── ops/                 # arithmetic, math free funcs, <<= driver
 ├── tests/                   # GoogleTest suite
+├── python/                  # nanobind Python bindings (tax-python)
+│   ├── CMakeLists.txt
+│   ├── src/tax_module.cpp
+│   ├── tax/__init__.py
+│   └── tests/test_dyn_te.py
 ├── CMakeLists.txt
 ├── CLAUDE.md
 └── LICENSE
@@ -114,11 +119,14 @@ ctest --test-dir build --output-on-failure
 | Option | Default | Description |
 |--------|---------|-------------|
 | `TAX_BUILD_TEST` | `ON` | Build the GoogleTest suite |
+| `TAX_BUILD_PYTHON` | `OFF` | Build the nanobind Python module (`tax`) |
 
 ### Dependencies
 
 - **Required:** Eigen 3.4+ (system package or `CMAKE_PREFIX_PATH`).
 - **Test framework:** Google Test (fetched via FetchContent).
+- **Python bindings (optional):** `pip install nanobind`, then configure
+  with `-DTAX_BUILD_PYTHON=ON`.
 
 ---
 
@@ -222,6 +230,16 @@ Run one: `./build/tests/test_math`.
   requires operand history).  Don't try to remove `coeffs_` from them.
 - No mixed static/dynamic expressions.  The `SameKindExpression`
   concept rejects them at compile time.
-- ODE / ADS / Python bindings / DACE benchmarks are out of scope for
-  the current state of the library and will be re-introduced on top of
-  this foundation in subsequent commits.
+- ODE / ADS / DACE benchmarks are out of scope for the current state of
+  the library and will be re-introduced on top of this foundation in
+  subsequent commits.
+
+## Python bindings
+
+`python/` contains the nanobind module (`tax`) exposing
+`DynamicTaylorExpansion<double>` as `tax.DynTE` plus the math free
+functions.  Build with `-DTAX_BUILD_PYTHON=ON`; arithmetic operators
+internally evaluate the C++ ET expressions into a fresh `DynTE` per
+call (Python cannot meaningfully own lazy ET temporaries across
+statements).  The static-extent C++ path is intentionally not exposed;
+no `std::variant` over an (Order, Vars) grid, no JIT.

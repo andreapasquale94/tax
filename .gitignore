@@ -3,3 +3,9 @@
 build
 build-*/
 site/
+
+# Python
+__pycache__/
+*.pyc
+*.so
+*.egg-info/

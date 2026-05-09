@@ -3,7 +3,7 @@
 // View-like ET nodes.  None of these allocate.
 //
 // Lazy Eigen expressions (CwiseBinaryOp etc.) capture their operands by
-// reference, which makes them unsafe to return out of `degreeSlice(d)`
+// reference, which makes them unsafe to return out of `slice(d)`
 // — the temporary VectorBlocks they wrap die on return.  We instead
 // hand back a custom `ParentSliceView` that holds a const-reference to
 // the *parent ET node* (which is alive for the duration of the full
@@ -88,11 +88,11 @@ class AddExpr : public Expr< AddExpr< L, R > >
 
     [[nodiscard]] Scalar coeffAtSlice( std::size_t d, std::size_t i ) const
     {
-        return static_cast< Scalar >( lhs_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) )
-               + static_cast< Scalar >( rhs_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
+        return static_cast< Scalar >( lhs_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) )
+               + static_cast< Scalar >( rhs_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
     }
 
-    [[nodiscard]] ParentSliceView< AddExpr > degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] ParentSliceView< AddExpr > slice( std::size_t d ) const noexcept
     {
         return ParentSliceView< AddExpr >( *this, d );
     }
@@ -135,11 +135,11 @@ class SubExpr : public Expr< SubExpr< L, R > >
 
     [[nodiscard]] Scalar coeffAtSlice( std::size_t d, std::size_t i ) const
     {
-        return static_cast< Scalar >( lhs_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) )
-               - static_cast< Scalar >( rhs_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
+        return static_cast< Scalar >( lhs_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) )
+               - static_cast< Scalar >( rhs_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
     }
 
-    [[nodiscard]] ParentSliceView< SubExpr > degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] ParentSliceView< SubExpr > slice( std::size_t d ) const noexcept
     {
         return ParentSliceView< SubExpr >( *this, d );
     }
@@ -182,10 +182,10 @@ class NegExpr : public Expr< NegExpr< E > >
     [[nodiscard]] Scalar coeffAtSlice( std::size_t d, std::size_t i ) const
     {
         return -static_cast< Scalar >(
-            inner_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
+            inner_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
     }
 
-    [[nodiscard]] ParentSliceView< NegExpr > degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] ParentSliceView< NegExpr > slice( std::size_t d ) const noexcept
     {
         return ParentSliceView< NegExpr >( *this, d );
     }
@@ -227,10 +227,10 @@ class ScalarMulExpr : public Expr< ScalarMulExpr< E > >
     [[nodiscard]] Scalar coeffAtSlice( std::size_t d, std::size_t i ) const
     {
         return scale_ * static_cast< Scalar >(
-                            inner_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
+                            inner_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
     }
 
-    [[nodiscard]] ParentSliceView< ScalarMulExpr > degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] ParentSliceView< ScalarMulExpr > slice( std::size_t d ) const noexcept
     {
         return ParentSliceView< ScalarMulExpr >( *this, d );
     }
@@ -273,11 +273,11 @@ class ScalarAddExpr : public Expr< ScalarAddExpr< E > >
     [[nodiscard]] Scalar coeffAtSlice( std::size_t d, std::size_t i ) const
     {
         const Scalar v = static_cast< Scalar >(
-            inner_.degreeSlice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
+            inner_.slice( d ).coeff( static_cast< Eigen::Index >( i ) ) );
         return ( d == 0 && i == 0 ) ? v + offset_ : v;
     }
 
-    [[nodiscard]] ParentSliceView< ScalarAddExpr > degreeSlice( std::size_t d ) const noexcept
+    [[nodiscard]] ParentSliceView< ScalarAddExpr > slice( std::size_t d ) const noexcept
     {
         return ParentSliceView< ScalarAddExpr >( *this, d );
     }

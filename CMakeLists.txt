@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(tax VERSION 0.2.0 LANGUAGES CXX)
 
 option(TAX_BUILD_TEST "Build the GoogleTest suite" ON)
+option(TAX_BUILD_PYTHON "Build the nanobind Python bindings (target tax-python)" OFF)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,4 +36,12 @@ target_compile_features(tax INTERFACE cxx_std_23)
 if(TAX_BUILD_TEST)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+# ---------- python bindings ----------
+if(TAX_BUILD_PYTHON)
+    if(NOT TAX_BUILD_TEST)
+        enable_testing()
+    endif()
+    add_subdirectory(python)
 endif()
