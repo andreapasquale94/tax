@@ -125,6 +125,19 @@ class TruncatedTaylorExpansionT
         return coeff( std::span< const std::size_t >( alpha.data(), Vars ) );
     }
 
+    // Compile-time multi-index overload: `result.coeff<1, 0>()`.  All
+    // index arithmetic resolves at compile time; the runtime lookup is a
+    // single constant-offset Eigen access.
+    template < std::size_t... Alpha >
+        requires( sizeof...( Alpha ) == Vars )
+    [[nodiscard]] T coeff() const noexcept
+    {
+        static constexpr std::array< std::size_t, Vars > a{ Alpha... };
+        constexpr std::size_t fi =
+            util::flatIndex( std::span< const std::size_t >( a.data(), Vars ) );
+        return coeffs_( static_cast< Eigen::Index >( fi ) );
+    }
+
     // Partial derivative at the expansion centre = alpha! * coeff(alpha).
     [[nodiscard]] T derivative( std::span< const std::size_t > alpha ) const
     {
@@ -136,6 +149,19 @@ class TruncatedTaylorExpansionT
     [[nodiscard]] T derivative( const std::array< std::size_t, Vars >& alpha ) const
     {
         return derivative( std::span< const std::size_t >( alpha.data(), Vars ) );
+    }
+
+    // Compile-time multi-index overload: `result.derivative<1, 1>()`.
+    template < std::size_t... Alpha >
+        requires( sizeof...( Alpha ) == Vars )
+    [[nodiscard]] T derivative() const noexcept
+    {
+        static constexpr std::array< std::size_t, Vars > a{ Alpha... };
+        constexpr std::size_t fi =
+            util::flatIndex( std::span< const std::size_t >( a.data(), Vars ) );
+        constexpr std::size_t f =
+            util::factorial( std::span< const std::size_t >( a.data(), Vars ) );
+        return coeffs_( static_cast< Eigen::Index >( fi ) ) * static_cast< T >( f );
     }
 
     // Evaluate the truncated polynomial at displacement dx.

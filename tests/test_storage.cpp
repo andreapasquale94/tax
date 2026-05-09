@@ -88,6 +88,23 @@ TEST( StaticStorage, ArrayOverloads )
     EXPECT_NEAR( x.eval( { 0.1, -0.2 } ), 1.1, 1e-12 );
 }
 
+TEST( StaticStorage, TemplatedIndexOverloads )
+{
+    auto [ x, y ] = TEn< 3, 2 >::variables( std::array< double, 2 >{ 1.0, 2.0 } );
+    // Template-parameter form resolves the flat index at compile time.
+    EXPECT_EQ( ( x.coeff< 1, 0 >() ), 1.0 );
+    EXPECT_EQ( ( x.coeff< 0, 1 >() ), 0.0 );
+    EXPECT_EQ( ( y.coeff< 0, 1 >() ), 1.0 );
+    EXPECT_EQ( ( x.derivative< 1, 0 >() ), 1.0 );
+
+    // Apply factorial scaling on a higher-degree term: build u^2 v and
+    // verify d^3/(du^2 dv) = 2! * 1! * coeff = 2 * coeff_at_(2,1).
+    TEn< 3, 2 > p;
+    p <<= x * x * y;
+    EXPECT_NEAR( ( p.coeff< 2, 1 >() ), 1.0, 1e-12 );
+    EXPECT_NEAR( ( p.derivative< 2, 1 >() ), 2.0, 1e-12 );
+}
+
 TEST( StaticStorage, NormsAreReasonable )
 {
     auto x = TE< 3 >::variable( 1.5 );
