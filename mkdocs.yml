@@ -45,6 +45,9 @@ theme:
     edit: material/pencil
     view: material/eye
 
+exclude_docs: |
+  requirements.txt
+
 extra_css:
   - stylesheets/extra.css
 

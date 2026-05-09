@@ -1,0 +1,9 @@
+# Documentation build dependencies.
+#
+# Used by `pip install -r docs/requirements.txt` and by the docs CI
+# workflow (.github/workflows/docs.yml) which keys its pip cache off
+# this file.
+
+mkdocs-material>=9.5
+pymdown-extensions>=10
+mkdocs-material-extensions>=1.3
