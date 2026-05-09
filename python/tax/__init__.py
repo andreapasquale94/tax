@@ -7,13 +7,28 @@ order and number of variables.  The static-extent C++ path
 no ``std::variant`` over a (Order, Vars) grid, no JIT, and no per-shape
 specialisation explosion.
 
+Construction goes through module-level utility functions
+(:func:`zero`, :func:`one`, :func:`constant`, :func:`variable`,
+:func:`variables`); the ``DynTE`` class itself is not directly
+constructible from Python.
+
 Free math functions (``sin``, ``cos``, ``exp``, ``log``, ``sqrt``,
-``tan``, ``sinh``, ``cosh``, ``tanh``, ``square``, ``cube``) are
-re-exported here.
+``tan``, ``sinh``, ``cosh``, ``tanh``, ``square``, ``cube``) and
+arithmetic operators (``+``, ``-``, ``*``, ``/``) all return fresh
+``DynTE`` instances — Python cannot meaningfully own lazy ET
+temporaries across statements, so every call evaluates eagerly.
 """
 
 from ._tax import (  # noqa: F401
+    # type
     DynTE,
+    # factories
+    zero,
+    one,
+    constant,
+    variable,
+    variables,
+    # math
     sin,
     cos,
     tan,
@@ -29,6 +44,11 @@ from ._tax import (  # noqa: F401
 
 __all__ = [
     "DynTE",
+    "zero",
+    "one",
+    "constant",
+    "variable",
+    "variables",
     "sin",
     "cos",
     "tan",

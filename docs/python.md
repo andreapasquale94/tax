@@ -2,9 +2,13 @@
 
 The `tax` Python package wraps the C++ library through
 [nanobind](https://nanobind.readthedocs.io). Per the architectural
-brief, **only `DynamicTaylorExpansion<double>` is exposed** (as
-`tax.DynTE`); the static-extent C++ path stays C++-only — no
+brief, **only `DynamicTaylorExpansion<double>` is exposed** (as the
+`tax.DynTE` type); the static-extent C++ path stays C++-only — no
 `std::variant` over an `(Order, Vars)` grid, no JIT.
+
+Construction goes through **module-level utility functions**, not
+classmethod factories. The `DynTE` class is a return type only — you
+can't construct one directly with `tax.DynTE(...)`.
 
 ## Build & install
 
@@ -12,7 +16,7 @@ brief, **only `DynamicTaylorExpansion<double>` is exposed** (as
 pip install nanobind pytest
 cmake -S . -B build -DTAX_BUILD_PYTHON=ON
 cmake --build build -j
-PYTHONPATH=build/python python -c "import tax; print(tax.DynTE)"
+PYTHONPATH=build/python python -c "import tax; print(tax.zero(2, 1))"
 ```
 
 The compiled module lives in `build/python/tax/_tax.so`; the Python
@@ -24,19 +28,18 @@ useful surface.
 ```python
 import tax
 
-# Constructors / factories
-tax.DynTE(order, nvars)                   # zero-initialised
-tax.DynTE.zero(order, nvars)
-tax.DynTE.one(order, nvars)
-tax.DynTE.constant(value, order, nvars)
-tax.DynTE.variable(value, order, nvars, var_idx)
-tax.DynTE.variables([x0, x1, ...], order)  # returns a Python list
+# Factories — module-level, not classmethods
+tax.zero(order, nvars)
+tax.one(order, nvars)
+tax.constant(value, order, nvars)
+tax.variable(value, order, nvars, var_idx)
+tax.variables([x0, x1, ...], order)        # returns a Python list
 
-# Properties / accessors
+# Properties / accessors on the returned DynTE objects
 x.order
 x.nvars
 x.value()
-x.coeff([1, 0])                            # multi-index as a list of ints
+x.coeff([1, 0])                             # multi-index as a list of ints
 x.derivative([1, 1])
 x.eval([0.1, 0.05])
 x.coeffs_norm_inf()
@@ -47,12 +50,15 @@ x.coeffs_norm_2()
 a + b      a - b      a * b      a / b      -a
 a + 1.5    1.5 + a    a - 1.5    1.5 - a    a * 2.0    2.0 * a    a / 2.0
 
-# Math
+# Math — module-level
 tax.sin(a)   tax.cos(a)   tax.tan(a)
 tax.sinh(a)  tax.cosh(a)  tax.tanh(a)
 tax.exp(a)   tax.log(a)   tax.sqrt(a)
 tax.square(a)  tax.cube(a)
 ```
+
+`isinstance(x, tax.DynTE)` works for type checks; the class is
+re-exported even though it is not directly constructible.
 
 ## Why eager evaluation?
 
@@ -92,7 +98,7 @@ CTest also picks up the suite as the `python_bindings` test when
 import math
 import tax
 
-u, v = tax.DynTE.variables([1.0, 2.0], 3)
+u, v = tax.variables([1.0, 2.0], 3)
 f = u * tax.sin(v) + u * v
 
 print(f.value())            # ≈ sin(2) + 2
@@ -102,8 +108,12 @@ print(f.derivative([0, 1])) # = cos(2) + 1
 
 ## Gotchas
 
+- **`tax.DynTE` is not directly constructible.** Use one of the
+  factories (`tax.zero`, `tax.one`, `tax.constant`, `tax.variable`,
+  `tax.variables`) or get one back from a math/arithmetic call.
+  `tax.DynTE()` raises `TypeError`.
 - **Multi-indices are Python lists of ints.** A length mismatch with
-  `nvars` raises a TypeError at conversion time (nanobind's
+  `nvars` raises a `TypeError` at conversion time (nanobind's
   `std::vector` caster).
 - **Order and nvars must match across operands.** Mixed-shape
   arithmetic fires the same compile-time `SameKindExpression` check

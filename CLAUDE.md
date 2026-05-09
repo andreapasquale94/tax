@@ -237,9 +237,13 @@ Run one: `./build/tests/test_math`.
 ## Python bindings
 
 `python/` contains the nanobind module (`tax`) exposing
-`DynamicTaylorExpansion<double>` as `tax.DynTE` plus the math free
-functions.  Build with `-DTAX_BUILD_PYTHON=ON`; arithmetic operators
-internally evaluate the C++ ET expressions into a fresh `DynTE` per
-call (Python cannot meaningfully own lazy ET temporaries across
-statements).  The static-extent C++ path is intentionally not exposed;
-no `std::variant` over an (Order, Vars) grid, no JIT.
+`DynamicTaylorExpansion<double>` as the `tax.DynTE` return type plus
+the math free functions.  Build with `-DTAX_BUILD_PYTHON=ON`.
+Construction goes through **module-level utility functions**
+(`tax.zero`, `tax.one`, `tax.constant`, `tax.variable`,
+`tax.variables`); `tax.DynTE` itself is not directly constructible from
+Python.  Arithmetic operators internally evaluate the C++ ET
+expressions into a fresh `DynTE` per call (Python cannot meaningfully
+own lazy ET temporaries across statements).  The static-extent C++ path
+is intentionally not exposed; no `std::variant` over an (Order, Vars)
+grid, no JIT.

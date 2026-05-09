@@ -27,7 +27,11 @@ is the new foundation everything else will build on.
   expressions at compile time.
 - **nanobind Python bindings** (`-DTAX_BUILD_PYTHON=ON`) exposing
   `DynTE<double>` and the math free functions; arithmetic operators
-  evaluate eagerly into a fresh `DynTE`.
+  evaluate eagerly into a fresh `DynTE`. Construction goes through
+  module-level utility functions (`tax.zero`, `tax.one`,
+  `tax.constant`, `tax.variable`, `tax.variables`); the `DynTE` class
+  is a return type only and is not directly constructible from
+  Python.
 - **Documentation site** (this MkDocs build).
 
 ### Math coverage

@@ -91,7 +91,8 @@ example runs unchanged.
 | | C++ | Python |
 |---|---|---|
 | Static-extent storage     | `tax::TE<N>`, `tax::TEn<N, M>` | — |
-| Dynamic-extent storage    | `tax::DynTE<T>`                 | `tax.DynTE`                     |
+| Dynamic-extent storage    | `tax::DynTE<T>`                 | `tax.DynTE` (return-type-only) |
+| Construction              | factories on the storage type   | module-level `tax.zero`, `tax.variable`, … |
 | Streaming ET nodes        | view-like + buffered            | not exposed (eager evaluation)  |
 | Build flag                | always on                       | `-DTAX_BUILD_PYTHON=ON`         |
 

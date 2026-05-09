@@ -7,27 +7,35 @@ import pytest
 import tax
 
 
+def test_class_is_not_directly_constructible():
+    # The DynTE type exists but has no public Python constructor;
+    # construction goes through the module-level factories.
+    with pytest.raises(TypeError):
+        tax.DynTE()
+
+
 def test_zero_constant_one():
-    z = tax.DynTE.zero(3, 2)
+    z = tax.zero(3, 2)
+    assert isinstance(z, tax.DynTE)
     assert z.order == 3
     assert z.nvars == 2
     assert z.value() == 0.0
 
-    k = tax.DynTE.constant(2.5, 3, 2)
+    k = tax.constant(2.5, 3, 2)
     assert k.value() == 2.5
 
-    o = tax.DynTE.one(3, 2)
+    o = tax.one(3, 2)
     assert o.value() == 1.0
 
 
 def test_variable_seed():
-    x = tax.DynTE.variable(1.5, 3, 1, 0)
+    x = tax.variable(1.5, 3, 1, 0)
     assert x.value() == 1.5
     assert x.coeff([1]) == 1.0
 
 
 def test_variables_unpacks_to_list():
-    vars_ = tax.DynTE.variables([1.0, 2.0], 2)
+    vars_ = tax.variables([1.0, 2.0], 2)
     x, y = vars_
     assert x.value() == 1.0
     assert y.value() == 2.0
@@ -36,8 +44,8 @@ def test_variables_unpacks_to_list():
 
 
 def test_arithmetic_with_dynte_and_scalar():
-    x = tax.DynTE.variable(1.0, 3, 1, 0)
-    y = tax.DynTE.variable(2.0, 3, 1, 0)
+    x = tax.variable(1.0, 3, 1, 0)
+    y = tax.variable(2.0, 3, 1, 0)
 
     r_add = x + y
     assert r_add.value() == pytest.approx(3.0)
@@ -56,7 +64,7 @@ def test_arithmetic_with_dynte_and_scalar():
 
 
 def test_multiply_multivariate():
-    x, y = tax.DynTE.variables([1.0, 2.0], 2)
+    x, y = tax.variables([1.0, 2.0], 2)
     r = x * y
     assert r.value() == pytest.approx(2.0)
     assert r.coeff([1, 0]) == pytest.approx(2.0)
@@ -66,8 +74,8 @@ def test_multiply_multivariate():
 
 def test_division_reciprocal():
     # 1 / (1 + x) at x=0 = 1 - x + x^2 - x^3 + x^4
-    x = tax.DynTE.variable(0.0, 4, 1, 0)
-    one = tax.DynTE.one(4, 1)
+    x = tax.variable(0.0, 4, 1, 0)
+    one = tax.one(4, 1)
     r = one / (one + x)
     expected = [1.0, -1.0, 1.0, -1.0, 1.0]
     for i, e in enumerate(expected):
@@ -75,7 +83,7 @@ def test_division_reciprocal():
 
 
 def test_math_exp_at_zero():
-    x = tax.DynTE.variable(0.0, 4, 1, 0)
+    x = tax.variable(0.0, 4, 1, 0)
     r = tax.exp(x)
     assert r.coeff([0]) == pytest.approx(1.0)
     assert r.coeff([1]) == pytest.approx(1.0)
@@ -84,7 +92,7 @@ def test_math_exp_at_zero():
 
 
 def test_math_log_at_one():
-    x = tax.DynTE.variable(1.0, 4, 1, 0)
+    x = tax.variable(1.0, 4, 1, 0)
     r = tax.log(x)
     assert r.coeff([0]) == pytest.approx(0.0)
     assert r.coeff([1]) == pytest.approx(1.0)
@@ -93,7 +101,7 @@ def test_math_log_at_one():
 
 
 def test_math_sin_cos_pythagorean():
-    x = tax.DynTE.variable(0.7, 5, 1, 0)
+    x = tax.variable(0.7, 5, 1, 0)
     s = tax.sin(x)
     c = tax.cos(x)
     r = tax.square(s) + tax.square(c)
@@ -103,7 +111,7 @@ def test_math_sin_cos_pythagorean():
 
 
 def test_math_sqrt_around_one():
-    x = tax.DynTE.variable(1.0, 4, 1, 0)
+    x = tax.variable(1.0, 4, 1, 0)
     r = tax.sqrt(x)
     assert r.coeff([0]) == pytest.approx(1.0)
     assert r.coeff([1]) == pytest.approx(0.5)
@@ -112,13 +120,13 @@ def test_math_sqrt_around_one():
 
 
 def test_eval_matches_function_value():
-    x = tax.DynTE.variable(0.0, 8, 1, 0)
+    x = tax.variable(0.0, 8, 1, 0)
     r = tax.exp(x)
     assert r.eval([0.3]) == pytest.approx(math.exp(0.3), abs=1e-9)
 
 
 def test_brief_example_end_to_end():
-    u, v = tax.DynTE.variables([1.0, 2.0], 3)
+    u, v = tax.variables([1.0, 2.0], 3)
     f = u * tax.sin(v) + u * v
     assert f.value() == pytest.approx(math.sin(2.0) + 2.0)
     # df/du at (1, 2) = sin(2) + 2
@@ -128,7 +136,7 @@ def test_brief_example_end_to_end():
 
 
 def test_repr_smoke():
-    z = tax.DynTE.constant(1.5, 2, 1)
+    z = tax.constant(1.5, 2, 1)
     assert "DynTE" in repr(z)
     assert "order=2" in repr(z)
     assert "nvars=1" in repr(z)

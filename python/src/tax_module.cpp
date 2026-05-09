@@ -4,10 +4,13 @@
 //
 // Per the architectural brief, Python sees `DynTE<double>` only — no
 // std::variant dispatch over a (Order, Vars) grid, no JIT instantiation
-// tricks.  The dynamic storage type is what users get; arithmetic and
-// math operators evaluate the underlying ET expressions into a fresh
-// DynTE on every call (because Python expressions cannot meaningfully
-// own lazy ET temporaries across statements).
+// tricks.  Construction goes through module-level utility functions
+// (`tax.zero`, `tax.one`, `tax.constant`, `tax.variable`,
+// `tax.variables`); the class itself isn't directly constructible from
+// Python.  Arithmetic and math operators evaluate the underlying ET
+// expressions into a fresh DynTE on every call (because Python
+// expressions cannot meaningfully own lazy ET temporaries across
+// statements).
 
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
@@ -58,28 +61,10 @@ NB_MODULE( _tax, m )
 {
     m.doc() = "Truncated multivariate Taylor expansions (DynTE<double>).";
 
-    nb::class_< DynTE >( m, "DynTE" )
-        // ---- ctors -----------------------------------------------------
-        .def( nb::init<>() )
-        .def( nb::init< std::size_t, std::size_t >(), nb::arg( "order" ), nb::arg( "nvars" ),
-              "Allocate a zero DynTE with the given truncation order and number of variables." )
-
-        // ---- factories -------------------------------------------------
-        .def_static( "zero", &DynTE::zero, nb::arg( "order" ), nb::arg( "nvars" ) )
-        .def_static( "one", &DynTE::one, nb::arg( "order" ), nb::arg( "nvars" ) )
-        .def_static( "constant", &DynTE::constant, nb::arg( "value" ), nb::arg( "order" ),
-                     nb::arg( "nvars" ) )
-        .def_static( "variable", &DynTE::variable, nb::arg( "value" ), nb::arg( "order" ),
-                     nb::arg( "nvars" ), nb::arg( "var_idx" ),
-                     "x_i = value + dx_i where var_idx selects the seeded variable." )
-        .def_static(
-            "variables",
-            []( const std::vector< double >& x0, std::size_t order ) {
-                return DynTE::variables( x0, order );
-            },
-            nb::arg( "x0" ), nb::arg( "order" ),
-            "Return a list of M = len(x0) independent variables." )
-
+    nb::class_< DynTE >( m, "DynTE",
+                         "A truncated Taylor expansion in M variables of order N.\n"
+                         "Construct via the module-level factories: tax.zero, tax.one,\n"
+                         "tax.constant, tax.variable, tax.variables." )
         // ---- accessors -------------------------------------------------
         .def_prop_ro( "order", &DynTE::order )
         .def_prop_ro( "nvars", &DynTE::nvars )
@@ -142,6 +127,26 @@ NB_MODULE( _tax, m )
                    + ", nvars=" + std::to_string( self.nvars() )
                    + ", value=" + std::to_string( self.value() ) + ")";
         } );
+
+    // ---- module-level factories ----------------------------------------
+    m.def( "zero", &DynTE::zero, nb::arg( "order" ), nb::arg( "nvars" ),
+           "Allocate a zero TTE of the given order and number of variables." );
+    m.def( "one", &DynTE::one, nb::arg( "order" ), nb::arg( "nvars" ),
+           "TTE whose constant term is 1 and all other coefficients are 0." );
+    m.def( "constant", &DynTE::constant, nb::arg( "value" ), nb::arg( "order" ),
+           nb::arg( "nvars" ),
+           "TTE whose constant term is `value` and whose linear part is 0." );
+    m.def( "variable", &DynTE::variable, nb::arg( "value" ), nb::arg( "order" ),
+           nb::arg( "nvars" ), nb::arg( "var_idx" ),
+           "x_i = value + dx_i, with the dx-seed placed at multi-index var_idx." );
+    m.def(
+        "variables",
+        []( const std::vector< double >& x0, std::size_t order ) {
+            return DynTE::variables( x0, order );
+        },
+        nb::arg( "x0" ), nb::arg( "order" ),
+        "Return a list of M = len(x0) independent variables sharing the\n"
+        "same truncation order, each seeded against its own dx_i." );
 
     // ---- math free functions -------------------------------------------
     m.def( "sin", []( const DynTE& a ) { return realise( a, tax::sin( a ) ); } );
