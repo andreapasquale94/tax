@@ -1,29 +1,30 @@
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Umbrella header for tax: a header-only C++23 library for truncated
+// Taylor expansions in M variables of order N (a.k.a. multivariate
+// Differential Algebra).  Including this single header pulls in:
+//
+//   - storage types (static + dynamic)
+//   - the streaming expression-template machinery
+//   - all user-facing operators and math functions
+//
+// All public symbols live in `namespace tax`.
+
 #pragma once
 
-/**
- * @file
- * @brief Umbrella include for the full tax differential algebra API.
- * @details Includes utilities, kernels, expression nodes, the materialized
- * `TruncatedTaylorExpansionT` type, and operator overloads.
- */
+#include "tax/concepts.hpp"
+#include "tax/fwd.hpp"
 
-#include <tax/tte.hpp>
-#include <tax/expr/arithmetic_ops.hpp>
-#include <tax/expr/base.hpp>
-#include <tax/expr/bin_expr.hpp>
-#include <tax/expr/func_expr.hpp>
-#include <tax/expr/math_ops.hpp>
-#include <tax/expr/product_expr.hpp>
-#include <tax/expr/scalar_expr.hpp>
-#include <tax/expr/sum_expr.hpp>
-#include <tax/expr/unary_expr.hpp>
-#include <tax/kernels.hpp>
-#include <tax/operators.hpp>
-#include <tax/utils.hpp>
-#include <tax/eigen/derivative.hpp>
-#include <tax/eigen/eval.hpp>
-#include <tax/eigen/invert_map.hpp>
-#include <tax/eigen/types.hpp>
-#include <tax/eigen/value.hpp>
-#include <tax/eigen/variables.hpp>
-#include <tax/ode/taylor_integrator.hpp>
+// View-like + buffered ET nodes
+#include "tax/expr/base.hpp"
+#include "tax/expr/buffered_nodes.hpp"
+#include "tax/expr/view_nodes.hpp"
+
+// Storage types (also defines operator<<=)
+#include "tax/storage/dynamic_tte.hpp"
+#include "tax/storage/static_tte.hpp"
+
+// Operators
+#include "tax/ops/arithmetic.hpp"
+#include "tax/ops/assign.hpp"
+#include "tax/ops/math.hpp"
