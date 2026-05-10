@@ -122,7 +122,7 @@ def test_math_sqrt_around_one():
 def test_eval_matches_function_value():
     x = tax.variable(0.0, 8, 1, 0)
     r = tax.exp(x)
-    assert r.eval([0.3]) == pytest.approx(math.exp(0.3), abs=1e-9)
+    assert r.at([0.3]) == pytest.approx(math.exp(0.3), abs=1e-9)
 
 
 def test_brief_example_end_to_end():

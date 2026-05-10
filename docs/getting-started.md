@@ -70,13 +70,12 @@ int main() {
 
     auto f = u * tax::sin(v) + u * v;     // ET expression — no allocation
 
-    tax::TEn<3, 2> result;
-    result = (f).eval();                          // streaming sweep fills `result`
+    auto result = f.eval();                // streaming sweep yields a TEn<3, 2>
 
     std::cout << "f       = " << result.value()           << "\n";
     std::cout << "df/du   = " << result.derivative<1, 0>() << "\n";
     std::cout << "df/dv   = " << result.derivative<0, 1>() << "\n";
-    std::cout << "f(0.1)  = " << result.eval({0.1, 0.05}) << "\n";
+    std::cout << "f(0.1)  = " << result.at({0.1, 0.05}) << "\n";
 }
 ```
 

@@ -337,9 +337,10 @@ class TaylorExpansionT : public detail::ShapeBase< Order, Vars >
         return coeffs_( static_cast< Eigen::Index >( fi ) ) * static_cast< T >( f );
     }
 
-    // Evaluate the truncated polynomial at displacement dx.
+    // Evaluate the truncated polynomial at displacement `dx` from the
+    // expansion centre.
     template < class Vec >
-    [[nodiscard]] T eval( const Vec& dx ) const
+    [[nodiscard]] T at( const Vec& dx ) const
     {
         T acc{ 0 };
         const std::size_t N = order();
@@ -365,12 +366,12 @@ class TaylorExpansionT : public detail::ShapeBase< Order, Vars >
         return acc;
     }
 
-    // std::array overload of eval for the static path.
-    [[nodiscard]] T eval(
+    // std::array overload of at(dx) for the static path.
+    [[nodiscard]] T at(
         const std::array< T, static_cast< std::size_t >( Vars ) >& dx ) const
         requires IsStatic
     {
-        return eval< std::array< T, static_cast< std::size_t >( Vars ) > >( dx );
+        return at< std::array< T, static_cast< std::size_t >( Vars ) > >( dx );
     }
 
     // ---- coefficient norms ---------------------------------------------

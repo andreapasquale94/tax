@@ -2,15 +2,13 @@
 //
 // View-like ET nodes.  None of these allocate.
 //
-// Lazy Eigen expressions (CwiseBinaryOp etc.) capture their operands by
-// reference, which makes them unsafe to return out of `slice(d)`
-// — the temporary VectorBlocks they wrap die on return.  We instead
-// hand back a custom `ParentSliceView` that holds a const-reference to
-// the *parent ET node* (which is alive for the duration of the full
-// expression) plus the degree being viewed, and computes each element
-// on demand by recursing into the parent's `coeffAtSlice(d, i)` method.
+// Each node returns a `ParentSliceView` from `slice(d)`.  The view holds
+// a const-reference to the parent ET node (whose lifetime is the
+// surrounding full expression) plus the degree being viewed, and
+// computes each coefficient on demand by calling
+// `parent.coeffAtSlice(d, i)`.
 //
-// Read-only by design: only `coeff(i)` and `size()` are provided, which
+// Read-only by design: only `coeff(i)` and `size()` are exposed, which
 // is the entire interface buffered kernels need.
 
 #pragma once

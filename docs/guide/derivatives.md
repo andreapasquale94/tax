@@ -11,7 +11,7 @@ are `[[nodiscard]]`.
 | `value()` | scalar at expansion centre | — |
 | `coeff(α)` | raw Taylor coefficient at α | span / array / template |
 | `derivative(α)` | `α! · coeff(α)` | span / array / template |
-| `eval(dx)` | truncated polynomial evaluated at dx | array / templated `Vec` |
+| `at(dx)` | truncated polynomial evaluated at dx | array / templated `Vec` |
 | `coeffsNormInf()` | `‖c‖_∞` over the whole buffer | — |
 | `coeffsNorm<P>()` | `‖c‖_p` over the whole buffer | template parameter |
 
@@ -62,9 +62,9 @@ r.derivative({2});   // = 1   (= 2! · 1/2)
 r.derivative<2>();   // = 1   (compile-time index)
 ```
 
-## `eval(dx)`
+## `at(dx)`
 
-`eval(dx)` evaluates the truncated polynomial at displacement `dx`
+`at(dx)` evaluates the truncated polynomial at displacement `dx`
 from the expansion centre.
 
 ```cpp
@@ -72,7 +72,7 @@ auto x = tax::TE<8>::variable(0.0);
 tax::TE<8> r;
 r = (tax::exp(x)).eval();
 
-r.eval({0.3});       // ≈ exp(0.3) within the truncation error of order 8
+r.at({0.3});       // ≈ exp(0.3) within the truncation error of order 8
 ```
 
 For multivariate, `dx` is an `M`-element range:
@@ -81,10 +81,10 @@ For multivariate, `dx` is an `M`-element range:
 auto [u, v] = tax::TEn<5, 2>::variables(std::array{0.0, 0.0});
 tax::TEn<5, 2> r;
 r = (tax::sin(u * v)).eval();
-r.eval({0.1, 0.2});   // truncation of sin(0.02)
+r.at({0.1, 0.2});   // truncation of sin(0.02)
 ```
 
-The static path's `eval` overloads to `std::array<T, Vars>` for
+The static path's `at` overloads to `std::array<T, Vars>` for
 braced-init; the underlying template form accepts any range-like
 indexable type (e.g. `Eigen::Vector`).
 

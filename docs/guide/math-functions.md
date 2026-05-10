@@ -133,9 +133,9 @@ theta = (tax::atan2(y, x)).eval();   // theta.value() == 3π/4
 Any of these compose, including nesting:
 
 ```cpp
-result = (tax::erf(u + v) * tax::exp(-tax::square(u))).eval();
-result = (tax::log10(1.0 + tax::hypot(u, v))).eval();
-result = (tax::atan2(tax::sin(u), tax::cos(v))).eval();
+auto a = (tax::erf(u + v) * tax::exp(-tax::square(u))).eval();
+auto b = (tax::log10(1.0 + tax::hypot(u, v))).eval();
+auto c = tax::atan2(tax::sin(u), tax::cos(v)).eval();
 ```
 
 Each buffered node along the chain owns one `coeffs_` (and any

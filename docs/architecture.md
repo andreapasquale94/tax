@@ -48,20 +48,16 @@ The single statement does the following:
    `coeffs_` (and `SinExpr` an extra `cos_` for the pair). That is
    the entire allocation footprint of the chain.
 
-## Why view-like nodes need a custom slice view
+## How view-like nodes hand back slices
 
-A naive `AddExpr::slice(d)` written as
-`lhs_.slice(d) + rhs_.slice(d)` returns a `CwiseBinaryOp` that
-captures the operand `VectorBlock`s **by reference**. But those
-blocks are temporaries created inside the function — they die on
-return, and the returned expression dangles.
-
-`ParentSliceView<Parent>` instead holds a const reference to the
-parent ET node (whose lifetime is the full enclosing expression) and
-the degree being viewed. On every `coeff(i)` it walks down through
-`parent.coeffAtSlice(d, i)`, which produces a fresh `VectorBlock`
-temporary that lives just long enough to read one element. No
-references survive the parent-slice-view boundary.
+Each view-like ET (`AddExpr`, `SubExpr`, `NegExpr`, `ScalarMulExpr`,
+`ScalarAddExpr`) returns a `ParentSliceView<Parent>` from `slice(d)`.
+The view holds a const reference to the parent ET node — whose
+lifetime is the surrounding full expression — and the degree being
+viewed. On every `coeff(i)` it dispatches to
+`parent.coeffAtSlice(d, i)`, which reads the underlying storage
+directly. Element accesses traverse stable references all the way
+down to the leaves; the view itself owns no buffer.
 
 ## Kernel signatures
 

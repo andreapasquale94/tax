@@ -453,5 +453,5 @@ TEST( Math, EvalAgreesWithFunction )
     TE< 8 > r;
     r = (tax::exp( x )).eval();
     std::array< double, 1 > dx{ 0.3 };
-    EXPECT_NEAR( r.eval( dx ), std::exp( 0.3 ), 1e-9 );
+    EXPECT_NEAR( r.at( dx ), std::exp( 0.3 ), 1e-9 );
 }

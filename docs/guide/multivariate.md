@@ -91,16 +91,16 @@ first-in-v is `∂³f / (∂u² ∂v) = 2`.
 
 ## Polynomial evaluation
 
-`eval(dx)` evaluates the truncated polynomial at displacement `dx`
+`at(dx)` evaluates the truncated polynomial at displacement `dx`
 from the expansion centre.
 
 ```cpp
 tax::TEn<8, 2> r;
 r = (tax::exp(u + v)).eval();
-r.eval({0.1, 0.05});   // ≈ exp(1.0 + 2.0 + 0.1 + 0.05)
+r.at({0.1, 0.05});   // ≈ exp(1.0 + 2.0 + 0.1 + 0.05)
 ```
 
-The dynamic path's `eval` takes any range-like (e.g. `std::vector`,
+The dynamic path's `at` takes any range-like (e.g. `std::vector`,
 `Eigen::Vector`) of length `nvars()`.
 
 ## Two static-path conventions worth pinning

@@ -42,7 +42,7 @@ x.nvars
 x.value()
 x.coeff([1, 0])                             # multi-index as a list of ints
 x.derivative([1, 1])
-x.eval([0.1, 0.05])
+x.at([0.1, 0.05])
 x.coeffs_norm_inf()
 x.coeffs_norm_1()
 x.coeffs_norm_2()

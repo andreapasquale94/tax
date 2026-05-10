@@ -68,17 +68,21 @@ dynamism is rejected with a `static_assert`.
 | `coeff(const std::array&)` *(static)*| array overload |
 | `coeff<size_t... Alpha>()` *(static)*| compile-time index |
 | `derivative(span)` / `(array)` / `<>()` | `α! · coeff(α)` |
-| `eval(const Vec&)` / `(const array&)` | truncated polynomial at `dx` |
+| `at(const Vec&)` / `(const array&)` | truncated polynomial at `dx` |
 | `coeffsNormInf()`, `coeffsNorm<P>()` | buffer norms |
 | `data()`, `coeffs()`, `rawCoeff(i)`, `setRawCoeff(i, v)` | raw access |
 | `slice(d)`                           | Eigen `VectorBlock` for degree d |
 | `advanceTo(d)`                       | no-op (storage is fully populated) |
-| `auto eval() const`                | streaming assignment from any `StreamingExpression` |
 
 The array and template-parameter `coeff` / `derivative` overloads
 require compile-time multi-indices and are therefore disabled on the
-dynamic path. `eval` accepts `std::array<T, Vars>` only on the static
+dynamic path. `at` accepts `std::array<T, Vars>` only on the static
 path; the templated `Vec` form covers both.
+
+ET nodes (operators, math functions) inherit a separate `eval()`
+member from `expr::Expr<Derived>` that materialises the lazy
+expression into a fresh `TaylorExpansionT` of matching shape:
+`auto result = (u * tax::sin(v) + u * v).eval();`.
 
 ## Concepts
 

@@ -133,11 +133,16 @@ Both inputs only need `coeff(i)`; the output needs `coeffRef(i)`.
 Lazy `ParentSliceView`s satisfy the input contract;
 `Eigen::VectorBlock`s satisfy both.
 
-## Why this matters
+## Allocation footprint
 
-A naive expression-template library materialises every intermediate
-polynomial: `(a + b) * (c + d)` would allocate four `Eigen::Vector`s
-in the worst case. tax allocates exactly one buffer per `MulExpr`,
-`DivExpr`, or transcendental — the irreducible storage demanded by
-Cauchy convolution — and writes the final polynomial straight into
-the user's destination. There are no temporary TTE objects.
+For any expression tree, the total allocation is one `coeffs_`
+buffer per buffered node (`MulExpr`, `DivExpr`, `SquareExpr`,
+`SqrtExpr`, `CbrtExpr`, `ExpExpr`, `LogExpr`, `SinCosExpr`,
+`SinhCoshExpr`, `Atan2Expr`, `ErfExpr`, `PowRealExpr`, plus the
+`InverseFunctionExpr` family) plus any auxiliary buffer the
+recurrence requires (the cos buffer alongside sin in `SinCosExpr`,
+the F² buffer alongside F in `CbrtExpr`, the G buffer in
+`InverseFunctionExpr` and `Atan2Expr`, the H = exp(-u²) buffer in
+`ErfExpr`). View-like nodes contribute zero. The final
+`TaylorExpansionT` returned by `eval()` is the only top-level
+allocation.

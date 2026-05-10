@@ -10,9 +10,8 @@ return ET nodes; the result is materialised when assigned via `.eval()`.
 tax::TE<5> x = tax::TE<5>::variable(1.0);
 tax::TE<5> y = tax::TE<5>::variable(2.0);
 
-auto expr = (x + y) * (x - y);   // ET tree, no allocation yet
-tax::TE<5> result;
-result = (expr).eval();                  // streaming sweep computes the polynomial
+auto expr   = (x + y) * (x - y);   // ET tree, no allocation yet
+auto result = expr.eval();         // streaming sweep yields a TE<5>
 ```
 
 The temporaries created inside the operator chain — `AddExpr`,
@@ -99,10 +98,8 @@ order and variable count when both are static.
 int main() {
     auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 
-    auto poly = (u - v) * (u + v) - 2.0 * u + 1.0;
-
-    tax::TEn<3, 2> result;
-    result = (poly).eval();
+    auto poly   = (u - v) * (u + v) - 2.0 * u + 1.0;
+    auto result = poly.eval();
 
     // (u - v)(u + v) - 2u + 1 = u^2 - v^2 - 2u + 1
     // value at (1, 2): 1 - 4 - 2 + 1 = -4

@@ -87,11 +87,13 @@ NB_MODULE( _tax, m )
             },
             nb::arg( "alpha" ) )
         .def(
-            "eval",
+            "at",
             []( const DynTE& self, const std::vector< double >& dx ) {
-                return self.eval( dx );
+                return self.at( dx );
             },
-            nb::arg( "dx" ) )
+            nb::arg( "dx" ),
+            "Evaluate the truncated polynomial at displacement dx from the\n"
+            "expansion centre." )
 
         // ---- norms -----------------------------------------------------
         .def( "coeffs_norm_inf", &DynTE::coeffsNormInf )
@@ -133,10 +135,10 @@ NB_MODULE( _tax, m )
 
     // ---- module-level factories ----------------------------------------
     //
-    // Wrapped in lambdas because the unified TaylorExpansionT exposes both
-    // static-only and dynamic-only overloads of each factory name; a bare
-    // `&DynTE::zero` is then ambiguous to overload-resolve.  The lambdas
-    // pin down the dynamic signature.
+    // Each factory is wrapped in a lambda that pins the dynamic-path
+    // signature (the unified `TaylorExpansionT` carries both static and
+    // dynamic factory overloads of each name; the lambda picks the
+    // dynamic one unambiguously for `DynTE`).
     m.def(
         "zero",
         []( std::size_t order, std::size_t nvars ) {

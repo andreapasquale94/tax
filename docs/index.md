@@ -30,12 +30,11 @@ auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 
 auto f = u * tax::sin(v) + u * v;     // lazy expression, no allocation yet
 
-tax::TEn<3, 2> result;
-result = (f).eval();                          // streaming degree-by-degree sweep
+auto result = f.eval();                // streaming degree-by-degree sweep
 
 result.value();              // function value at the centre
 result.derivative<1, 0>();   // partial w.r.t. u (compile-time index)
-result.eval({0.1, 0.05});    // Taylor polynomial at a displacement
+result.at({0.1, 0.05});      // truncated polynomial at a displacement
 ```
 
 <div class="tax-features" markdown>
@@ -44,8 +43,8 @@ result.eval({0.1, 0.05});    // Taylor polynomial at a displacement
 ### Slice-streamed ETs
 View-like nodes never allocate; buffered nodes (`*`, `/`,
 transcendentals) own only the buffer Cauchy convolution structurally
-requires. The `.eval()` driver writes straight into the destination, so
-the top of the tree allocates nothing either.
+requires. The `TaylorExpansionT` returned by `.eval()` is the only
+top-level allocation.
 </div>
 
 <div class="tax-feature" markdown>

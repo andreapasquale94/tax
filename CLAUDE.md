@@ -61,31 +61,36 @@ ET nodes evaluate **degree-by-degree**, never whole-polynomial-at-once.
 Two node categories:
 
 - **View-like nodes** (`AddExpr`, `SubExpr`, `NegExpr`, `ScalarMulExpr`,
-  `ScalarAddExpr`): allocate nothing.  Their `degreeSlice(d)` returns a
-  custom `ParentSliceView` that holds a stable reference to the parent
-  ET node and computes elements on demand by recursing into the parent's
+  `ScalarAddExpr`): allocate nothing.  Their `slice(d)` returns a
+  `ParentSliceView` that holds a stable reference to the parent ET
+  node and computes elements on demand by calling the parent's
   `coeffAtSlice(d, i)`.
 - **Buffered nodes** (`MulExpr`, `DivExpr`, `SquareExpr`, `SqrtExpr`,
-  `ExpExpr`, `LogExpr`, `SinCosExpr`, `SinhCoshExpr`): own a `coeffs_`
-  buffer plus any auxiliary buffer the recurrence needs (e.g. cos
-  alongside sin).  Their `advanceTo(d)` fills slices monotonically.
+  `CbrtExpr`, `ExpExpr`, `LogExpr`, `SinCosExpr`, `SinhCoshExpr`,
+  `InverseFunctionExpr`, `Atan2Expr`, `ErfExpr`, `PowRealExpr`): own a
+  `coeffs_` buffer plus any auxiliary buffer the recurrence requires
+  (e.g. cos alongside sin in `SinCosExpr`).  Their `advanceTo(d)`
+  fills slices monotonically.
 
-Driver loop in `tax::detail::streamingAssign` (called by
-`.eval()` on either storage type):
+Materialisation goes through `expr::Expr<Derived>::eval()` (declared on
+the ET CRTP base, defined out-of-line in `storage/tte.hpp` once
+`TaylorExpansionT` is complete).  The driver loop is:
 
 ```cpp
-for (std::size_t d = 0; d <= dst.order(); ++d) {
-    expr.advanceTo(d);
-    auto out_d = dst.degreeSlice(d);
-    auto in_d  = expr.degreeSlice(d);
+auto result = ...some TaylorExpansionT shaped like the expression...;
+for (std::size_t d = 0; d <= self.order(); ++d) {
+    self.advanceTo(d);
+    auto out_d = result.slice(d);
+    auto in_d  = self.slice(d);
     for (Eigen::Index i = 0; i < in_d.size(); ++i) {
         out_d.coeffRef(i) = in_d.coeff(i);
     }
 }
+return result;
 ```
 
-The root assignment writes directly into the destination, so the top of
-the tree allocates nothing either.
+The returned `TaylorExpansionT` is the only top-level allocation; the
+tree's intermediate buffers live on the buffered ET nodes themselves.
 
 ### Operand storage trait
 
@@ -158,13 +163,12 @@ auto z        = tax::TE<5>::zero();
 auto o        = tax::TE<5>::one();
 
 auto f = u * tax::sin(v) + u * v;       // ET expression, no allocation yet
-tax::TEn<3, 2> result;
-result = (f).eval();                            // drives the streaming sweep
+auto result = f.eval();                  // drives the streaming sweep
 
 result.value();
 result.coeff({1, 0});
 result.derivative({1, 1});
-result.eval(std::array{0.1, 0.05});
+result.at(std::array{0.1, 0.05});
 result.coeffsNormInf();
 result.coeffsNorm<2>();
 ```

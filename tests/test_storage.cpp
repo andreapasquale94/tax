@@ -69,15 +69,15 @@ TEST( StaticStorage, EvalUnivariate )
     // f(x) = x with center 2.0; eval at displacement 0.5 -> 2.5
     auto x = TE< 4 >::variable( 2.0 );
     std::array< double, 1 > dx{ 0.5 };
-    EXPECT_NEAR( x.eval( dx ), 2.5, kTol );
+    EXPECT_NEAR( x.at( dx ), 2.5, kTol );
 }
 
 TEST( StaticStorage, EvalMultivariate )
 {
     auto [ x, y ] = TEn< 3, 2 >::variables( std::array< double, 2 >{ 1.0, 2.0 } );
     std::array< double, 2 > dx{ 0.1, -0.2 };
-    EXPECT_NEAR( x.eval( dx ), 1.1, kTol );
-    EXPECT_NEAR( y.eval( dx ), 1.8, kTol );
+    EXPECT_NEAR( x.at( dx ), 1.1, kTol );
+    EXPECT_NEAR( y.at( dx ), 1.8, kTol );
 }
 
 TEST( StaticStorage, DerivativeApplyFactorialScaling )
@@ -97,7 +97,7 @@ TEST( StaticStorage, ArrayOverloads )
     EXPECT_EQ( x.coeff( { 0, 1 } ), 0.0 );
     EXPECT_EQ( y.coeff( { 0, 1 } ), 1.0 );
     EXPECT_EQ( x.derivative( { 1, 0 } ), 1.0 );
-    EXPECT_NEAR( x.eval( { 0.1, -0.2 } ), 1.1, 1e-12 );
+    EXPECT_NEAR( x.at( { 0.1, -0.2 } ), 1.1, 1e-12 );
 }
 
 TEST( StaticStorage, TemplatedIndexOverloads )

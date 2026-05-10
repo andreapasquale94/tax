@@ -12,12 +12,11 @@ auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 
 auto f = u * tax::sin(v) + u * v;     // lazy expression, no allocation yet
 
-tax::TEn<3, 2> result;
-result = (f).eval();                          // streaming degree-by-degree sweep
+auto result = f.eval();                       // streaming degree-by-degree sweep
 
-double f0    = result.value();         // function value at the centre
-double dfdu  = result.derivative({1, 0});  // partial w.r.t. u
-double fhat  = result.eval(std::array{0.1, 0.05});  // Taylor polynomial eval
+double f0    = result.value();                // function value at the centre
+double dfdu  = result.derivative({1, 0});     // partial w.r.t. u
+double fhat  = result.at({0.1, 0.05});        // truncated polynomial at a point
 ```
 
 ## Building
@@ -42,9 +41,9 @@ convolution, exp, log, sin/cos pair, sinh/cosh pair, sqrt, ...).  Expression tem
 nodes (`AddExpr`, `NegExpr`, `ScalarMulExpr`, ...) allocate nothing and
 return lazy slice views; buffered nodes (`MulExpr`, `DivExpr`, all
 transcendentals) own a coefficient buffer and fill slices monotonically.
-The `.eval()` driver writes directly into the destination so the top of the
-tree allocates nothing either.  Mixed static/dynamic expressions are
-rejected at compile time.
+`.eval()` materialises the expression tree into a fresh `TaylorExpansionT`
+of matching shape — that is the only top-level allocation.  Mixed
+static/dynamic expressions are rejected at compile time.
 
 See [`CLAUDE.md`](CLAUDE.md) for the complete architecture and
 contributor guide.
