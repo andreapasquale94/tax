@@ -28,18 +28,36 @@ from ._tax import (  # noqa: F401
     constant,
     variable,
     variables,
-    # math
+    # trig + hyperbolic
     sin,
     cos,
     tan,
     sinh,
     cosh,
     tanh,
+    sincos,
+    sinhcosh,
+    # inverse trig + hyperbolic
+    asin,
+    acos,
+    atan,
+    asinh,
+    acosh,
+    atanh,
+    atan2,
+    # exp / log
     exp,
     log,
+    log10,
+    # roots, powers
     sqrt,
+    cbrt,
     square,
     cube,
+    pow,
+    hypot,
+    # erf
+    erf,
 )
 
 __all__ = [
@@ -55,9 +73,23 @@ __all__ = [
     "sinh",
     "cosh",
     "tanh",
+    "sincos",
+    "sinhcosh",
+    "asin",
+    "acos",
+    "atan",
+    "asinh",
+    "acosh",
+    "atanh",
+    "atan2",
     "exp",
     "log",
+    "log10",
     "sqrt",
+    "cbrt",
     "square",
     "cube",
+    "pow",
+    "hypot",
+    "erf",
 ]

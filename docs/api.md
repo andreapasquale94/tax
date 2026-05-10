@@ -127,18 +127,46 @@ auto operator*(const E&, Scalar c);
 auto operator*(Scalar c, const E&);
 auto operator/(const E&, Scalar c);   // = e * (1/c)
 
-// math
+// trig + hyperbolic
 auto sin(const E&);
 auto cos(const E&);
-auto tan(const E&);     // sin / cos
+auto tan(const E&);     // sin / cos (composed)
 auto sinh(const E&);
 auto cosh(const E&);
-auto tanh(const E&);    // sinh / cosh
+auto tanh(const E&);    // sinh / cosh (composed)
+
+// paired trig / hyperbolic — share buffers across the two branches
+auto sincos(const E&);     // returns SinCosPair<E> with .sin() / .cos()
+auto sinhcosh(const E&);   // returns SinhCoshPair<E> with .sinh() / .cosh()
+
+// inverse trig + hyperbolic
+auto asin(const E&);
+auto acos(const E&);
+auto atan(const E&);
+auto asinh(const E&);
+auto acosh(const E&);
+auto atanh(const E&);
+auto atan2(const Y&, const X&);   // requires SameKindExpression<Y, X>
+
+// exp / log
 auto exp(const E&);
 auto log(const E&);
+auto log10(const E&);   // log(e) / log(10) (scaled view)
+
+// roots, powers
 auto sqrt(const E&);
+auto cbrt(const E&);
 auto square(const E&);
-auto cube(const E&);    // square(e) * e
+auto cube(const E&);                      // square(e) * e (composed)
+template <int N> auto pow(const E&);      // compile-time integer exponent
+auto pow(const E&, Scalar p);             // runtime real exponent
+
+// hypot
+auto hypot(const X&, const Y&);
+auto hypot(const X&, const Y&, const Z&);
+
+// erf
+auto erf(const E&);
 
 }
 ```
@@ -159,13 +187,23 @@ them. They are spelled out here because they appear in error messages.
 | `DivExpr<L, R>`        | buffered | `coeffs_` |
 | `SquareExpr<E>`        | buffered | `coeffs_` |
 | `SqrtExpr<E>`          | buffered | `coeffs_` |
+| `CbrtExpr<E>`          | buffered | `coeffs_`, F² aux |
 | `ExpExpr<E>`           | buffered | `coeffs_` |
 | `LogExpr<E>`           | buffered | `coeffs_` |
-| `SinCosExpr<E, ReturnSin>` | buffered | `sin_`, `cos_` (paired) |
-| `SinhCoshExpr<E, ReturnSinh>` | buffered | `sinh_`, `cosh_` (paired) |
+| `SinCosExpr<E, ReturnSin>`         | buffered | `sin_`, `cos_` (paired) |
+| `SinhCoshExpr<E, ReturnSinh>`       | buffered | `sinh_`, `cosh_` (paired) |
+| `SinCosNodeExpr<E>` + `SinCosPairView<Node, ReturnSin>` | shared buffered + view | sin/cos sharing |
+| `SinhCoshNodeExpr<E>` + `SinhCoshPairView<Node, ReturnSinh>` | shared buffered + view | sinh/cosh sharing |
+| `InverseFunctionExpr<E, FunKind, GMode, Sign>` | buffered | `coeffs_`, G aux |
+| `Atan2Expr<Y, X>`      | buffered | `coeffs_`, x²+y² aux |
+| `ErfExpr<E>`           | buffered | `coeffs_`, exp(-u²) aux |
+| `PowRealExpr<E>`       | buffered | `coeffs_` |
 
 Aliases `SinExpr`, `CosExpr`, `SinhExpr`, `CoshExpr` instantiate the
-paired classes with the right `ReturnSin` / `ReturnSinh`.
+non-shared paired classes with the right `ReturnSin` / `ReturnSinh`.
+Aliases `AtanExpr`, `AtanhExpr`, `AsinExpr`, `AcosExpr`, `AsinhExpr`,
+`AcoshExpr` instantiate `InverseFunctionExpr` with the right
+`(FunKind, GMode, Sign)` triple.
 
 ## Multi-index utilities (`tax::util`)
 
@@ -220,6 +258,7 @@ Sub-headers exist for fine-grained inclusion:
 #include <tax/kernels/cauchy.hpp>
 #include <tax/kernels/elementary.hpp>
 #include <tax/kernels/exp_log.hpp>
+#include <tax/kernels/inverse_trig.hpp>
 #include <tax/kernels/trig.hpp>
 #include <tax/storage/tte.hpp>
 #include <tax/expr/base.hpp>

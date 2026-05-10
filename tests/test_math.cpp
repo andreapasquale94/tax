@@ -192,6 +192,260 @@ TEST( Math, BriefExampleEndToEnd )
                  std::cos( 2.0 ) + 1.0, kTol );
 }
 
+TEST( Math, SincosPairAgreesWithSeparateCalls )
+{
+    auto x = TE< 5 >::variable( 0.7 );
+    auto pair = tax::sincos( x );
+
+    TE< 5 > s_pair, c_pair;
+    s_pair <<= pair.sin();
+    c_pair <<= pair.cos();  // shares the work already done above
+
+    TE< 5 > s_solo, c_solo;
+    s_solo <<= tax::sin( x );
+    c_solo <<= tax::cos( x );
+
+    for ( Eigen::Index i = 0; i < s_pair.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( s_pair.coeffs()( i ), s_solo.coeffs()( i ), kTol );
+        EXPECT_NEAR( c_pair.coeffs()( i ), c_solo.coeffs()( i ), kTol );
+    }
+}
+
+TEST( Math, SinhcoshPairAgreesWithSeparateCalls )
+{
+    auto x = TE< 4 >::variable( 0.3 );
+    auto pair = tax::sinhcosh( x );
+
+    TE< 4 > s_pair, c_pair;
+    s_pair <<= pair.sinh();
+    c_pair <<= pair.cosh();
+
+    TE< 4 > s_solo, c_solo;
+    s_solo <<= tax::sinh( x );
+    c_solo <<= tax::cosh( x );
+
+    for ( Eigen::Index i = 0; i < s_pair.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( s_pair.coeffs()( i ), s_solo.coeffs()( i ), kTol );
+        EXPECT_NEAR( c_pair.coeffs()( i ), c_solo.coeffs()( i ), kTol );
+    }
+}
+
+TEST( Math, AtanAtZero )
+{
+    // atan(x) = x - x^3/3 + x^5/5 - x^7/7
+    auto x = TE< 7 >::variable( 0.0 );
+    TE< 7 > r;
+    r <<= tax::atan( x );
+    EXPECT_NEAR( r.coeffs()( 0 ), 0.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 1 ), 1.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 2 ), 0.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), -1.0 / 3.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 5 ), 1.0 / 5.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 7 ), -1.0 / 7.0, kTol );
+}
+
+TEST( Math, AtanhAtZero )
+{
+    // atanh(x) = x + x^3/3 + x^5/5
+    auto x = TE< 5 >::variable( 0.0 );
+    TE< 5 > r;
+    r <<= tax::atanh( x );
+    EXPECT_NEAR( r.coeffs()( 1 ), 1.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), 1.0 / 3.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 5 ), 1.0 / 5.0, kTol );
+}
+
+TEST( Math, AsinAtZero )
+{
+    // asin(x) = x + x^3/6 + 3 x^5/40
+    auto x = TE< 5 >::variable( 0.0 );
+    TE< 5 > r;
+    r <<= tax::asin( x );
+    EXPECT_NEAR( r.coeffs()( 1 ), 1.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), 1.0 / 6.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 5 ), 3.0 / 40.0, kTol );
+}
+
+TEST( Math, AcosAtZero )
+{
+    // acos(x) = pi/2 - asin(x)
+    auto x = TE< 5 >::variable( 0.0 );
+    TE< 5 > r;
+    r <<= tax::acos( x );
+    EXPECT_NEAR( r.coeffs()( 0 ), M_PI / 2.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 1 ), -1.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), -1.0 / 6.0, kTol );
+}
+
+TEST( Math, AsinhAtZero )
+{
+    // asinh(x) = x - x^3/6 + 3 x^5 / 40
+    auto x = TE< 5 >::variable( 0.0 );
+    TE< 5 > r;
+    r <<= tax::asinh( x );
+    EXPECT_NEAR( r.coeffs()( 1 ), 1.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), -1.0 / 6.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 5 ), 3.0 / 40.0, kTol );
+}
+
+TEST( Math, AcoshAroundTwo )
+{
+    // acosh near u_0 = 2: F'(u) = 1/sqrt(u^2 - 1).  Verify by composing
+    // cosh(acosh(x)) ~ x.
+    auto x = TE< 4 >::variable( 2.0 );
+    TE< 4 > inv;
+    inv <<= tax::cosh( tax::acosh( x ) );
+    EXPECT_NEAR( inv.value(), 2.0, 1e-10 );
+    EXPECT_NEAR( inv.coeffs()( 1 ), 1.0, 1e-10 );
+}
+
+TEST( Math, Log10AtTen )
+{
+    auto x = TE< 4 >::variable( 10.0 );
+    TE< 4 > r;
+    r <<= tax::log10( x );
+    EXPECT_NEAR( r.value(), 1.0, kTol );
+    // d/dx log10(x) = 1 / (x ln 10) = 1/(10 ln 10).
+    EXPECT_NEAR( r.coeffs()( 1 ), 1.0 / ( 10.0 * std::log( 10.0 ) ), kTol );
+}
+
+TEST( Math, CbrtAroundOne )
+{
+    // cbrt(1+u) = 1 + u/3 - u^2/9 + 5u^3/81 - ...
+    auto x = TE< 4 >::variable( 1.0 );
+    TE< 4 > r;
+    r <<= tax::cbrt( x );
+    EXPECT_NEAR( r.coeffs()( 0 ), 1.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 1 ), 1.0 / 3.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 2 ), -1.0 / 9.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), 5.0 / 81.0, kTol );
+
+    // Composition: cbrt(x)^3 == x.
+    TE< 4 > cube_of_root;
+    cube_of_root <<= tax::cube( tax::cbrt( x ) );
+    for ( Eigen::Index i = 0; i < x.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( cube_of_root.coeffs()( i ), x.coeffs()( i ), 1e-10 );
+    }
+}
+
+TEST( Math, PowIntCompileTime )
+{
+    auto x = TE< 5 >::variable( 0.5 );
+    TE< 5 > r0, r2, r5, rNeg;
+    r0 <<= tax::pow< 0 >( x );
+    r2 <<= tax::pow< 2 >( x );
+    r5 <<= tax::pow< 5 >( x );
+    rNeg <<= tax::pow< -2 >( x );
+
+    // pow<0> = 1 (constant).
+    EXPECT_NEAR( r0.value(), 1.0, kTol );
+    for ( Eigen::Index i = 1; i < r0.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( r0.coeffs()( i ), 0.0, kTol );
+    }
+
+    // pow<2>(x) == x*x.
+    TE< 5 > r2_ref;
+    r2_ref <<= x * x;
+    for ( Eigen::Index i = 0; i < r2.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( r2.coeffs()( i ), r2_ref.coeffs()( i ), kTol );
+    }
+
+    // pow<5>(x) == x*x*x*x*x.
+    TE< 5 > r5_ref;
+    r5_ref <<= x * x * x * x * x;
+    for ( Eigen::Index i = 0; i < r5.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( r5.coeffs()( i ), r5_ref.coeffs()( i ), kTol );
+    }
+
+    // pow<-2>(x) == 1 / x^2.
+    TE< 5 > rNeg_ref;
+    rNeg_ref <<= TE< 5 >::one() / ( x * x );
+    for ( Eigen::Index i = 0; i < rNeg.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( rNeg.coeffs()( i ), rNeg_ref.coeffs()( i ), 1e-10 );
+    }
+}
+
+TEST( Math, PowRealMatchesIntegerWhenInteger )
+{
+    auto x = TE< 5 >::variable( 1.5 );
+    TE< 5 > r_real, r_int;
+    r_real <<= tax::pow( x, 3.0 );
+    r_int <<= tax::pow< 3 >( x );
+    for ( Eigen::Index i = 0; i < r_real.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( r_real.coeffs()( i ), r_int.coeffs()( i ), 1e-10 );
+    }
+}
+
+TEST( Math, PowRealHalfIsSqrt )
+{
+    auto x = TE< 5 >::variable( 4.0 );
+    TE< 5 > a, b;
+    a <<= tax::pow( x, 0.5 );
+    b <<= tax::sqrt( x );
+    for ( Eigen::Index i = 0; i < a.coeffs().size(); ++i )
+    {
+        EXPECT_NEAR( a.coeffs()( i ), b.coeffs()( i ), 1e-10 );
+    }
+}
+
+TEST( Math, HypotTwoArg )
+{
+    auto [ x, y ] = TEn< 4, 2 >::variables( std::array< double, 2 >{ 3.0, 4.0 } );
+    TEn< 4, 2 > r;
+    r <<= tax::hypot( x, y );
+    EXPECT_NEAR( r.value(), 5.0, 1e-10 );
+}
+
+TEST( Math, HypotThreeArg )
+{
+    auto [ x, y, z ] = TEn< 4, 3 >::variables( std::array< double, 3 >{ 1.0, 2.0, 2.0 } );
+    TEn< 4, 3 > r;
+    r <<= tax::hypot( x, y, z );
+    EXPECT_NEAR( r.value(), 3.0, 1e-10 );
+}
+
+TEST( Math, Atan2InAllQuadrants )
+{
+    for ( auto [ y0, x0 ] : { std::pair{ 1.0, 1.0 }, std::pair{ 1.0, -1.0 },
+                              std::pair{ -1.0, -1.0 }, std::pair{ -1.0, 1.0 } } )
+    {
+        auto [ y, x ] = TEn< 3, 2 >::variables( std::array< double, 2 >{ y0, x0 } );
+        TEn< 3, 2 > r;
+        r <<= tax::atan2( y, x );
+        EXPECT_NEAR( r.value(), std::atan2( y0, x0 ), 1e-10 );
+    }
+}
+
+TEST( Math, ErfAtZero )
+{
+    // erf(x) = (2/sqrt(pi)) (x - x^3/3 + x^5/10 - x^7/42 + ...)
+    auto x = TE< 5 >::variable( 0.0 );
+    TE< 5 > r;
+    r <<= tax::erf( x );
+    const double k = 2.0 / std::sqrt( M_PI );
+    EXPECT_NEAR( r.coeffs()( 0 ), 0.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 1 ), k, kTol );
+    EXPECT_NEAR( r.coeffs()( 2 ), 0.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 3 ), -k / 3.0, kTol );
+    EXPECT_NEAR( r.coeffs()( 5 ), k / 10.0, kTol );
+}
+
+TEST( Math, ErfAgreesWithFunctionAtCentre )
+{
+    auto x = TE< 6 >::variable( 0.4 );
+    TE< 6 > r;
+    r <<= tax::erf( x );
+    EXPECT_NEAR( r.value(), std::erf( 0.4 ), 1e-12 );
+}
+
 TEST( Math, EvalAgreesWithFunction )
 {
     // f(x) = exp(x); at x0 = 0, eval at dx = 0.3 should be ~ exp(0.3).

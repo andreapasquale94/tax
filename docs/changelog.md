@@ -51,8 +51,18 @@ is the new foundation everything else will build on.
 ### Math coverage
 
 - Arithmetic: `+`, `-`, `*`, `/`, unary `-`, scalar variants.
-- Math: `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh`, `exp`, `log`,
-  `sqrt`, `square`, `cube`.
+- Trig + hyperbolic: `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh`.
+- Paired evaluators: `sincos(x)` and `sinhcosh(x)` return owner
+  objects exposing `.sin()`/`.cos()` (resp. `.sinh()`/`.cosh()`)
+  views that share one set of internal buffers — the second `<<=`
+  is a buffer copy.
+- Inverse trig + hyperbolic: `asin`, `acos`, `atan`, `asinh`,
+  `acosh`, `atanh`, `atan2(y, x)`.
+- Exp / log: `exp`, `log`, `log10`.
+- Roots, powers, hypot: `sqrt`, `cbrt`, `square`, `cube`,
+  `pow<N>(x)` (compile-time integer), `pow(x, p)` (runtime real),
+  `hypot(x, y)`, `hypot(x, y, z)`.
+- Special: `erf`.
 
 ### Tests
 

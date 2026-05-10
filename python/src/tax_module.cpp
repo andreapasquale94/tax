@@ -15,6 +15,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/array.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
@@ -180,9 +181,63 @@ NB_MODULE( _tax, m )
     m.def( "sinh", []( const DynTE& a ) { return realise( a, tax::sinh( a ) ); } );
     m.def( "cosh", []( const DynTE& a ) { return realise( a, tax::cosh( a ) ); } );
     m.def( "tanh", []( const DynTE& a ) { return realise( a, tax::tanh( a ) ); } );
+    m.def( "asin", []( const DynTE& a ) { return realise( a, tax::asin( a ) ); } );
+    m.def( "acos", []( const DynTE& a ) { return realise( a, tax::acos( a ) ); } );
+    m.def( "atan", []( const DynTE& a ) { return realise( a, tax::atan( a ) ); } );
+    m.def( "asinh", []( const DynTE& a ) { return realise( a, tax::asinh( a ) ); } );
+    m.def( "acosh", []( const DynTE& a ) { return realise( a, tax::acosh( a ) ); } );
+    m.def( "atanh", []( const DynTE& a ) { return realise( a, tax::atanh( a ) ); } );
     m.def( "exp", []( const DynTE& a ) { return realise( a, tax::exp( a ) ); } );
     m.def( "log", []( const DynTE& a ) { return realise( a, tax::log( a ) ); } );
+    m.def( "log10", []( const DynTE& a ) { return realise( a, tax::log10( a ) ); } );
     m.def( "sqrt", []( const DynTE& a ) { return realise( a, tax::sqrt( a ) ); } );
+    m.def( "cbrt", []( const DynTE& a ) { return realise( a, tax::cbrt( a ) ); } );
     m.def( "square", []( const DynTE& a ) { return realise( a, tax::square( a ) ); } );
     m.def( "cube", []( const DynTE& a ) { return realise( a, tax::cube( a ) ); } );
+    m.def( "erf", []( const DynTE& a ) { return realise( a, tax::erf( a ) ); } );
+
+    // pow(a, p) — runtime real exponent.
+    m.def(
+        "pow",
+        []( const DynTE& a, double p ) { return realise( a, tax::pow( a, p ) ); },
+        nb::arg( "a" ), nb::arg( "p" ) );
+
+    // atan2(y, x).
+    m.def(
+        "atan2",
+        []( const DynTE& y, const DynTE& x ) { return realise( y, tax::atan2( y, x ) ); },
+        nb::arg( "y" ), nb::arg( "x" ) );
+
+    // hypot — 2 and 3 argument forms.
+    m.def(
+        "hypot",
+        []( const DynTE& x, const DynTE& y ) { return realise( x, tax::hypot( x, y ) ); },
+        nb::arg( "x" ), nb::arg( "y" ) );
+    m.def(
+        "hypot",
+        []( const DynTE& x, const DynTE& y, const DynTE& z ) {
+            return realise( x, tax::hypot( x, y, z ) );
+        },
+        nb::arg( "x" ), nb::arg( "y" ), nb::arg( "z" ) );
+
+    // sincos / sinhcosh — return (sin, cos) / (sinh, cosh) tuples.  Python
+    // doesn't carry lazy ETs across statements, but the C++ pair owner
+    // still saves the second streaming sweep (the second realise() call
+    // copies from an already-populated buffer).
+    m.def(
+        "sincos",
+        []( const DynTE& a ) {
+            auto p = tax::sincos( a );
+            return std::pair< DynTE, DynTE >{ realise( a, p.sin() ), realise( a, p.cos() ) };
+        },
+        nb::arg( "a" ),
+        "Return (sin(a), cos(a)).  Internally shares the paired sin/cos buffers." );
+    m.def(
+        "sinhcosh",
+        []( const DynTE& a ) {
+            auto p = tax::sinhcosh( a );
+            return std::pair< DynTE, DynTE >{ realise( a, p.sinh() ), realise( a, p.cosh() ) };
+        },
+        nb::arg( "a" ),
+        "Return (sinh(a), cosh(a)).  Internally shares the paired sinh/cosh buffers." );
 }
