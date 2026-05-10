@@ -24,7 +24,7 @@ multi-index has to be known at compile time).
 ```cpp
 auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 tax::TEn<3, 2> p;
-p <<= u * u * v;
+p = (u * u * v).eval();
 
 // 1. std::span<const std::size_t> — canonical, used by the kernel layer.
 std::array<std::size_t, 2> a{2, 1};
@@ -55,7 +55,7 @@ factorial scaling through `derivative`:
 ```cpp
 auto x = tax::TE<3>::variable(0.0);
 tax::TE<3> r;
-r <<= tax::exp(x);
+r = (tax::exp(x)).eval();
 
 r.coeff({2});        // = 1/2 (Taylor coefficient)
 r.derivative({2});   // = 1   (= 2! · 1/2)
@@ -70,7 +70,7 @@ from the expansion centre.
 ```cpp
 auto x = tax::TE<8>::variable(0.0);
 tax::TE<8> r;
-r <<= tax::exp(x);
+r = (tax::exp(x)).eval();
 
 r.eval({0.3});       // ≈ exp(0.3) within the truncation error of order 8
 ```
@@ -80,7 +80,7 @@ For multivariate, `dx` is an `M`-element range:
 ```cpp
 auto [u, v] = tax::TEn<5, 2>::variables(std::array{0.0, 0.0});
 tax::TEn<5, 2> r;
-r <<= tax::sin(u * v);
+r = (tax::sin(u * v)).eval();
 r.eval({0.1, 0.2});   // truncation of sin(0.02)
 ```
 

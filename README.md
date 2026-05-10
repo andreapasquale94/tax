@@ -13,7 +13,7 @@ auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 auto f = u * tax::sin(v) + u * v;     // lazy expression, no allocation yet
 
 tax::TEn<3, 2> result;
-result <<= f;                          // streaming degree-by-degree sweep
+result = (f).eval();                          // streaming degree-by-degree sweep
 
 double f0    = result.value();         // function value at the centre
 double dfdu  = result.derivative({1, 0});  // partial w.r.t. u
@@ -42,7 +42,7 @@ convolution, exp, log, sin/cos pair, sinh/cosh pair, sqrt, ...).  Expression tem
 nodes (`AddExpr`, `NegExpr`, `ScalarMulExpr`, ...) allocate nothing and
 return lazy slice views; buffered nodes (`MulExpr`, `DivExpr`, all
 transcendentals) own a coefficient buffer and fill slices monotonically.
-The `<<=` driver writes directly into the destination so the top of the
+The `.eval()` driver writes directly into the destination so the top of the
 tree allocates nothing either.  Mixed static/dynamic expressions are
 rejected at compile time.
 

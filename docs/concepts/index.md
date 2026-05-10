@@ -50,7 +50,7 @@ nodes own dense slices; view-like ET nodes hand back a
 
 **Streaming.**
 Driving an ET tree degree-by-degree via `advanceTo(d)` followed by
-reading `slice(d)`. The `<<=` operator on either storage type
+reading `slice(d)`. The `.eval()` operator on either storage type
 runs the loop.
 
 **View-like vs. buffered ET node.**

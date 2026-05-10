@@ -63,7 +63,7 @@ re-exported even though it is not directly constructible.
 
 ## Why eager evaluation?
 
-In C++, operator chains build lazy ET trees that the `<<=` driver
+In C++, operator chains build lazy ET trees that the `.eval()` driver
 consumes within a single full expression. Python statements don't
 have that lifetime: an intermediate `MulExpr` referenced through
 `x = a * b` would have to outlive the statement.
@@ -75,7 +75,7 @@ The Python bindings therefore evaluate every operator into a fresh
 .def("__mul__",
      [](const DynTE& a, const DynTE& b) {
          DynTE out(a.order(), a.nvars());
-         out <<= a * b;        // ET runs once into `out`
+         out = (a * b).eval();        // ET runs once into `out`
          return out;
      })
 ```

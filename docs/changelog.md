@@ -30,7 +30,7 @@ is the new foundation everything else will build on.
 - **Two storage types**, sharing one math core:
   `TruncatedTaylorExpansionT<T, N, M>` (static, `Eigen::Matrix`) and
   `DynamicTaylorExpansion<T>` (runtime-sized, `Eigen::VectorX`).
-- **`<<=` driver** that streams an ET into a destination without
+- **`.eval()` driver** that streams an ET into a destination without
   allocating at the root.
 - **Compile-time index accessors**: `coeff<1, 0>()`,
   `derivative<1, 1>()` resolve flat-index and factorial at compile
@@ -54,7 +54,7 @@ is the new foundation everything else will build on.
 - Trig + hyperbolic: `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh`.
 - Paired evaluators: `sincos(x)` and `sinhcosh(x)` return owner
   objects exposing `.sin()`/`.cos()` (resp. `.sinh()`/`.cosh()`)
-  views that share one set of internal buffers — the second `<<=`
+  views that share one set of internal buffers — the second `.eval()`
   is a buffer copy.
 - Inverse trig + hyperbolic: `asin`, `acos`, `atan`, `asinh`,
   `acosh`, `atanh`, `atan2(y, x)`.

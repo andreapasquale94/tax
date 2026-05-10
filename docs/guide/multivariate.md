@@ -60,7 +60,7 @@ when you reach for `rawCoeff(i)`.
 ```cpp
 auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 tax::TEn<3, 2> p;
-p <<= u * v;
+p = (u * v).eval();
 
 // Three equivalent index forms — all return the (1, 1) coefficient.
 double a = p.coeff({1, 1});                     // std::array overload
@@ -80,7 +80,7 @@ form to reach for when the multi-index is known statically.
 
 ```cpp
 tax::TEn<3, 2> p;
-p <<= u * u * v;
+p = (u * u * v).eval();
 
 p.derivative({2, 0});   // 2! · 1! · coeff({2,0}) — value at the centre
 p.derivative<2, 1>();   // = 2! · 1! · coeff<2,1>() = 2 · 1 = 2
@@ -96,7 +96,7 @@ from the expansion centre.
 
 ```cpp
 tax::TEn<8, 2> r;
-r <<= tax::exp(u + v);
+r = (tax::exp(u + v)).eval();
 r.eval({0.1, 0.05});   // ≈ exp(1.0 + 2.0 + 0.1 + 0.05)
 ```
 

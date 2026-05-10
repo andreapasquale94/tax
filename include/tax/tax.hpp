@@ -20,10 +20,9 @@
 #include "tax/expr/buffered_nodes.hpp"
 #include "tax/expr/view_nodes.hpp"
 
-// Storage type (also defines operator<<=)
+// Storage type (also defines Expr<Derived>::eval() out-of-line)
 #include "tax/storage/tte.hpp"
 
 // Operators
 #include "tax/ops/arithmetic.hpp"
-#include "tax/ops/assign.hpp"
 #include "tax/ops/math.hpp"

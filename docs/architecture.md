@@ -1,6 +1,6 @@
 # Architecture
 
-This page traces the flow of a single `<<=` statement from operator
+This page traces the flow of a single `.eval()` statement from operator
 overload to streaming sweep, then catalogues the recurrences each
 buffered node uses. Read [Concepts](concepts/index.md) first for the
 high-level picture.
@@ -10,8 +10,7 @@ high-level picture.
 ```cpp
 auto [u, v] = tax::TEn<3, 2>::variables(std::array{1.0, 2.0});
 auto f = u * tax::sin(v) + u * v;
-tax::TEn<3, 2> result;
-result <<= f;
+auto result = f.eval();
 ```
 
 The single statement does the following:
@@ -24,12 +23,14 @@ The single statement does the following:
    captured **by const reference**. The final `+` produces an
    `AddExpr<MulExpr, MulExpr>` that owns both child nodes.
 
-2. **`f` is a temporary**, alive for the full expression `result <<=
-   f`. The `result.operator<<=` body delegates to
-   `tax::detail::streamingAssign(*this, f)`.
+2. **`f` is a temporary**, alive for the full expression
+   `auto result = f.eval();`. The `Expr<Derived>::eval()` body —
+   defined out-of-line in `storage/tte.hpp` once `TaylorExpansionT`
+   is complete — constructs a fresh result of matching shape and
+   drives the streaming sweep into it.
 
-3. **Driver loop.** `streamingAssign` walks `d = 0, 1, …, order` and
-   for each `d`:
+3. **Driver loop.** `eval()` walks `d = 0, 1, …, order` and for
+   each `d`:
    - calls `f.advanceTo(d)`. The `AddExpr` forwards to its children;
      the `MulExpr`s call their inputs' `advanceTo(d)` and then run
      `kernels::cauchyMulComputeDegree<Scalar>(d, nvars(), lhs_,
@@ -204,5 +205,4 @@ fills its own slices.
 | `include/tax/expr/buffered_nodes.hpp` | buffered ET nodes |
 | `include/tax/ops/arithmetic.hpp`      | `+`, `-`, `*`, `/`, scalar variants |
 | `include/tax/ops/math.hpp`            | `sin`, `cos`, `exp`, `log`, … |
-| `include/tax/ops/assign.hpp`          | the `<<=` driver |
 | `python/src/tax_module.cpp`           | nanobind module |

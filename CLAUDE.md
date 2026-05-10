@@ -71,7 +71,7 @@ Two node categories:
   alongside sin).  Their `advanceTo(d)` fills slices monotonically.
 
 Driver loop in `tax::detail::streamingAssign` (called by
-`operator<<=` on either storage type):
+`.eval()` on either storage type):
 
 ```cpp
 for (std::size_t d = 0; d <= dst.order(); ++d) {
@@ -108,7 +108,7 @@ tax/
 │   ├── kernels/             # slice-aware coefficient kernels
 │   ├── storage/             # static + dynamic TTE storage types
 │   ├── expr/                # ET base + view-like + buffered nodes
-│   └── ops/                 # arithmetic, math free funcs, <<= driver
+│   └── ops/                 # arithmetic, math free funcs
 ├── tests/                   # GoogleTest suite
 ├── python/                  # nanobind Python bindings (tax-python)
 │   ├── CMakeLists.txt
@@ -159,7 +159,7 @@ auto o        = tax::TE<5>::one();
 
 auto f = u * tax::sin(v) + u * v;       // ET expression, no allocation yet
 tax::TEn<3, 2> result;
-result <<= f;                            // drives the streaming sweep
+result = (f).eval();                            // drives the streaming sweep
 
 result.value();
 result.coeff({1, 0});

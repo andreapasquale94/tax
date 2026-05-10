@@ -30,7 +30,7 @@ TEST( Arithmetic, AddTwoUnivariates )
     auto x = TE< 3 >::variable( 1.0 );
     auto y = TE< 3 >::variable( 2.0 );
     TE< 3 > result;
-    result <<= x + y;
+    result = (x + y).eval();
     EXPECT_NEAR( result.value(), 3.0, kTol );
     // Coeff at degree 1 = 2 (each contributes 1).
     EXPECT_NEAR( result.coeffs()( 1 ), 2.0, kTol );
@@ -41,7 +41,7 @@ TEST( Arithmetic, SubtractTwoUnivariates )
     auto x = TE< 3 >::variable( 5.0 );
     auto y = TE< 3 >::variable( 2.0 );
     TE< 3 > result;
-    result <<= x - y;
+    result = (x - y).eval();
     EXPECT_NEAR( result.value(), 3.0, kTol );
     EXPECT_NEAR( result.coeffs()( 1 ), 0.0, kTol );  // 1 - 1 = 0
 }
@@ -50,7 +50,7 @@ TEST( Arithmetic, NegateUnivariate )
 {
     auto x = TE< 3 >::variable( 1.5 );
     TE< 3 > result;
-    result <<= -x;
+    result = (-x).eval();
     EXPECT_NEAR( result.value(), -1.5, kTol );
     EXPECT_NEAR( result.coeffs()( 1 ), -1.0, kTol );
 }
@@ -59,8 +59,8 @@ TEST( Arithmetic, ScalarAdd )
 {
     auto x = TE< 3 >::variable( 0.0 );
     TE< 3 > r1, r2;
-    r1 <<= x + 7.0;
-    r2 <<= 7.0 + x;
+    r1 = (x + 7.0).eval();
+    r2 = (7.0 + x).eval();
     EXPECT_NEAR( r1.value(), 7.0, kTol );
     EXPECT_NEAR( r2.value(), 7.0, kTol );
     EXPECT_NEAR( r1.coeffs()( 1 ), 1.0, kTol );
@@ -71,8 +71,8 @@ TEST( Arithmetic, ScalarSubtract )
 {
     auto x = TE< 3 >::variable( 4.0 );
     TE< 3 > r1, r2;
-    r1 <<= x - 1.0;
-    r2 <<= 10.0 - x;
+    r1 = (x - 1.0).eval();
+    r2 = (10.0 - x).eval();
     EXPECT_NEAR( r1.value(), 3.0, kTol );
     EXPECT_NEAR( r2.value(), 6.0, kTol );
     EXPECT_NEAR( r1.coeffs()( 1 ), 1.0, kTol );
@@ -83,7 +83,7 @@ TEST( Arithmetic, ScalarMul )
 {
     auto x = TE< 3 >::variable( 2.0 );
     TE< 3 > r;
-    r <<= 3.0 * x;
+    r = (3.0 * x).eval();
     EXPECT_NEAR( r.value(), 6.0, kTol );
     EXPECT_NEAR( r.coeffs()( 1 ), 3.0, kTol );
 }
@@ -94,7 +94,7 @@ TEST( Arithmetic, MultiplyUnivariates )
     auto x = TE< 3 >::variable( 2.0 );
     auto y = TE< 3 >::variable( 3.0 );
     TE< 3 > r;
-    r <<= x * y;
+    r = (x * y).eval();
     // x*y as 1D Taylor in dx: (2+dx)(3+dx) = 6 + 5 dx + 1 dx^2 + 0 dx^3
     EXPECT_NEAR( r.value(), 6.0, kTol );
     EXPECT_NEAR( r.coeffs()( 1 ), 5.0, kTol );
@@ -106,7 +106,7 @@ TEST( Arithmetic, MultiplyMultivariate )
 {
     auto [ x, y ] = TEn< 2, 2 >::variables( std::array< double, 2 >{ 1.0, 2.0 } );
     TEn< 2, 2 > r;
-    r <<= x * y;
+    r = (x * y).eval();
     // (1+dx)(2+dy) = 2 + 2 dx + 1 dy + dx*dy
     EXPECT_NEAR( r.value(), 2.0, kTol );
     std::array< std::size_t, 2 > a10{ 1, 0 };
@@ -126,7 +126,7 @@ TEST( Arithmetic, DivideAndReciprocal )
     // 1 / (1 + x) at x=0 = 1 - x + x^2 - x^3 + ...
     auto x = TE< 4 >::variable( 0.0 );
     TE< 4 > r;
-    r <<= TE< 4 >::one() / ( TE< 4 >::one() + x );
+    r = (TE< 4 >::one() / ( TE< 4 >::one() + x )).eval();
     EXPECT_NEAR( r.coeffs()( 0 ), 1.0, kTol );
     EXPECT_NEAR( r.coeffs()( 1 ), -1.0, kTol );
     EXPECT_NEAR( r.coeffs()( 2 ), 1.0, kTol );
@@ -139,7 +139,7 @@ TEST( Arithmetic, NestedExpression )
     // ((x+1) * (x-1)) = x^2 - 1
     auto x = TE< 3 >::variable( 0.0 );
     TE< 3 > r;
-    r <<= ( x + 1.0 ) * ( x - 1.0 );
+    r = (( x + 1.0 ) * ( x - 1.0 )).eval();
     EXPECT_NEAR( r.coeffs()( 0 ), -1.0, kTol );
     EXPECT_NEAR( r.coeffs()( 1 ), 0.0, kTol );
     EXPECT_NEAR( r.coeffs()( 2 ), 1.0, kTol );

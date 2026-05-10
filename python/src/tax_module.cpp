@@ -47,13 +47,15 @@ struct MultiIndexBuf
     return MultiIndexBuf{ alpha };
 }
 
-// Realise an ET expression into a fresh DynTE matching `like` in shape.
+// Realise an ET expression into a fresh DynTE.  Just forwards to the
+// expression's own `.eval()` — we keep this thin wrapper purely so the
+// binding lambdas read uniformly across paths that don't pass through
+// an ET (e.g. operator+(DynTE, double) which is itself an ET that we
+// then eval).
 template < class Expr >
-[[nodiscard]] DynTE realise( const DynTE& like, Expr&& expr )
+[[nodiscard]] DynTE realise( const DynTE& /*like*/, Expr&& expr )
 {
-    DynTE out( like.order(), like.nvars() );
-    out <<= std::forward< Expr >( expr );
-    return out;
+    return std::forward< Expr >( expr ).eval();
 }
 
 }  // namespace

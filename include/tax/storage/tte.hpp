@@ -30,8 +30,8 @@
 #include <vector>
 
 #include "tax/concepts.hpp"
+#include "tax/expr/base.hpp"
 #include "tax/fwd.hpp"
-#include "tax/ops/assign.hpp"
 #include "tax/util/multi_index.hpp"
 
 namespace tax
@@ -450,16 +450,6 @@ class TaylorExpansionT : public detail::ShapeBase< Order, Vars >
     {
     }
 
-    // ---- <<= driver: realise a streaming expression into this storage --
-
-    template < class Expr >
-        requires StreamingExpression< std::remove_cvref_t< Expr > >
-    TaylorExpansionT& operator<<=( Expr&& expr )
-    {
-        detail::streamingAssign( *this, expr );
-        return *this;
-    }
-
   private:
     Coeffs coeffs_{};
 
@@ -499,3 +489,49 @@ struct expr_traits< TaylorExpansionT< T, Order, Vars > >
 };
 
 }  // namespace tax
+
+// Out-of-line definition of `expr::Expr<Derived>::eval()`.  Lives here
+// because the body materialises the result into a concrete
+// `TaylorExpansionT`, which has to be complete at the point of
+// definition.
+namespace tax::expr
+{
+
+template < class Derived >
+inline auto Expr< Derived >::eval() const
+{
+    using D = Derived;
+    using S = typename D::Scalar;
+    using Out = TaylorExpansionT< S, D::OrderAtCompileTime, D::VarsAtCompileTime >;
+
+    const D& self = static_cast< const D& >( *this );
+
+    auto make_out = [ & ]() {
+        if constexpr ( D::IsStatic )
+        {
+            return Out{};
+        }
+        else
+        {
+            return Out( self.order(), self.nvars() );
+        }
+    };
+    Out out = make_out();
+
+    const std::size_t N = self.order();
+    const std::size_t M = self.nvars();
+    for ( std::size_t d = 0; d <= N; ++d )
+    {
+        self.advanceTo( d );
+        auto out_d = out.slice( d );
+        auto in_d = self.slice( d );
+        const Eigen::Index n = static_cast< Eigen::Index >( util::degreeSize( d, M ) );
+        for ( Eigen::Index i = 0; i < n; ++i )
+        {
+            out_d.coeffRef( i ) = in_d.coeff( i );
+        }
+    }
+    return out;
+}
+
+}  // namespace tax::expr

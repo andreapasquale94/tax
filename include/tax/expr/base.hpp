@@ -59,6 +59,21 @@ class Expr : public ExprTag
     {
         return *static_cast< const Derived* >( this );
     }
+
+    // Materialise this lazy expression into a fresh `TaylorExpansionT` of
+    // matching shape.  This is the entry point users go through to turn
+    // an ET tree into a concrete value:
+    //
+    //   auto u = tax::TE<5>::variable(1.0);
+    //   auto v = tax::TE<5>::variable(2.0);
+    //   auto f = u * tax::sin(v) + u * v;
+    //   auto result = f.eval();              // realises the streaming sweep
+    //
+    // The driver loop walks every degree from 0 to order(), advances the
+    // ET tree once per degree, and copies the produced slice into the
+    // destination.  No intermediate `TaylorExpansionT` is ever allocated;
+    // the only fresh storage is the returned `out`.
+    [[nodiscard]] auto eval() const;
 };
 
 // ----------------------------------------------------------------------

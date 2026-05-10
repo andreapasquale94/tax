@@ -112,7 +112,7 @@ TEST( StaticStorage, TemplatedIndexOverloads )
     // Apply factorial scaling on a higher-degree term: build u^2 v and
     // verify d^3/(du^2 dv) = 2! * 1! * coeff = 2 * coeff_at_(2,1).
     TEn< 3, 2 > p;
-    p <<= x * x * y;
+    p = (x * x * y).eval();
     EXPECT_NEAR( ( p.coeff< 2, 1 >() ), 1.0, 1e-12 );
     EXPECT_NEAR( ( p.derivative< 2, 1 >() ), 2.0, 1e-12 );
 }

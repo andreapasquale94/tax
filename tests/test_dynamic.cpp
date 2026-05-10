@@ -38,7 +38,7 @@ TEST( Dynamic, AddTwoUnivariates )
     auto x = DynTE::variable( 1.0, 3, 1, 0 );
     auto y = DynTE::variable( 2.0, 3, 1, 0 );
     DynTE r( 3, 1 );
-    r <<= x + y;
+    r = (x + y).eval();
     EXPECT_NEAR( r.value(), 3.0, kTol );
     std::array< std::size_t, 1 > a1{ 1 };
     EXPECT_NEAR( r.coeff( std::span< const std::size_t >( a1 ) ), 2.0, kTol );
@@ -50,7 +50,7 @@ TEST( Dynamic, MultiplyMultivariate )
     auto& x = vars[ 0 ];
     auto& y = vars[ 1 ];
     DynTE r( 2, 2 );
-    r <<= x * y;
+    r = (x * y).eval();
     EXPECT_NEAR( r.value(), 2.0, kTol );
     std::array< std::size_t, 2 > a10{ 1, 0 };
     std::array< std::size_t, 2 > a01{ 0, 1 };
@@ -64,7 +64,7 @@ TEST( Dynamic, ExpAtZero )
 {
     auto x = DynTE::variable( 0.0, 4, 1, 0 );
     DynTE r( 4, 1 );
-    r <<= tax::exp( x );
+    r = (tax::exp( x )).eval();
     EXPECT_NEAR( r.coeffs()( 0 ), 1.0, kTol );
     EXPECT_NEAR( r.coeffs()( 1 ), 1.0, kTol );
     EXPECT_NEAR( r.coeffs()( 2 ), 0.5, kTol );
@@ -76,7 +76,7 @@ TEST( Dynamic, SinAtZero )
 {
     auto x = DynTE::variable( 0.0, 5, 1, 0 );
     DynTE r( 5, 1 );
-    r <<= tax::sin( x );
+    r = (tax::sin( x )).eval();
     EXPECT_NEAR( r.coeffs()( 1 ), 1.0, kTol );
     EXPECT_NEAR( r.coeffs()( 3 ), -1.0 / 6.0, kTol );
     EXPECT_NEAR( r.coeffs()( 5 ), 1.0 / 120.0, kTol );

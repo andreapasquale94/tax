@@ -2,7 +2,7 @@
 
 All four binary operators (`+`, `-`, `*`, `/`), unary `-`, and scalar
 combinations are overloaded for any `tax::TaxExpression`. Operators
-return ET nodes; the result is materialised when assigned via `<<=`.
+return ET nodes; the result is materialised when assigned via `.eval()`.
 
 ## The big picture
 
@@ -12,18 +12,18 @@ tax::TE<5> y = tax::TE<5>::variable(2.0);
 
 auto expr = (x + y) * (x - y);   // ET tree, no allocation yet
 tax::TE<5> result;
-result <<= expr;                  // streaming sweep computes the polynomial
+result = (expr).eval();                  // streaming sweep computes the polynomial
 ```
 
 The temporaries created inside the operator chain — `AddExpr`,
 `SubExpr`, `MulExpr` — survive only until the end of the
-`<<=` statement, which is when the streaming driver consumes them.
+`.eval()` statement, which is when the streaming driver consumes them.
 
 !!! warning "Don't outlive the full expression"
     `auto e = (x + y) * (x - y);` keeps `e` valid only within its
     initialisation statement. After the semicolon the inner `AddExpr`
     and `SubExpr` temporaries are destroyed, and `e` has dangling
-    references. Always feed the chain straight into `<<=` or a
+    references. Always feed the chain straight into `.eval()` or a
     function that consumes it within the same full expression.
 
 ## Operators
@@ -58,9 +58,9 @@ operand.
 auto x = tax::TE<3>::variable(0.0);
 
 tax::TE<3> a, b, c;
-a <<= x + 7.0;            // shifts only the constant term
-b <<= 7.0 - x;            // (-x) + 7.0
-c <<= 3.0 * x;            // every coefficient * 3.0
+a = (x + 7.0).eval();            // shifts only the constant term
+b = (7.0 - x).eval();            // (-x) + 7.0
+c = (3.0 * x).eval();            // every coefficient * 3.0
 ```
 
 ## Mixed kinds are rejected
@@ -87,7 +87,7 @@ auto b = tax::TEn<3, 3>::constant(1.0);
 auto bad = a + b;     // ❌ VarsAtCompileTime mismatch
 ```
 
-The `<<=` driver also asserts the destination matches the expression's
+The `.eval()` driver also asserts the destination matches the expression's
 order and variable count when both are static.
 
 ## Putting it together
@@ -102,7 +102,7 @@ int main() {
     auto poly = (u - v) * (u + v) - 2.0 * u + 1.0;
 
     tax::TEn<3, 2> result;
-    result <<= poly;
+    result = (poly).eval();
 
     // (u - v)(u + v) - 2u + 1 = u^2 - v^2 - 2u + 1
     // value at (1, 2): 1 - 4 - 2 + 1 = -4

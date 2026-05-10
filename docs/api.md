@@ -73,7 +73,7 @@ dynamism is rejected with a `static_assert`.
 | `data()`, `coeffs()`, `rawCoeff(i)`, `setRawCoeff(i, v)` | raw access |
 | `slice(d)`                           | Eigen `VectorBlock` for degree d |
 | `advanceTo(d)`                       | no-op (storage is fully populated) |
-| `operator<<=(Expr&&)`                | streaming assignment from any `StreamingExpression` |
+| `auto eval() const`                | streaming assignment from any `StreamingExpression` |
 
 The array and template-parameter `coeff` / `derivative` overloads
 require compile-time multi-indices and are therefore disabled on the
@@ -106,7 +106,7 @@ concept StreamingExpression = /* requires advanceTo(d) and slice(d) */;
 
 All operators are constrained on `TaxExpression` /
 `SameKindExpression`. They return ET nodes; results are materialised
-on `<<=`.
+on `.eval()`.
 
 ```cpp
 namespace tax {

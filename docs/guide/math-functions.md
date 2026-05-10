@@ -2,7 +2,7 @@
 
 All math functions live in `namespace tax` as templates constrained on
 `TaxExpression`. Most return buffered ET nodes that fill their
-coefficient buffer degree-by-degree via the streaming `<<=` driver.
+coefficient buffer degree-by-degree via the streaming `.eval()` driver.
 
 ## Catalogue
 
@@ -22,8 +22,8 @@ coefficient buffer degree-by-degree via the streaming `<<=` driver.
 ```cpp
 auto p = tax::sincos(x);   // owns one shared buffered node
 TE<5> s, c;
-s <<= p.sin();             // streams sin slices from the shared buffers
-c <<= p.cos();             // already populated; the second <<= is a copy
+s = (p.sin()).eval();             // streams sin slices from the shared buffers
+c = p.cos().eval();               // already populated; the second .eval() is a buffer copy
 ```
 
 Same pattern for `tax::sinhcosh(x)` exposing `.sinh()` / `.cosh()`.
@@ -88,7 +88,7 @@ use the two-argument `pow(x, p)`.
 ```cpp
 auto x = tax::TE<5>::variable(0.7);
 tax::TE<5> identity;
-identity <<= tax::square(tax::sin(x)) + tax::square(tax::cos(x));
+identity = (tax::square(tax::sin(x)) + tax::square(tax::cos(x))).eval();
 // identity.value() ≈ 1.0; all higher-degree coefficients ≈ 0.
 ```
 
@@ -97,7 +97,7 @@ Same with the paired form, sharing buffers:
 ```cpp
 auto p = tax::sincos(x);
 tax::TE<5> identity;
-identity <<= tax::square(p.sin()) + tax::square(p.cos());
+identity = (tax::square(p.sin()) + tax::square(p.cos())).eval();
 ```
 
 ### Round-trips
@@ -105,9 +105,9 @@ identity <<= tax::square(p.sin()) + tax::square(p.cos());
 ```cpp
 auto x = tax::TE<4>::variable(0.5);
 tax::TE<4> back;
-back <<= tax::sin(tax::asin(x));   // ≈ x
-back <<= tax::log(tax::exp(x));    // ≈ x
-back <<= tax::cube(tax::cbrt(x));  // ≈ x
+back = (tax::sin(tax::asin(x))).eval();   // ≈ x
+back = (tax::log(tax::exp(x))).eval();    // ≈ x
+back = (tax::cube(tax::cbrt(x))).eval();  // ≈ x
 ```
 
 ### Compile-time integer power vs. runtime real
@@ -115,8 +115,8 @@ back <<= tax::cube(tax::cbrt(x));  // ≈ x
 ```cpp
 auto x = tax::TE<5>::variable(1.5);
 tax::TE<5> a, b;
-a <<= tax::pow<3>(x);       // unrolled to MulExpr(SquareExpr(x), x)
-b <<= tax::pow(x, 3.0);     // PowRealExpr (general recurrence)
+a = (tax::pow<3>(x)).eval();       // unrolled to MulExpr(SquareExpr(x), x)
+b = (tax::pow(x, 3.0)).eval();     // PowRealExpr (general recurrence)
 // a.coeffs() == b.coeffs() to floating-point precision.
 ```
 
@@ -125,7 +125,7 @@ b <<= tax::pow(x, 3.0);     // PowRealExpr (general recurrence)
 ```cpp
 auto [y, x] = tax::TEn<3, 2>::variables(std::array{1.0, -1.0});
 tax::TEn<3, 2> theta;
-theta <<= tax::atan2(y, x);   // theta.value() == 3π/4
+theta = (tax::atan2(y, x)).eval();   // theta.value() == 3π/4
 ```
 
 ## Composing freely
@@ -133,9 +133,9 @@ theta <<= tax::atan2(y, x);   // theta.value() == 3π/4
 Any of these compose, including nesting:
 
 ```cpp
-result <<= tax::erf(u + v) * tax::exp(-tax::square(u));
-result <<= tax::log10(1.0 + tax::hypot(u, v));
-result <<= tax::atan2(tax::sin(u), tax::cos(v));
+result = (tax::erf(u + v) * tax::exp(-tax::square(u))).eval();
+result = (tax::log10(1.0 + tax::hypot(u, v))).eval();
+result = (tax::atan2(tax::sin(u), tax::cos(v))).eval();
 ```
 
 Each buffered node along the chain owns one `coeffs_` (and any

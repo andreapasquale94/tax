@@ -3,7 +3,7 @@
 Practical use of tax, organised by capability:
 
 - [**Arithmetic**](arithmetic.md) — `+`, `-`, `*`, `/`, scalars, the
-  `<<=` driver, lifetime caveats.
+  `.eval()` driver, lifetime caveats.
 - [**Math functions**](math-functions.md) — `sin`, `cos`, `exp`, `log`,
   `sqrt`, the rest of the catalogue.
 - [**Multivariate**](multivariate.md) — `TEn<N, M>::variables`, the

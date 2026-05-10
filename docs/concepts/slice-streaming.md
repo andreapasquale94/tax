@@ -7,7 +7,7 @@ the contiguous block of degree-d coefficients.
 
 ## The driver loop
 
-`operator<<=` on either storage type delegates to
+`.eval()` on either storage type delegates to
 `tax::detail::streamingAssign`:
 
 ```cpp
