@@ -114,13 +114,32 @@ def main() -> None:
     ax_ic.grid(True, alpha=0.25)
 
     # ----- Phase-space view -----------------------------------------------
-    ax_ph.plot(ref["x"], ref["y"], "k-", lw=1.0, alpha=0.5, label="reference orbit")
-    ax_ph.plot([0.0], [0.0], "*", color="orange", ms=14, zorder=5, label="primary")
-
     flow_poly = _polygon(flow_img)
+    all_x = [flow_poly[:, 0]]
+    all_y = [flow_poly[:, 1]]
+    for sid in split_ids:
+        sel = split_ph["split_idx"] == sid
+        for role in ("parent", "left", "right"):
+            r = sel & (split_ph["role"] == role)
+            if np.any(r):
+                poly = _polygon(split_ph[r])
+                all_x.append(poly[:, 0])
+                all_y.append(poly[:, 1])
+    all_x = np.concatenate(all_x)
+    all_y = np.concatenate(all_y)
+    pad_x = 0.10 * (all_x.max() - all_x.min() + 1e-12)
+    pad_y = 0.10 * (all_y.max() - all_y.min() + 1e-12)
+    xlim = (all_x.min() - pad_x, all_x.max() + pad_x)
+    ylim = (all_y.min() - pad_y, all_y.max() + pad_y)
+
+    # Reference orbit + primary only if visible in the zoomed window.
+    ax_ph.plot(ref["x"], ref["y"], "k-", lw=1.0, alpha=0.4, label="reference orbit")
+    if xlim[0] <= 0.0 <= xlim[1] and ylim[0] <= 0.0 <= ylim[1]:
+        ax_ph.plot([0.0], [0.0], "*", color="orange", ms=14, zorder=5, label="primary")
+
     ax_ph.fill(flow_poly[:, 0], flow_poly[:, 1],
                facecolor="lightgrey", edgecolor="dimgrey",
-               alpha=0.35, linewidth=0.8, zorder=1,
+               alpha=0.45, linewidth=0.9, zorder=1,
                label="single flow polygon (no split)")
 
     for idx, sid in enumerate(split_ids):
@@ -132,12 +151,14 @@ def main() -> None:
             poly = _polygon(split_ph[r])
             if role == "parent":
                 ax_ph.plot(poly[:, 0], poly[:, 1], color=colors[idx],
-                           linewidth=0.8, alpha=0.7, zorder=2)
+                           linewidth=1.0, alpha=0.8, zorder=2)
             else:
                 ax_ph.fill(poly[:, 0], poly[:, 1],
                            facecolor=colors[idx], alpha=0.30,
                            edgecolor=colors[idx], linewidth=0.6, zorder=3)
 
+    ax_ph.set_xlim(xlim)
+    ax_ph.set_ylim(ylim)
     ax_ph.set_aspect("equal", adjustable="box")
     ax_ph.set_xlabel("x(t = T_orbit)")
     ax_ph.set_ylabel("y(t = T_orbit)")
@@ -157,22 +178,40 @@ def main() -> None:
         cb.set_label("split index", fontsize=9)
 
     # ----- Converged ADS leaves -------------------------------------------
-    ax_fin.plot(ref["x"], ref["y"], "k-", lw=1.0, alpha=0.5, label="reference orbit")
-    ax_fin.plot([0.0], [0.0], "*", color="orange", ms=14, zorder=5, label="primary")
+    leaf_ids = sorted(set(final["leaf_idx"].astype(int).tolist()))
+
+    leaf_x = [flow_poly[:, 0]]
+    leaf_y = [flow_poly[:, 1]]
+    for li in leaf_ids:
+        sel = final["leaf_idx"] == li
+        poly = _polygon(final[sel])
+        leaf_x.append(poly[:, 0])
+        leaf_y.append(poly[:, 1])
+    leaf_x = np.concatenate(leaf_x)
+    leaf_y = np.concatenate(leaf_y)
+    pad_x = 0.10 * (leaf_x.max() - leaf_x.min() + 1e-12)
+    pad_y = 0.10 * (leaf_y.max() - leaf_y.min() + 1e-12)
+    fxlim = (leaf_x.min() - pad_x, leaf_x.max() + pad_x)
+    fylim = (leaf_y.min() - pad_y, leaf_y.max() + pad_y)
+
+    ax_fin.plot(ref["x"], ref["y"], "k-", lw=1.0, alpha=0.4, label="reference orbit")
+    if fxlim[0] <= 0.0 <= fxlim[1] and fylim[0] <= 0.0 <= fylim[1]:
+        ax_fin.plot([0.0], [0.0], "*", color="orange", ms=14, zorder=5, label="primary")
     ax_fin.fill(flow_poly[:, 0], flow_poly[:, 1],
                 facecolor="lightgrey", edgecolor="dimgrey",
-                alpha=0.35, linewidth=0.8, zorder=1,
+                alpha=0.45, linewidth=0.9, zorder=1,
                 label="single flow polygon")
 
-    leaf_ids = sorted(set(final["leaf_idx"].astype(int).tolist()))
     leaf_cmap = plt.get_cmap("tab20")
     for k, li in enumerate(leaf_ids):
         sel = final["leaf_idx"] == li
         poly = _polygon(final[sel])
         ax_fin.fill(poly[:, 0], poly[:, 1],
-                    facecolor=leaf_cmap(k % 20), alpha=0.55,
-                    edgecolor="black", linewidth=0.5, zorder=3)
+                    facecolor=leaf_cmap(k % 20), alpha=0.65,
+                    edgecolor="black", linewidth=0.6, zorder=3)
 
+    ax_fin.set_xlim(fxlim)
+    ax_fin.set_ylim(fylim)
     ax_fin.set_aspect("equal", adjustable="box")
     ax_fin.set_xlabel("x(t = T_orbit)")
     ax_fin.set_ylabel("y(t = T_orbit)")
