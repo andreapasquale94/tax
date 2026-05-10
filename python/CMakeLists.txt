@@ -30,6 +30,13 @@ target_compile_features(_tax PRIVATE cxx_std_23)
 set_target_properties(_tax PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/python/tax")
 
+# Wheel install path.  scikit-build-core uses CMake's install(TARGETS …)
+# rules to land binaries in the wheel; the `tax` destination puts the
+# compiled `_tax.so` next to `python/tax/__init__.py` (which the
+# `[tool.scikit-build] wheel.packages` setting collects) so the final
+# wheel exposes `tax/_tax.so` and `tax/__init__.py` together.
+install(TARGETS _tax LIBRARY DESTINATION tax)
+
 # Stage the Python package alongside the compiled module so users can
 # `python -c "import tax"` from the build directory.
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/tax/__init__.py"

@@ -1,0 +1,72 @@
+name: wheels
+
+# Builds Python wheels and uploads them as workflow artifacts.  Trigger
+# on every push to main, on pull requests, on tag pushes, and on
+# manual `workflow_dispatch` runs.  No PyPI publishing — wheels are
+# downloadable from the Actions UI / API only.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: wheels-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_wheels:
+    name: ${{ matrix.os }} wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheels (manylinux_2_28, cp310 → cp313)
+        uses: pypa/cibuildwheel@v2.21
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+          # cibuildwheel reads the rest of its config from
+          # [tool.cibuildwheel] in pyproject.toml.
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: tax-wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+          if-no-files-found: error
+
+  build_sdist:
+    name: source distribution
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build sdist
+        run: |
+          pip install build
+          python -m build --sdist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: tax-sdist
+          path: ./dist/*.tar.gz
+          if-no-files-found: error

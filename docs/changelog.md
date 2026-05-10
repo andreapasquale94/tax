@@ -46,6 +46,12 @@ is the new foundation everything else will build on.
   `tax.constant`, `tax.variable`, `tax.variables`); the `DynTE` class
   is a return type only and is not directly constructible from
   Python.
+- **Python wheels.** A `pyproject.toml` driven by `scikit-build-core`
+  produces a manylinux_2_28 wheel for CPython 3.10 through 3.13.  The
+  `wheels` GitHub Actions workflow runs `cibuildwheel` on every push
+  and uploads the built wheels (plus an sdist) as downloadable
+  artifacts.  No PyPI publishing — wheels are consumed straight from
+  the Actions UI.
 - **Documentation site** (this MkDocs build).
 
 ### Math coverage

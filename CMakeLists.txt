@@ -13,14 +13,30 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # ---------- Eigen ----------
+# Try the CMake config first, then well-known system include paths,
+# then fall back to FetchContent so the build still works inside
+# manylinux-style images that may not ship Eigen.
 find_package(Eigen3 3.4 QUIET CONFIG)
 if(NOT Eigen3_FOUND)
-    # Fallback: probe well-known system include paths.
     find_path(EIGEN3_INCLUDE_DIR NAMES Eigen/Core
-              PATHS /usr/include/eigen3 /usr/local/include/eigen3
-              REQUIRED)
-    add_library(Eigen3::Eigen INTERFACE IMPORTED)
-    target_include_directories(Eigen3::Eigen INTERFACE ${EIGEN3_INCLUDE_DIR})
+              PATHS /usr/include/eigen3 /usr/local/include/eigen3)
+    if(EIGEN3_INCLUDE_DIR)
+        add_library(Eigen3::Eigen INTERFACE IMPORTED)
+        target_include_directories(Eigen3::Eigen INTERFACE ${EIGEN3_INCLUDE_DIR})
+    else()
+        message(STATUS "Eigen not found locally; fetching 3.4.0 via FetchContent.")
+        include(FetchContent)
+        set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
+        set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+        set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+        FetchContent_Declare(
+            eigen
+            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+            GIT_TAG        3.4.0
+            GIT_SHALLOW    TRUE
+        )
+        FetchContent_MakeAvailable(eigen)
+    endif()
 endif()
 
 # ---------- tax (header-only) ----------

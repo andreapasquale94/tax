@@ -9,3 +9,7 @@ __pycache__/
 *.pyc
 *.so
 *.egg-info/
+dist/
+wheelhouse/
+*.whl
+*.tar.gz

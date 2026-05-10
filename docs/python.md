@@ -11,7 +11,24 @@ Construction goes through **module-level utility functions**, not
 classmethod factories. The `DynTE` class is a return type only — you
 can't construct one directly with `tax.DynTE(...)`.
 
-## Build & install
+## Install
+
+### From a CI wheel artifact
+
+Every push to the repository builds a manylinux_2_28 wheel for CPython
+3.10 through 3.13.  Download the `tax-wheels-ubuntu-24.04` artifact
+from the [`wheels` workflow](https://github.com/andreapasquale94/tax/actions/workflows/wheels.yml)
+run of your choice, then:
+
+```sh
+pip install tax-0.2.0-cp311-cp311-manylinux_2_28_x86_64.whl
+python -c "import tax; print(tax.zero(2, 1))"
+```
+
+A source distribution (sdist) is built alongside the wheels — useful
+if you'd rather compile against a system Eigen.
+
+### From source (development)
 
 ```sh
 pip install nanobind pytest
@@ -23,6 +40,17 @@ PYTHONPATH=build/python python -c "import tax; print(tax.zero(2, 1))"
 The compiled module lives in `build/python/tax/_tax.so`; the Python
 package wrapper at `build/python/tax/__init__.py` re-exports the
 useful surface.
+
+### Building a wheel locally
+
+```sh
+pip install build scikit-build-core nanobind
+python -m build --wheel
+ls dist/
+```
+
+The build is driven by `pyproject.toml`; scikit-build-core invokes
+the CMake project at the repo root with `-DTAX_BUILD_PYTHON=ON`.
 
 ## Surface
 

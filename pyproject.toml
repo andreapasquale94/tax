@@ -1,0 +1,107 @@
+# Build configuration for the `tax` Python wheel.
+#
+# scikit-build-core drives the CMake build with `-DTAX_BUILD_PYTHON=ON`
+# and packages the resulting `tax/` directory (compiled `_tax.so`
+# alongside the `tax/__init__.py` wrapper) as the wheel.
+#
+# cibuildwheel reads the `[tool.cibuildwheel]` block to produce
+# manylinux_2_28 wheels for CPython 3.10 through 3.13.
+
+[build-system]
+requires      = ["scikit-build-core>=0.10", "nanobind>=2.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name            = "tax"
+version         = "0.2.0"
+description     = "Truncated multivariate Taylor expansions (Differential Algebra)."
+readme          = "README.md"
+license         = { file = "LICENSE" }
+authors         = [{ name = "Andrea Pasquale" }]
+requires-python = ">=3.10"
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+Homepage      = "https://github.com/andreapasquale94/tax"
+Documentation = "https://andreapasquale94.github.io/tax/"
+Repository    = "https://github.com/andreapasquale94/tax"
+Changelog     = "https://github.com/andreapasquale94/tax/blob/main/docs/changelog.md"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+# ---------------------------------------------------------------------
+# scikit-build-core
+# ---------------------------------------------------------------------
+[tool.scikit-build]
+minimum-version = "0.10"
+cmake.version   = ">=3.20"
+cmake.build-type = "Release"
+build-dir       = "build/{wheel_tag}"
+
+# Pure-Python wrapper alongside the compiled module.
+wheel.packages = ["python/tax"]
+# Drop everything that isn't the actual Python module from the wheel.
+wheel.exclude  = ["**/tests/**", "**/.cache/**"]
+
+# Pass through to the existing CMake project at the repo root.
+[tool.scikit-build.cmake.define]
+TAX_BUILD_PYTHON = "ON"
+TAX_BUILD_TEST   = "OFF"
+
+# ---------------------------------------------------------------------
+# cibuildwheel
+# ---------------------------------------------------------------------
+[tool.cibuildwheel]
+# Python versions: 3.10 through 3.13 (all CPython).
+build = "cp310-* cp311-* cp312-* cp313-*"
+# musllinux skipped: tax requires C++23, the available toolchains there
+# lag behind manylinux's gcc-toolset offering.
+skip  = "*-musllinux*"
+
+build-frontend = "build"
+test-command   = "pytest {project}/python/tests"
+test-requires  = "pytest"
+
+[tool.cibuildwheel.linux]
+# manylinux_2_28 ships AlmaLinux 8 / RHEL 8 -based image; pulling
+# gcc-toolset-13 brings the C++23 toolchain we need.
+manylinux-x86_64-image  = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+
+# Install build-time dependencies inside the manylinux container before
+# any wheel is built.  Eigen and the GCC 13 toolchain are both required
+# by the build, the latter to enable C++23.
+before-all = """
+dnf install -y --nogpgcheck eigen3-devel gcc-toolset-13 gcc-toolset-13-libstdc++-devel
+"""
+
+# Activate gcc-toolset-13 for the duration of the build.
+[tool.cibuildwheel.linux.environment]
+CC                  = "/opt/rh/gcc-toolset-13/root/usr/bin/gcc"
+CXX                 = "/opt/rh/gcc-toolset-13/root/usr/bin/g++"
+PATH                = "/opt/rh/gcc-toolset-13/root/usr/bin:$PATH"
+LD_LIBRARY_PATH     = "/opt/rh/gcc-toolset-13/root/usr/lib64:$LD_LIBRARY_PATH"
+PKG_CONFIG_PATH     = "/usr/lib64/pkgconfig:$PKG_CONFIG_PATH"
+
+[tool.cibuildwheel.macos]
+# Apple Clang 15 (Xcode 15) supports C++23.  macOS 13+ runners ship it.
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "13.0"
+
+[tool.cibuildwheel.windows]
+# MSVC 19.36+ (VS 2022 17.6+) implements enough of C++23 for tax.
+[tool.cibuildwheel.windows.environment]
+SKBUILD_CMAKE_ARGS = "-DCMAKE_CXX_STANDARD=23"
