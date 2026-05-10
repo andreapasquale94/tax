@@ -1262,8 +1262,15 @@ class ErfExpr : public Expr< ErfExpr< E > >
                     // i.e. we accumulate into h_e at multi-index a+b+c.
                     // Rather than a triple loop, materialise (u^2)_k into
                     // a temporary slice in the aux buffer's "next" slot.
-                    Coeffs tmp_uu_k = Coeffs::Zero(
-                        static_cast< Eigen::Index >( util::degreeSize( k, nvars() ) ) );
+                    // Materialise (u^2)_k into a temporary slice-sized
+                    // buffer.  Always dynamic-extent (independent of
+                    // Coeffs's compile-time size) because the slice
+                    // length is degreeSize(k, nvars), not the full
+                    // monomialCount(order, nvars).
+                    Eigen::Matrix< Scalar, Eigen::Dynamic, 1 > tmp_uu_k =
+                        Eigen::Matrix< Scalar, Eigen::Dynamic, 1 >::Zero(
+                            static_cast< Eigen::Index >(
+                                util::degreeSize( k, nvars() ) ) );
                     for ( std::size_t a = 0; a <= k; ++a )
                     {
                         auto u_a = inner_.slice( a );
