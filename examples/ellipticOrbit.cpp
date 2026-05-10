@@ -107,10 +107,10 @@ int main()
     // -------------------------------------------------------------------------
     // 1-D IC uncertainty: variation in periapsis tangential velocity v_y(0).
     //
-    // 2% velocity perturbation over a full orbit is enough that the single
-    // flow polynomial is visibly inaccurate near apoapsis — ADS recovers it.
+    // 4% velocity perturbation over a full orbit is enough that the single
+    // flow polynomial is wildly inaccurate near apoapsis — ADS recovers it.
     // -------------------------------------------------------------------------
-    Box< double, kD > box{ { rp, 0.0, 0.0, vp }, { 0.0, 0.0, 0.0, 0.02 } };
+    Box< double, kD > box{ { rp, 0.0, 0.0, vp }, { 0.0, 0.0, 0.0, 0.04 } };
 
     // -------------------------------------------------------------------------
     // 2) Single flow expansion (DaIntegrator, no splitting).
@@ -251,7 +251,7 @@ int main()
     //                          box and its two children, both in IC-space and
     //                          pushed forward to T_orbit through DaIntegrator.
     // -------------------------------------------------------------------------
-    Box< double, kD > box2D{ { rp, 0.0, 0.0, vp }, { 0.0, 0.005, 0.0, 0.008 } };
+    Box< double, kD > box2D{ { rp, 0.0, 0.0, vp }, { 0.0, 0.020, 0.0, 0.030 } };
 
     constexpr int n_per_edge = 24;
     auto unit_square_boundary = []( int n ) {
@@ -363,7 +363,7 @@ int main()
     std::vector< SplitSnap > snaps;
 
     ode::AdsIntegrator< kN, kP, kD > snap_ads{
-        kepler, ode::AdsConfig{ .step_tol = 1e-13, .ads_tol = 1e-4, .max_depth = 6 } };
+        kepler, ode::AdsConfig{ .step_tol = 1e-13, .ads_tol = 1e-3, .max_depth = 5 } };
     snap_ads.on_split = [&]( const ode::SplitEvent< kP, kD >& ev ) {
         snaps.push_back( SplitSnap{ static_cast< int >( snaps.size() ), ev.parent_depth,
                                     ev.split_dim, ev.truncation_error, ev.parent_box,
