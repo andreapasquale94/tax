@@ -19,22 +19,38 @@ math operations propagate complete Taylor jets in one pass.
 
 The whole library hangs off two design decisions.
 
-### 1. Dual sizing: static and dynamic share one math core
+### 1. Dual sizing: one template, one math core
+
+A single template handles both compile-time-fixed and runtime-fixed
+sizes, modelled directly on `Eigen::Matrix<T, Rows, Cols>` with
+`Eigen::Dynamic` (= -1) as the runtime-size sentinel.
 
 ```
-TruncatedTaylorExpansionT<T, Order, Vars>   ←  static-size, Eigen::Matrix
-TE<N>          = TruncatedTaylorExpansionT<double, N, 1>
-TEn<N, M>      = TruncatedTaylorExpansionT<double, N, M>
+TaylorExpansionT<T, int Order, int Vars>
 
-DynamicTaylorExpansion<T>                   ←  runtime-sized, Eigen::VectorX
-DynTE<T>       = DynamicTaylorExpansion<T>
+  Order, Vars >= 0           →  static path:   Eigen::Matrix<T, monomialCount(N, M), 1>
+  Order = Vars = Dynamic     →  dynamic path:  Eigen::VectorX<T>
+
+TE<N>            = TaylorExpansionT<double, N, 1>
+TEn<N, M>        = TaylorExpansionT<double, N, M>
+DynTE<T = double> = TaylorExpansionT<T, Eigen::Dynamic, Eigen::Dynamic>
 ```
 
-Both satisfy a single `tax::TaxExpression` concept and feed identical
-**coefficient kernels** (slice-aware Cauchy convolution, exp/log, sin/cos,
-sqrt, ...).  The static path is the C++ hot path with compile-time
-constant sizes; the dynamic path is what Python bindings will eventually
-expose, with no `std::variant` over an (N, M) grid and no JIT.
+Mixed dynamism (one static, one dynamic) is rejected with a
+`static_assert`.  Both configurations satisfy a single
+`tax::TaxExpression` concept and feed identical **coefficient
+kernels** (slice-aware Cauchy convolution, exp/log, sin/cos, sqrt,
+...).  The static path is the C++ hot path with compile-time constant
+sizes; the dynamic path is what Python bindings expose, with no
+`std::variant` over an (N, M) grid and no JIT.
+
+Each `TaxExpression` (storage or ET node) publishes four trait
+constants matching Eigen's `RowsAtCompileTime` convention:
+
+- `OrderAtCompileTime` (int) — template arg, possibly `Eigen::Dynamic`.
+- `VarsAtCompileTime` (int) — same.
+- `IsStatic` (bool) — `true` iff both above are non-`Dynamic`.
+- `IsDynamic` (bool) — `!IsStatic`.
 
 Mixed static/dynamic expressions are rejected at compile time via the
 `SameKindExpression` concept.
@@ -159,8 +175,9 @@ Free functions: `+`, `-`, `*`, `/`, unary `-`, scalar combinations,
 `tax::cube`.
 
 The dynamic path is `DynTE<double>` (alias for
-`DynamicTaylorExpansion<double>`).  Its factories take `(value, order,
-nvars[, var_idx])` since sizes are runtime-fixed at construction.
+`TaylorExpansionT<double, Eigen::Dynamic, Eigen::Dynamic>`).  Its
+factories take `(value, order, nvars[, var_idx])` since sizes are
+runtime-fixed at construction.
 
 ---
 
@@ -168,12 +185,12 @@ nvars[, var_idx])` since sizes are runtime-fixed at construction.
 
 | Category | Convention | Examples |
 |----------|-----------|----------|
-| Types | `PascalCase` | `TruncatedTaylorExpansionT`, `MulExpr`, `ParentSliceView` |
+| Types | `PascalCase` | `TaylorExpansionT`, `MulExpr`, `ParentSliceView` |
 | Free functions / methods | `camelCase` | `monomialCount`, `degreeSlice`, `advanceTo`, `coeffAtSlice`, `streamingAssign` |
 | Local variables | `snake_case` | `out_d`, `inv_b0`, `alpha_buf` |
 | Template parameters | uppercase short names | `T`, `N`, `M`, `E`, `L`, `R` |
 | Aliases | short upper-case | `TE<N>`, `TEn<N,M>`, `DynTE<T>` |
-| Compile-time constants on types | `kPascal` | `kStatic`, `kOrder`, `kVars` |
+| Compile-time trait constants    | Eigen-style `XxxAtCompileTime` / `IsXxx` | `OrderAtCompileTime`, `VarsAtCompileTime`, `IsStatic`, `IsDynamic` |
 | Detail namespaces | `tax::detail`, `tax::expr::detail`, `tax::kernels::detail` | |
 
 C++ patterns:
@@ -237,8 +254,9 @@ Run one: `./build/tests/test_math`.
 ## Python bindings
 
 `python/` contains the nanobind module (`tax`) exposing
-`DynamicTaylorExpansion<double>` as the `tax.DynTE` return type plus
-the math free functions.  Build with `-DTAX_BUILD_PYTHON=ON`.
+`TaylorExpansionT<double, Eigen::Dynamic, Eigen::Dynamic>` (i.e.
+`tax::DynTE<double>`) as the `tax.DynTE` return type plus the math
+free functions.  Build with `-DTAX_BUILD_PYTHON=ON`.
 Construction goes through **module-level utility functions**
 (`tax.zero`, `tax.one`, `tax.constant`, `tax.variable`,
 `tax.variables`); `tax.DynTE` itself is not directly constructible from

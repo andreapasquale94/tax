@@ -2,89 +2,83 @@
 
 Public symbols, listed by component. All live in `namespace tax`.
 
-## Storage types
+## Storage type
 
-### `TruncatedTaylorExpansionT<T, Order, Vars>`
+### `TaylorExpansionT<T, Order, Vars>`
 
-Static-extent TTE. `T` is a floating-point scalar; `Order >= 0`,
-`Vars >= 1`.
+Single template that handles both compile-time and runtime sizes —
+modelled on `Eigen::Matrix<T, Rows, Cols>` with `Eigen::Dynamic` (= -1)
+as the sentinel.
 
 ```cpp
-template <class T, std::size_t Order, std::size_t Vars>
-class TruncatedTaylorExpansionT;
+template <class T, int Order, int Vars>
+class TaylorExpansionT;
 ```
+
+Valid configurations: both `Order` and `Vars` are non-negative
+integers (static) or both equal `Eigen::Dynamic` (dynamic). Mixed
+dynamism is rejected with a `static_assert`.
 
 | Constexpr member | Value |
 |---|---|
-| `kStatic` | `true` |
-| `kOrder`  | `Order` |
-| `kVars`   | `Vars` |
-| `kSize`   | `monomialCount(Order, Vars) = C(Order+Vars, Vars)` |
+| `OrderAtCompileTime` | `Order` (template arg, possibly `Eigen::Dynamic`) |
+| `VarsAtCompileTime`  | `Vars`  (template arg, possibly `Eigen::Dynamic`) |
+| `IsStatic`           | `(Order != Eigen::Dynamic) && (Vars != Eigen::Dynamic)` |
+| `IsDynamic`          | `!IsStatic` |
 
 | Type alias | Definition |
 |---|---|
 | `Scalar`   | `T` |
-| `Coeffs`   | `Eigen::Matrix<T, kSize, 1>` |
+| `Coeffs`   | `Eigen::Matrix<T, monomialCount(Order, Vars), 1>` (static) or `Eigen::Matrix<T, Eigen::Dynamic, 1>` (dynamic) |
 
-| Static factory | Returns |
+| Aliases (all in `namespace tax`) | Expansion |
 |---|---|
-| `zero()`              | TTE with all coefficients zero |
-| `one()`               | TTE with constant 1, rest zero |
-| `constant(T c)`       | TTE with constant c, rest zero |
-| `variable(T x0)` *(M=1 only)*           | `x = x0 + dx` |
-| `variables(const Vec& x0)`              | `std::tuple<TTE, …>` of M variables |
-| `variables(args...)` *(M args)*         | same, accepting M scalars |
+| `TE<N>`        | `TaylorExpansionT<double, N, 1>` |
+| `TEn<N, M>`    | `TaylorExpansionT<double, N, M>` |
+| `DynTE<T = double>` | `TaylorExpansionT<T, Eigen::Dynamic, Eigen::Dynamic>` |
 
-| Instance method | Returns |
+#### Static-only factories *(require `IsStatic`)*
+
+| Factory | Returns |
 |---|---|
-| `order()` / `nvars()`               | constexpr sizes |
+| `zero()`           | TTE with all coefficients zero |
+| `one()`            | TTE with constant 1, rest zero |
+| `constant(T c)`    | TTE with constant c, rest zero |
+| `variable(T x0)` *(requires `Vars == 1`)* | `x = x0 + dx` |
+| `variables(const Vec& x0)`         | `std::tuple<TTE, …>` of `Vars` variables |
+| `variables(args...)` *(`Vars` args)*| same, accepting `Vars` scalars |
+
+#### Dynamic-only factories *(require `IsDynamic`)*
+
+| Factory | Returns |
+|---|---|
+| `zero(order, nvars)` |  |
+| `one(order, nvars)`  |  |
+| `constant(c, order, nvars)` |  |
+| `variable(x0, order, nvars, var_idx)` | seeds dx at index `var_idx` |
+| `variables(const std::vector<T>& x0, order)` | `std::vector<DynTE>` of `len(x0)` variables |
+
+#### Instance methods (both paths)
+
+| Method | Returns |
+|---|---|
+| `order()` / `nvars()`                | sizes (constexpr in static path, runtime in dynamic) |
 | `value()`                            | `coeffs(0)` |
 | `coeff(std::span<const size_t>)`     | raw Taylor coefficient |
-| `coeff(const std::array&)`           | array overload |
-| `coeff<size_t... Alpha>()`           | compile-time index |
-| `derivative(span)` / `(array)` / `<>()`     | `α! · coeff(α)` |
-| `eval(const Vec&)` / `(const array&)`       | truncated polynomial at `dx` |
-| `coeffsNormInf()`, `coeffsNorm<P>()`        | buffer norms |
+| `coeff(const std::array&)` *(static)*| array overload |
+| `coeff<size_t... Alpha>()` *(static)*| compile-time index |
+| `derivative(span)` / `(array)` / `<>()` | `α! · coeff(α)` |
+| `eval(const Vec&)` / `(const array&)` | truncated polynomial at `dx` |
+| `coeffsNormInf()`, `coeffsNorm<P>()` | buffer norms |
 | `data()`, `coeffs()`, `rawCoeff(i)`, `setRawCoeff(i, v)` | raw access |
 | `slice(d)`                           | Eigen `VectorBlock` for degree d |
 | `advanceTo(d)`                       | no-op (storage is fully populated) |
 | `operator<<=(Expr&&)`                | streaming assignment from any `StreamingExpression` |
 
-| Alias | Expansion |
-|---|---|
-| `tax::TE<N>`        | `TruncatedTaylorExpansionT<double, N, 1>` |
-| `tax::TEn<N, M>`    | `TruncatedTaylorExpansionT<double, N, M>` |
-
-### `DynamicTaylorExpansion<T>`
-
-Runtime-sized TTE. Coefficients live in `Eigen::VectorX<T>`.
-
-```cpp
-template <class T>
-class DynamicTaylorExpansion;
-```
-
-| Constexpr member | Value |
-|---|---|
-| `kStatic` | `false` |
-| `kOrder`, `kVars` | `0` (placeholders; runtime `order_` / `nvars_` are authoritative) |
-
-| Static factory | Returns |
-|---|---|
-| `zero(order, nvars)` |  |
-| `one(order, nvars)` |  |
-| `constant(c, order, nvars)` |  |
-| `variable(x0, order, nvars, var_idx)` | seeds dx at index `var_idx` |
-| `variables(const std::vector<T>& x0, order)` | `std::vector<DynTE>` of `len(x0)` variables |
-
-The instance methods mirror the static path. `coeff` / `derivative`
-accept `std::span<const size_t>` directly; the array and
-template-parameter forms are static-only (the multi-index has to be
-known at compile time).
-
-| Alias | Expansion |
-|---|---|
-| `tax::DynTE<T = double>` | `DynamicTaylorExpansion<T>` |
+The array and template-parameter `coeff` / `derivative` overloads
+require compile-time multi-indices and are therefore disabled on the
+dynamic path. `eval` accepts `std::array<T, Vars>` only on the static
+path; the templated `Vec` form covers both.
 
 ## Concepts
 
@@ -98,7 +92,7 @@ concept TaxExpression = /* see expr/base.hpp */;
 template <class L, class R>
 concept SameKindExpression =
     TaxExpression<L> && TaxExpression<R>
-    && L::kStatic == R::kStatic
+    && L::IsStatic == R::IsStatic
     && std::is_same_v<typename L::Scalar, typename R::Scalar>;
 
 template <class E>
@@ -227,8 +221,7 @@ Sub-headers exist for fine-grained inclusion:
 #include <tax/kernels/elementary.hpp>
 #include <tax/kernels/exp_log.hpp>
 #include <tax/kernels/trig.hpp>
-#include <tax/storage/static_tte.hpp>
-#include <tax/storage/dynamic_tte.hpp>
+#include <tax/storage/tte.hpp>
 #include <tax/expr/base.hpp>
 #include <tax/expr/view_nodes.hpp>
 #include <tax/expr/buffered_nodes.hpp>

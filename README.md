@@ -32,12 +32,13 @@ ctest --test-dir build --output-on-failure
 
 ## Architecture in one paragraph
 
-Two coexisting storage types — static-extent `TruncatedTaylorExpansionT<T,
-N, M>` (alias `TE<N>` / `TEn<N,M>`) and runtime-sized
-`DynamicTaylorExpansion<T>` (alias `DynTE<T>`) — both satisfy a single
-`tax::TaxExpression` concept and feed the same slice-aware coefficient
-kernels (Cauchy convolution, exp, log, sin/cos pair, sinh/cosh pair,
-sqrt, ...).  Expression templates evaluate **degree-by-degree**: view-like
+A single storage template — `TaylorExpansionT<T, int Order, int Vars>`,
+modelled on `Eigen::Matrix<T, Rows, Cols>` with `Eigen::Dynamic` (= -1)
+as the runtime-size sentinel — covers both compile-time-fixed sizes
+(aliases `TE<N>` / `TEn<N, M>`) and runtime-fixed sizes (alias
+`DynTE<T>`). Both configurations satisfy the same `tax::TaxExpression`
+concept and feed the same slice-aware coefficient kernels (Cauchy
+convolution, exp, log, sin/cos pair, sinh/cosh pair, sqrt, ...).  Expression templates evaluate **degree-by-degree**: view-like
 nodes (`AddExpr`, `NegExpr`, `ScalarMulExpr`, ...) allocate nothing and
 return lazy slice views; buffered nodes (`MulExpr`, `DivExpr`, all
 transcendentals) own a coefficient buffer and fill slices monotonically.

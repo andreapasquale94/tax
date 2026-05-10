@@ -13,8 +13,9 @@
 namespace tax
 {
 
-// Anything that holds a complete (Order, Vars) jet of T-coefficients.  Both
-// `TruncatedTaylorExpansionT` and `DynamicTaylorExpansion` model this.
+// Anything that holds a complete (Order, Vars) jet of T-coefficients.  The
+// unified `TaylorExpansionT` template (in either of its IsStatic / dynamic
+// configurations) models this.
 template < class E >
 concept TaylorExpansion = requires( const E& e, std::span< const std::size_t > alpha ) {
     typename E::Scalar;

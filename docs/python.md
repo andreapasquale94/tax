@@ -2,9 +2,10 @@
 
 The `tax` Python package wraps the C++ library through
 [nanobind](https://nanobind.readthedocs.io). Per the architectural
-brief, **only `DynamicTaylorExpansion<double>` is exposed** (as the
-`tax.DynTE` type); the static-extent C++ path stays C++-only — no
-`std::variant` over an `(Order, Vars)` grid, no JIT.
+brief, **only the dynamic-shape configuration is exposed** — Python's
+`tax.DynTE` is `TaylorExpansionT<double, Eigen::Dynamic, Eigen::Dynamic>`.
+Static-extent instantiations stay C++-only, with no `std::variant`
+over an `(Order, Vars)` grid and no JIT.
 
 Construction goes through **module-level utility functions**, not
 classmethod factories. The `DynTE` class is a return type only — you

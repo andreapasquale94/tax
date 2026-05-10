@@ -20,9 +20,8 @@
 #include "tax/expr/buffered_nodes.hpp"
 #include "tax/expr/view_nodes.hpp"
 
-// Storage types (also defines operator<<=)
-#include "tax/storage/dynamic_tte.hpp"
-#include "tax/storage/static_tte.hpp"
+// Storage type (also defines operator<<=)
+#include "tax/storage/tte.hpp"
 
 // Operators
 #include "tax/ops/arithmetic.hpp"

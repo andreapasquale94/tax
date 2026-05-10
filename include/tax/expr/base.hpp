@@ -4,9 +4,9 @@
 //
 // Every node — view-like or buffered — exposes a uniform interface:
 //   using Scalar           = ...
-//   static constexpr bool kStatic        // true iff backed by static-size storage
-//   static constexpr std::size_t kOrder  // (only meaningful when kStatic)
-//   static constexpr std::size_t kVars   // (only meaningful when kStatic)
+//   static constexpr bool IsStatic        // true iff backed by static-size storage
+//   static constexpr int OrderAtCompileTime          // template arg, possibly Eigen::Dynamic
+//   static constexpr int VarsAtCompileTime           // template arg, possibly Eigen::Dynamic
 //   std::size_t order() const noexcept
 //   std::size_t nvars() const noexcept
 //   void advanceTo(std::size_t d) const     // const for both view-like and
@@ -64,20 +64,21 @@ class Expr : public ExprTag
 // ----------------------------------------------------------------------
 // Coefficient buffer type for a streaming expression that itself owns
 // storage (buffered nodes).  Resolves to a static-extent Eigen::Matrix
-// when kStatic == true and to Eigen::VectorX when kStatic == false.
+// when IsStatic == true and to Eigen::VectorX when IsStatic == false.
 
 namespace detail
 {
 
-template < class E, bool S = E::kStatic >
+template < class E, bool S = E::IsStatic >
 struct coeffs_for;
 
 template < class E >
 struct coeffs_for< E, true >
 {
     using type = Eigen::Matrix< typename E::Scalar,
-                                static_cast< Eigen::Index >(
-                                    util::monomialCount( E::kOrder, E::kVars ) ),
+                                static_cast< Eigen::Index >( util::monomialCount(
+                                    static_cast< std::size_t >( E::OrderAtCompileTime ),
+                                    static_cast< std::size_t >( E::VarsAtCompileTime ) ) ),
                                 1 >;
 };
 
@@ -95,7 +96,7 @@ template < class E >
 [[nodiscard]] coeffs_for_t< E > makeCoeffsLike( const E& op )
 {
     using Coeffs = coeffs_for_t< E >;
-    if constexpr ( E::kStatic )
+    if constexpr ( E::IsStatic )
     {
         return Coeffs::Zero();
     }
@@ -114,7 +115,7 @@ concept TaxExpression = std::is_base_of_v< ExprTag, std::remove_cvref_t< E > >
                        || requires { typename std::remove_cvref_t< E >::Scalar; }
                               && requires {
                                      {
-                                         std::remove_cvref_t< E >::kStatic
+                                         std::remove_cvref_t< E >::IsStatic
                                      } -> std::convertible_to< bool >;
                                  };
 
@@ -124,7 +125,7 @@ concept TaxExpression = std::is_base_of_v< ExprTag, std::remove_cvref_t< E > >
 template < class L, class R >
 concept SameKindExpression =
     TaxExpression< L > && TaxExpression< R >
-    && std::remove_cvref_t< L >::kStatic == std::remove_cvref_t< R >::kStatic
+    && std::remove_cvref_t< L >::IsStatic == std::remove_cvref_t< R >::IsStatic
     && std::is_same_v< typename std::remove_cvref_t< L >::Scalar,
                        typename std::remove_cvref_t< R >::Scalar >;
 

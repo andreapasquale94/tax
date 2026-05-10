@@ -50,10 +50,10 @@ the top of the tree allocates nothing either.
 
 <div class="tax-feature" markdown>
 ### Static and dynamic, one math core
-`TruncatedTaylorExpansionT<T, N, M>` is the C++ hot path with
-compile-time sizes. `DynamicTaylorExpansion<T>` is the runtime-sized
-path Python sees. They share every coefficient kernel — no JIT, no
-variant dispatch.
+A single `TaylorExpansionT<T, Order, Vars>` template handles both
+configurations — compile-time-fixed sizes when `Order, Vars >= 0`,
+runtime-fixed when both equal `Eigen::Dynamic`. Same idiom as
+`Eigen::Matrix<T, Rows, Cols>`, same kernel set.
 </div>
 
 <div class="tax-feature" markdown>

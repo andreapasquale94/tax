@@ -32,9 +32,10 @@ class MulExpr : public Expr< MulExpr< L, R > >
 {
   public:
     using Scalar = typename L::Scalar;
-    static constexpr bool kStatic = L::kStatic;
-    static constexpr std::size_t kOrder = L::kOrder;
-    static constexpr std::size_t kVars = L::kVars;
+    static constexpr bool IsStatic = L::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = L::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = L::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< MulExpr >;
 
     MulExpr( const L& l, const R& r )
@@ -89,9 +90,10 @@ class DivExpr : public Expr< DivExpr< L, R > >
 {
   public:
     using Scalar = typename L::Scalar;
-    static constexpr bool kStatic = L::kStatic;
-    static constexpr std::size_t kOrder = L::kOrder;
-    static constexpr std::size_t kVars = L::kVars;
+    static constexpr bool IsStatic = L::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = L::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = L::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< DivExpr >;
 
     DivExpr( const L& l, const R& r )
@@ -145,9 +147,10 @@ class SquareExpr : public Expr< SquareExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< SquareExpr >;
 
     explicit SquareExpr( const E& e )
@@ -200,9 +203,10 @@ class SqrtExpr : public Expr< SqrtExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< SqrtExpr >;
 
     explicit SqrtExpr( const E& e )
@@ -254,9 +258,10 @@ class ExpExpr : public Expr< ExpExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< ExpExpr >;
 
     explicit ExpExpr( const E& e )
@@ -308,9 +313,10 @@ class LogExpr : public Expr< LogExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< LogExpr >;
 
     explicit LogExpr( const E& e )
@@ -365,9 +371,10 @@ class SinCosExpr : public Expr< SinCosExpr< E, ReturnSin > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< SinCosExpr >;
 
     explicit SinCosExpr( const E& e )
@@ -460,9 +467,10 @@ class SinhCoshExpr : public Expr< SinhCoshExpr< E, ReturnSinh > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
     using Coeffs = detail::coeffs_for_t< SinhCoshExpr >;
 
     explicit SinhCoshExpr( const E& e )

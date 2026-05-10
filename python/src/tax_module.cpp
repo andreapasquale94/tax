@@ -24,7 +24,7 @@
 #include "tax/tax.hpp"
 
 namespace nb = nanobind;
-using DynTE = tax::DynamicTaylorExpansion< double >;
+using DynTE = tax::DynTE< double >;
 
 namespace
 {
@@ -129,16 +129,41 @@ NB_MODULE( _tax, m )
         } );
 
     // ---- module-level factories ----------------------------------------
-    m.def( "zero", &DynTE::zero, nb::arg( "order" ), nb::arg( "nvars" ),
-           "Allocate a zero TTE of the given order and number of variables." );
-    m.def( "one", &DynTE::one, nb::arg( "order" ), nb::arg( "nvars" ),
-           "TTE whose constant term is 1 and all other coefficients are 0." );
-    m.def( "constant", &DynTE::constant, nb::arg( "value" ), nb::arg( "order" ),
-           nb::arg( "nvars" ),
-           "TTE whose constant term is `value` and whose linear part is 0." );
-    m.def( "variable", &DynTE::variable, nb::arg( "value" ), nb::arg( "order" ),
-           nb::arg( "nvars" ), nb::arg( "var_idx" ),
-           "x_i = value + dx_i, with the dx-seed placed at multi-index var_idx." );
+    //
+    // Wrapped in lambdas because the unified TaylorExpansionT exposes both
+    // static-only and dynamic-only overloads of each factory name; a bare
+    // `&DynTE::zero` is then ambiguous to overload-resolve.  The lambdas
+    // pin down the dynamic signature.
+    m.def(
+        "zero",
+        []( std::size_t order, std::size_t nvars ) {
+            return DynTE::zero( order, nvars );
+        },
+        nb::arg( "order" ), nb::arg( "nvars" ),
+        "Allocate a zero TTE of the given order and number of variables." );
+    m.def(
+        "one",
+        []( std::size_t order, std::size_t nvars ) {
+            return DynTE::one( order, nvars );
+        },
+        nb::arg( "order" ), nb::arg( "nvars" ),
+        "TTE whose constant term is 1 and all other coefficients are 0." );
+    m.def(
+        "constant",
+        []( double value, std::size_t order, std::size_t nvars ) {
+            return DynTE::constant( value, order, nvars );
+        },
+        nb::arg( "value" ), nb::arg( "order" ), nb::arg( "nvars" ),
+        "TTE whose constant term is `value` and whose linear part is 0." );
+    m.def(
+        "variable",
+        []( double value, std::size_t order, std::size_t nvars,
+            std::size_t var_idx ) {
+            return DynTE::variable( value, order, nvars, var_idx );
+        },
+        nb::arg( "value" ), nb::arg( "order" ), nb::arg( "nvars" ),
+        nb::arg( "var_idx" ),
+        "x_i = value + dx_i, with the dx-seed placed at multi-index var_idx." );
     m.def(
         "variables",
         []( const std::vector< double >& x0, std::size_t order ) {

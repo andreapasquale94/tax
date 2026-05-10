@@ -63,9 +63,10 @@ class AddExpr : public Expr< AddExpr< L, R > >
 {
   public:
     using Scalar = typename L::Scalar;
-    static constexpr bool kStatic = L::kStatic;
-    static constexpr std::size_t kOrder = L::kOrder;
-    static constexpr std::size_t kVars = L::kVars;
+    static constexpr bool IsStatic = L::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = L::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = L::VarsAtCompileTime;
 
     AddExpr( const L& l, const R& r ) noexcept : lhs_( l ), rhs_( r )
     {
@@ -110,9 +111,10 @@ class SubExpr : public Expr< SubExpr< L, R > >
 {
   public:
     using Scalar = typename L::Scalar;
-    static constexpr bool kStatic = L::kStatic;
-    static constexpr std::size_t kOrder = L::kOrder;
-    static constexpr std::size_t kVars = L::kVars;
+    static constexpr bool IsStatic = L::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = L::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = L::VarsAtCompileTime;
 
     SubExpr( const L& l, const R& r ) noexcept : lhs_( l ), rhs_( r )
     {
@@ -157,9 +159,10 @@ class NegExpr : public Expr< NegExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
 
     explicit NegExpr( const E& e ) noexcept : inner_( e )
     {
@@ -202,9 +205,10 @@ class ScalarMulExpr : public Expr< ScalarMulExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
 
     ScalarMulExpr( const E& e, Scalar s ) noexcept : inner_( e ), scale_( s )
     {
@@ -248,9 +252,10 @@ class ScalarAddExpr : public Expr< ScalarAddExpr< E > >
 {
   public:
     using Scalar = typename E::Scalar;
-    static constexpr bool kStatic = E::kStatic;
-    static constexpr std::size_t kOrder = E::kOrder;
-    static constexpr std::size_t kVars = E::kVars;
+    static constexpr bool IsStatic = E::IsStatic;
+    static constexpr bool IsDynamic = !IsStatic;
+    static constexpr int OrderAtCompileTime = E::OrderAtCompileTime;
+    static constexpr int VarsAtCompileTime = E::VarsAtCompileTime;
 
     ScalarAddExpr( const E& e, Scalar c ) noexcept : inner_( e ), offset_( c )
     {

@@ -8,6 +8,20 @@ is the new foundation everything else will build on.
 
 ### Added
 
+- **Unified `TaylorExpansionT<T, Order, Vars>` storage template.**
+  Models `Eigen::Matrix<T, Rows, Cols>`: signed-int template
+  parameters with `Eigen::Dynamic` (= -1) as the runtime-size
+  sentinel. The previous `TruncatedTaylorExpansionT` (static) and
+  `DynamicTaylorExpansion` (dynamic) classes are gone, collapsed into
+  this single template. Aliases `TE<N>`, `TEn<N, M>`, `DynTE<T>` cover
+  the same surface they did before. Mixed dynamism (one static,
+  one dynamic) is rejected with a `static_assert`. Empty-base
+  optimisation keeps the static path byte-for-byte identical to a
+  raw `Eigen::Matrix` (asserted in `tests/test_storage.cpp`).
+- **Eigen-style trait constants.** `kStatic` / `kOrder` / `kVars` are
+  renamed to `IsStatic` / `OrderAtCompileTime` / `VarsAtCompileTime`,
+  mirroring Eigen's `RowsAtCompileTime` convention. A new
+  `IsDynamic = !IsStatic` constant is exposed alongside.
 - **Slice-streamed expression templates.** View-like nodes (`AddExpr`,
   `SubExpr`, `NegExpr`, `ScalarMulExpr`, `ScalarAddExpr`) allocate
   nothing; buffered nodes (`MulExpr`, `DivExpr`, `SquareExpr`,

@@ -17,13 +17,13 @@ namespace tax::detail
 template < class Dst, class Expr >
 inline void streamingAssign( Dst& dst, const Expr& expr )
 {
-    static_assert( Dst::kStatic == std::remove_cvref_t< Expr >::kStatic,
+    static_assert( Dst::IsStatic == std::remove_cvref_t< Expr >::IsStatic,
                    "Cannot mix static and dynamic Taylor expansions in one assignment" );
-    if constexpr ( Dst::kStatic )
+    if constexpr ( Dst::IsStatic )
     {
-        static_assert( Dst::kOrder == std::remove_cvref_t< Expr >::kOrder,
+        static_assert( Dst::OrderAtCompileTime == std::remove_cvref_t< Expr >::OrderAtCompileTime,
                        "Static Taylor order mismatch on <<=" );
-        static_assert( Dst::kVars == std::remove_cvref_t< Expr >::kVars,
+        static_assert( Dst::VarsAtCompileTime == std::remove_cvref_t< Expr >::VarsAtCompileTime,
                        "Static Taylor variable count mismatch on <<=" );
     }
 

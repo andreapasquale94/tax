@@ -16,10 +16,10 @@ must allocate, and what `coeffs_` exists for.
 <div class="tax-feature" markdown>
 ### [Static vs. dynamic](static-vs-dynamic.md)
 
-Two storage types share one mathematical kernel set: a compile-time
-`TruncatedTaylorExpansionT<T, N, M>` and a runtime-sized
-`DynamicTaylorExpansion<T>`. Why mixed expressions are rejected at
-compile time.
+A single `TaylorExpansionT<T, Order, Vars>` template, modelled on
+`Eigen::Matrix<T, Rows, Cols>`, covers both compile-time-fixed and
+runtime-fixed sizes. Why mixed expressions are rejected at compile
+time.
 </div>
 
 </div>
@@ -65,6 +65,7 @@ runs the loop.
 
 **Static vs. dynamic kind.**
 Whether a TTE has compile-time-fixed sizes (static) or runtime-fixed
-sizes (dynamic). Captured by the `kStatic` constant on every
-`TaxExpression`. Mixed-kind expressions are rejected by the
-`SameKindExpression` concept.
+sizes (dynamic). Captured by the `IsStatic` / `IsDynamic` constants
+(plus `OrderAtCompileTime` / `VarsAtCompileTime`) on every
+`TaxExpression`, mirroring Eigen's traits convention. Mixed-kind
+expressions are rejected by the `SameKindExpression` concept.

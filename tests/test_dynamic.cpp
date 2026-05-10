@@ -10,7 +10,7 @@
 
 #include "tax/tax.hpp"
 
-using DynTE = tax::DynamicTaylorExpansion< double >;
+using DynTE = tax::DynTE< double >;
 
 static constexpr double kTol = 1e-11;
 

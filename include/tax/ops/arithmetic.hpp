@@ -2,7 +2,7 @@
 //
 // Arithmetic operators: +, -, *, /, unary -.
 //
-// Each operator picks the appropriate ET node and propagates kStatic /
+// Each operator picks the appropriate ET node and propagates IsStatic /
 // dimensional checks through the SameKindExpression concept.  Scalar
 // operands fold into the cheap view-like ScalarAddExpr / ScalarMulExpr.
 

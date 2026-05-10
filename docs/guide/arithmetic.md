@@ -84,7 +84,7 @@ Within the static path, dimensions must match:
 auto a = tax::TEn<3, 2>::constant(1.0);
 auto b = tax::TEn<3, 3>::constant(1.0);
 
-auto bad = a + b;     // ❌ kVars mismatch
+auto bad = a + b;     // ❌ VarsAtCompileTime mismatch
 ```
 
 The `<<=` driver also asserts the destination matches the expression's

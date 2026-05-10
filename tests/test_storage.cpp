@@ -14,6 +14,18 @@ using tax::TEn;
 
 constexpr double kTol = 1e-12;
 
+TEST( StaticStorage, EmptyBaseShapeIsZeroSize )
+{
+    // The unified TaylorExpansionT inherits a ConstexprShape helper for
+    // its order/nvars when both are static.  EBO must collapse it to
+    // zero size so a static TE costs only its Eigen::Matrix.
+    static_assert( sizeof( TE< 3 > ) == sizeof( Eigen::Matrix< double, 4, 1 > ),
+                   "Static TE should have no shape-storage overhead beyond Coeffs" );
+    static_assert( sizeof( TEn< 2, 2 > )
+                       == sizeof( Eigen::Matrix< double, 6, 1 > ),
+                   "Static TEn should have no shape-storage overhead beyond Coeffs" );
+}
+
 TEST( StaticStorage, ZeroAndConstantAndOne )
 {
     auto z = TE< 3 >::zero();

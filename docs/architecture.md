@@ -175,6 +175,16 @@ using etstore_t = std::conditional_t<
     const E&>;    // storage types are stored by const&
 ```
 
+Each ET node also publishes its compile-time identity through four
+constants matching Eigen's traits convention:
+
+```cpp
+static constexpr int  OrderAtCompileTime;   // the operand's Order template arg
+static constexpr int  VarsAtCompileTime;    //          "
+static constexpr bool IsStatic;             // both are not Eigen::Dynamic
+static constexpr bool IsDynamic;            // !IsStatic
+```
+
 This pattern keeps the leaves cheap (no copying user-owned TTEs into
 ET nodes) while making the inner ET tree self-owning (each parent
 copies its ET children into itself, surviving the constructor
@@ -188,7 +198,7 @@ fills its own slices.
 |---|---|
 | `include/tax/util/`           | binomial coefficients, multi-index helpers |
 | `include/tax/kernels/`        | slice-aware Cauchy primitives + math recurrences |
-| `include/tax/storage/`        | static + dynamic TTE classes |
+| `include/tax/storage/tte.hpp` | unified `TaylorExpansionT<T, Order, Vars>` (static + dynamic) |
 | `include/tax/expr/base.hpp`   | `ExprTag`, `etstore_t`, `coeffs_for_t`, concepts |
 | `include/tax/expr/view_nodes.hpp`     | view-like ET nodes + `ParentSliceView` |
 | `include/tax/expr/buffered_nodes.hpp` | buffered ET nodes |
