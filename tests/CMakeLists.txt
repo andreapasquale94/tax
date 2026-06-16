@@ -51,6 +51,10 @@ tax_add_test(test_eigen_hessian     SOURCES eigen/test_eigen_hessian.cpp)
 tax_add_test(test_eigen_jacobian    SOURCES eigen/test_eigen_jacobian.cpp)
 tax_add_test(test_eigen_invert      SOURCES eigen/test_eigen_invert.cpp)
 
+# Statistics — Taylor-expansion moments (non-Monte-Carlo)
+tax_add_test(test_gaussian_moments  SOURCES stats/test_gaussian_moments.cpp)
+tax_add_test(test_expectation       SOURCES stats/test_expectation.cpp)
+
 # ADS — Stage 3a
 tax_add_test(test_ads_box SOURCES ads/test_box.cpp)
 tax_add_test(test_ads_leaf_tree SOURCES ads/test_leaf_tree.cpp)
