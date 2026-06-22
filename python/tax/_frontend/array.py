@@ -68,3 +68,23 @@ class Array:
 
     def __repr__(self):
         return f"Array(K={len(self)}, scheme={self.scheme})"
+
+
+def concatenate(items) -> Array:
+    from . import eager
+    exps = []
+    for it in items:
+        if isinstance(it, Array):
+            exps.extend(it._rows())
+        else:
+            exps.append(it)            # Expansion
+    if not exps:
+        raise ValueError("concatenate(): empty input")
+    target = exps[0].scheme
+    for e in exps[1:]:
+        target = target.union(e.scheme)
+    rows = [eager._embed(e, target) for e in exps]
+    return Array(np.stack(rows), target)
+
+
+stack = concatenate
