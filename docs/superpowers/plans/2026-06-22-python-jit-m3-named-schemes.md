@@ -576,7 +576,74 @@ git commit -m "feat(py): named accessors — coeff(**axes), gradient(name), Arra
 
 ---
 
-### Task 5: M3 gate — named two-body RHS
+### Task 5: `__pow__` operator (prerequisite for the `** 1.5` in the gate)
+
+**Context:** M1 added the `tax.pow(x, y)` free function and the `pow` opcode, but never the `__pow__` operator on `Expansion`/`Array`. The design's two-body examples (and the gate in Task 6) use `(…) ** 1.5`, so `**` must work. This is a thin sugar over the existing, verified `pow` path — no new kernel/opcode.
+
+**Files:**
+- Modify: `python/tax/_frontend/types.py`
+- Modify: `python/tax/_frontend/array.py`
+- Test: `python/tests/test_array.py`
+
+**Interfaces:**
+- Produces: `Expansion.__pow__(self, p) -> Expansion` (delegates to `eager.binary("pow", self, p)`); `Array.__pow__(self, p) -> Array` (delegates to `self._map_binary("pow", p)`). `p` is an int or float exponent (promoted to a constant expansion by the existing `binary`/`_map_binary` path). No `__rpow__` (scalar ** expansion is out of scope).
+- Consumes: `eager.binary` (Expansion), `Array._map_binary` (M2 Task 5).
+
+- [ ] **Step 1: Write the failing tests**
+
+```python
+# add to python/tests/test_array.py
+@needs_toolchain
+def test_pow_operator_matches_pow_function():
+    import numpy as np, tax
+    x = tax.variable(0.0, order=4)
+    b = x * x + 1.0                       # 1 + dx^2 (value 1 > 0)
+    np.testing.assert_allclose((b ** 1.5).numpy(), tax.pow(b, 1.5).numpy(), atol=1e-12)
+    np.testing.assert_allclose(((x + 2.0) ** 2).numpy(), tax.pow(x + 2.0, 2).numpy(), atol=1e-12)
+
+@needs_toolchain
+def test_array_pow_operator_elementwise():
+    import numpy as np, tax
+    X = tax.variables([2.0, 3.0], order=2)
+    Y = X ** 2                            # elementwise square
+    np.testing.assert_allclose(Y.value(), np.array([4.0, 9.0]), atol=1e-12)
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `cd python && .venv/bin/python -m pytest tests/test_array.py -k pow -v`
+Expected: FAIL — `unsupported operand type(s) for ** : 'Expansion'` / `'Array'`.
+
+- [ ] **Step 3: Add `__pow__` to both classes**
+
+```python
+# add to python/tax/_frontend/types.py, inside class Expansion (next to the other dunders)
+    def __pow__(self, p):
+        from .eager import binary
+        return binary("pow", self, p)
+```
+
+```python
+# add to python/tax/_frontend/array.py, inside class Array (next to the other dunders)
+    def __pow__(self, p):
+        return self._map_binary("pow", p)
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `cd python && .venv/bin/python -m pytest tests/test_array.py -k pow -v`
+Expected: PASS. Full suite green.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add python/tax/_frontend/types.py python/tax/_frontend/array.py python/tests/test_array.py
+git commit -m "feat(py): __pow__ operator on Expansion/Array (sugar over the pow opcode)"
+```
+
+---
+
+### Task 6: M3 gate — named two-body RHS
 
 **Files:**
 - Test: `python/tests/test_m3_gate.py`
@@ -632,7 +699,7 @@ def test_named_two_body_rhs():
 - [ ] **Step 2: Run test to verify it fails (or passes immediately)**
 
 Run: `cd python && .venv/bin/python -m pytest tests/test_m3_gate.py -v`
-Expected: PASS if Tasks 1–4 are complete (this is an integration gate over the named surface). If it fails, debug the specific op — most likely the union/embed for the mixed `{x}`-vs-`{mu,x}` operands in `concatenate`, or `jacobian("x")` column slicing.
+Expected: PASS if Tasks 1–5 are complete (this is an integration gate over the named surface). If it fails, debug the specific op — most likely the union/embed for the mixed `{x}`-vs-`{mu,x}` operands in `concatenate`, or `jacobian("x")` column slicing. (`** 1.5` requires Task 5's `__pow__`.)
 
 - [ ] **Step 3: (No new implementation expected)**
 
@@ -661,7 +728,8 @@ git commit -m "test(py): M3 gate — named two-body RHS value + jacobian(x) + ja
 - Axis-union promotion (compose across axis sets) → Task 3 (`_embed` Named branch + `union`). ✓
 - Named eager == compiled C++ (cross-check) → Task 3. ✓
 - Axis-addressed accessors (`coeff(x=…)`, `gradient("x")`, `jacobian("x")`) → Task 4. ✓
-- Named two-body RHS target → Task 5. ✓
+- `__pow__` operator (`** 1.5`), prerequisite gap found during execution → Task 5. ✓
+- Named two-body RHS target → Task 6. ✓
 - Out of scope (documented): symbolic `deriv`/`integ`/`slice` by axis in Python; per-axis *mixed* orders (C++-only). The M1 `pow(x, integer)` NaN follow-up is unrelated (named `**1.5` is real-pow with positive base — fine).
 
 **Placeholder scan:** No "TBD"/"similar to Task N"/"add error handling". Every step has complete code and concrete oracles (named product cross-checked vs compiled C++; two-body Jacobian hand-derived: `∂(-mu·rx/r³)/∂rx = -mu(r⁻³ - 3rx²r⁻⁵) = 2mu` at r=1, etc.).
