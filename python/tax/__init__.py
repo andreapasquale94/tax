@@ -2,7 +2,7 @@ from ._errors import (
     TaxError, CompilerNotFound, EigenNotFound, TaxIncludeNotFound,
     JitCompileError, DomainError,
 )
-from ._frontend.factories import variable
+from ._frontend.factories import variable, variables
 from ._frontend.types import Expansion
 from ._frontend.array import Array
 
@@ -11,7 +11,7 @@ __all__ = [
     "JitCompileError", "DomainError",
 ]
 
-__all__ += ["variable", "Expansion", "Array"]
+__all__ += ["variable", "variables", "Expansion", "Array"]
 
 from ._frontend import mathfns as _mathfns
 for _n in _mathfns.__all__:

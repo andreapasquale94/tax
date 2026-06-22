@@ -2,6 +2,7 @@ from __future__ import annotations
 import numpy as np
 from .scheme import Isotropic
 from .types import Expansion
+from .array import Array
 
 def variable(x0: float, order: int) -> Expansion:
     scheme = Isotropic(order, 1)
@@ -10,3 +11,16 @@ def variable(x0: float, order: int) -> Expansion:
     if order >= 1:
         coeffs[1] = 1.0
     return Expansion(coeffs, scheme)
+
+def variables(point, order: int) -> Array:
+    point = list(point)
+    M = len(point)
+    if M < 1:
+        raise ValueError("variables(): point must have at least one element")
+    scheme = Isotropic(order, M)
+    data = np.zeros((M, scheme.n_coeff), dtype=np.float64)
+    for i in range(M):
+        data[i, 0] = float(point[i])
+        if order >= 1:
+            data[i, i + 1] = 1.0          # flat_index(e_i) == i + 1
+    return Array(data, scheme)
