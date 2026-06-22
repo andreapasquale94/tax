@@ -33,7 +33,6 @@ def test_jit_retraces_on_new_signature_but_reuses_match(monkeypatch):
         calls["n"] += 1
         return real(*a, **k)
     monkeypatch.setattr(tracemod, "trace_function", counting)
-    import importlib
     from tax._frontend import jit as jitmod
     monkeypatch.setattr(jitmod, "trace_function", counting)
 
@@ -43,3 +42,7 @@ def test_jit_retraces_on_new_signature_but_reuses_match(monkeypatch):
         return tax.exp(x)
     f(x4); f(x4)                                    # second call -> memo hit, no re-trace
     assert calls["n"] == 1
+
+    x5 = tax.variable(0.0, order=5)                # different scheme -> new signature
+    f(x5)
+    assert calls["n"] == 2                          # re-traced for the new signature
