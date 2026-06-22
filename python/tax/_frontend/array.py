@@ -32,5 +32,39 @@ class Array:
     def numpy(self) -> np.ndarray:
         return self.coeffs.copy()
 
+    def _map_unary(self, op):
+        from . import eager
+        results = [eager.unary(op, r) for r in self._rows()]
+        return Array(np.stack([r.coeffs for r in results]), results[0].scheme)
+
+    def _map_binary(self, op, other):
+        from . import eager
+        rows = self._rows()
+        if isinstance(other, Array):
+            if len(other) != len(self):
+                raise ValueError(f"Array length mismatch: {len(self)} vs {len(other)}")
+            results = [eager.binary(op, a, b) for a, b in zip(rows, other._rows())]
+        else:                                  # Expansion or Python scalar -> broadcast
+            results = [eager.binary(op, a, other) for a in rows]
+        return Array(np.stack([r.coeffs for r in results]), results[0].scheme)
+
+    def __add__(self, other): return self._map_binary("add", other)
+    def __radd__(self, other): return self._map_binary("add", other)
+    def __sub__(self, other): return self._map_binary("sub", other)
+    def __rsub__(self, other):
+        from . import eager
+        rows = self._rows()
+        results = [eager.binary("sub", other, a) for a in rows]
+        return Array(np.stack([r.coeffs for r in results]), results[0].scheme)
+    def __mul__(self, other): return self._map_binary("mul", other)
+    def __rmul__(self, other): return self._map_binary("mul", other)
+    def __truediv__(self, other): return self._map_binary("div", other)
+    def __rtruediv__(self, other):
+        from . import eager
+        rows = self._rows()
+        results = [eager.binary("div", other, a) for a in rows]
+        return Array(np.stack([r.coeffs for r in results]), results[0].scheme)
+    def __neg__(self): return self._map_unary("neg")
+
     def __repr__(self):
         return f"Array(K={len(self)}, scheme={self.scheme})"
