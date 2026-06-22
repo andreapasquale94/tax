@@ -88,6 +88,15 @@ class Array:
 
 
 def concatenate(items) -> Array:
+    from .trace import Tracer, ArrayTracer
+    if any(isinstance(it, (Tracer, ArrayTracer)) for it in items):
+        rows = []
+        for it in items:
+            if isinstance(it, ArrayTracer):
+                rows.extend(it._rows())
+            else:
+                rows.append(it)             # a scalar Tracer
+        return ArrayTracer(rows, rows[0].scheme)
     from . import eager
     exps = []
     for it in items:
@@ -126,6 +135,20 @@ def norm(a):
 
 
 def cross(a, b):
+    from .trace import Tracer, ArrayTracer
+    if isinstance(a, ArrayTracer) or isinstance(b, ArrayTracer):
+        from . import eager
+        ra, rb = a._rows(), b._rows()
+        if len(ra) != len(rb) or len(ra) not in (2, 3):
+            raise ValueError("cross requires two 2- or 3-vectors of equal length")
+        mul = lambda x, y: eager.binary("mul", x, y)
+        sub = lambda x, y: eager.binary("sub", x, y)
+        if len(ra) == 2:
+            return sub(mul(ra[0], rb[1]), mul(ra[1], rb[0]))     # scalar Tracer
+        c0 = sub(mul(ra[1], rb[2]), mul(ra[2], rb[1]))
+        c1 = sub(mul(ra[2], rb[0]), mul(ra[0], rb[2]))
+        c2 = sub(mul(ra[0], rb[1]), mul(ra[1], rb[0]))
+        return ArrayTracer([c0, c1, c2], c0.scheme)
     from . import eager
     ra, rb = a._rows(), b._rows()
     if len(ra) != len(rb) or len(ra) not in (2, 3):

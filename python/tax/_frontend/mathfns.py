@@ -8,9 +8,10 @@ _UNARY = ["sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh",
 
 def _make_unary(opcode):
     def fn(x):
-        if isinstance(x, Array):
+        from .trace import ArrayTracer
+        if isinstance(x, (Array, ArrayTracer)):
             return x._map_unary(opcode)
-        return unary(opcode, x)
+        return unary(opcode, x)           # Expansion or Tracer
     fn.__name__ = opcode
     return fn
 
@@ -18,12 +19,14 @@ for _name in _UNARY:
     globals()[_name] = _make_unary(_name)
 
 def pow(x, y):
-    if isinstance(x, Array):
+    from .trace import ArrayTracer
+    if isinstance(x, (Array, ArrayTracer)):
         return x._map_binary("pow", y)
     return binary("pow", x, y)
 
 def atan2(y, x):
-    if isinstance(y, Array):
+    from .trace import ArrayTracer
+    if isinstance(y, (Array, ArrayTracer)):
         return y._map_binary("atan2", x)
     return binary("atan2", y, x)
 

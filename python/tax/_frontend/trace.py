@@ -54,3 +54,45 @@ def trace_binary(opcode, a, b) -> Tracer:
 
 def trace_unary(opcode, x) -> Tracer:
     return Tracer(x.builder, x.builder.add(Op(opcode, (x.node,), x.scheme)), x.scheme)
+
+
+class ArrayTracer:
+    """A symbolic stand-in for an Array during tracing: a list of scalar Tracers."""
+    __slots__ = ("rows", "scheme")
+
+    def __init__(self, rows, scheme):
+        self.rows = list(rows)
+        self.scheme = scheme
+
+    def __len__(self):
+        return len(self.rows)
+
+    def _rows(self):
+        return self.rows
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
+            return ArrayTracer(self.rows[i], self.scheme)
+        return self.rows[i]
+
+    def _map_unary(self, op):
+        return ArrayTracer([trace_unary(op, r) for r in self.rows], self.scheme)
+
+    def _map_binary(self, op, other):
+        if isinstance(other, ArrayTracer):
+            if len(other) != len(self):
+                raise ValueError(f"ArrayTracer length mismatch: {len(self)} vs {len(other)}")
+            return ArrayTracer([trace_binary(op, a, b) for a, b in zip(self.rows, other.rows)],
+                               self.scheme)
+        return ArrayTracer([trace_binary(op, a, other) for a in self.rows], self.scheme)
+
+    def __add__(self, o): return self._map_binary("add", o)
+    def __radd__(self, o): return self._map_binary("add", o)
+    def __sub__(self, o): return self._map_binary("sub", o)
+    def __rsub__(self, o): return ArrayTracer([trace_binary("sub", o, a) for a in self.rows], self.scheme)
+    def __mul__(self, o): return self._map_binary("mul", o)
+    def __rmul__(self, o): return self._map_binary("mul", o)
+    def __truediv__(self, o): return self._map_binary("div", o)
+    def __rtruediv__(self, o): return ArrayTracer([trace_binary("div", o, a) for a in self.rows], self.scheme)
+    def __neg__(self): return self._map_unary("neg")
+    def __pow__(self, p): return self._map_binary("pow", p)
