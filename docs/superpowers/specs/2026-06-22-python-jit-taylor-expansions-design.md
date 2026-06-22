@@ -165,7 +165,9 @@ extern "C" int tax_kernel(const double* const* ins, double* const* outs) noexcep
 
 ### 6.6 Loader / FFI (`tax/_codegen/load.py`)
 
-`ctypes.CDLL(so_path)`, resolve `tax_kernel`, set `argtypes`/`restype`. Call passes arrays of `double*` (from contiguous, C-order `float64` numpy buffers) for `ins`/`outs`; the wrapper allocates output buffers sized `K*nCoeff` from the scheme and rebuilds `Expansion`/`Array`. No per-op binding code — the only native code is the JIT'd kernel.
+`ctypes.CDLL(so_path)` (or `cffi`), resolve `tax_kernel`, set `argtypes`/`restype`. Call passes arrays of `double*` (from contiguous, C-order `float64` numpy buffers) for `ins`/`outs`; the wrapper allocates output buffers sized `K*nCoeff` from the scheme and rebuilds `Expansion`/`Array`. No per-op binding code — the only native code is the JIT'd kernel.
+
+**Why not nanobind/pybind11 here.** nanobind binds *build-time* C++ into a Python *module*; our kernels are generated at *runtime* as bare `extern "C"` functions, so a C-ABI loader is the natural fit and keeps the base package **pure-Python** (no compiled extension; `py3-none-any` wheel). **`cffi` (API mode)** is preferred over bare `ctypes` for ~10× lower per-call overhead — it matters for eager op-granular calls, and is negligible on the fused `jit` path (one call per computation); both release the GIL across the call. A small **nanobind "fast core"** (C++ eager-dispatch loop + kernel-pointer trampoline + first-class numpy `ndarray` handling) is a possible *later* optimization if eager overhead proves limiting — at the cost of the pure-Python wheel (per-platform builds) — and is **deferred pending M0/M1 benchmarks**. The prior `claude/nanobind-tax-bindings` branch is reused only for packaging learnings (its dynamic-sparse binding is a different architecture).
 
 ### 6.7 Eager engine (`tax/_frontend/eager.py`)
 
@@ -262,6 +264,7 @@ Because every emitted TU names a *fixed* scheme, the kernel's locals are `Taylor
 - **Fusion effectiveness at large `(N,M)`.** For big schemes the `std::array`s stay in memory; the loops still fuse but register promotion won't. M0 quantifies where the crossover is. *Risk: medium; mitigated by measuring early.*
 - **Compile latency UX.** Even cached, the *first* run of a fresh program is seconds. PCH + a small shipped grid of the most common `(order,size)` could give zero first-touch for the hot cases. *Decide after M0 numbers.*
 - **Eager kernel cache cardinality.** `(op, operand-schemes)` grows with the distinct schemes a program uses; bounded in practice (a handful of orders × axis sets), each entry small. *Risk: low.*
+- **FFI overhead in eager mode.** Bare `ctypes` per-call cost can dominate tiny eager ops; mitigated by `cffi` (API mode) and, if it still limits, an optional nanobind "fast core" (§6.6) — at the cost of the pure-Python wheel. *Decide via M0/M1 benchmarks.*
 - **Tracer limitations.** Data-dependent Python control flow over `Expansion` values can't be traced (standard JAX caveat); documented, with a clear `TraceError`.
 - **Eigen vendoring & licensing.** MPL2 redistribution is fine but must be documented in the wheel. *Risk: low.*
 - **`t` (time) semantics in non-autonomous RHS.** A plain-float `t` is a runtime scalar input; making `t` an axis (for ∂/∂t) is just passing a named/indexed `Expansion` — both supported by the input-kind mechanism. *No blocker.*
