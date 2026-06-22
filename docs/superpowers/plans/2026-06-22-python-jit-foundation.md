@@ -320,16 +320,20 @@ needs_toolchain = pytest.mark.skipif(
 ```python
 # python/tests/test_build.py
 from tax._codegen import build
+from tests._helpers import needs_toolchain   # importing also sets TAX_INCLUDE/TAX_CACHE_DIR
 
+@needs_toolchain
 def test_find_compiler_returns_path():
     cxx = build.find_compiler()
     assert isinstance(cxx, str) and cxx
 
+@needs_toolchain
 def test_compiler_id_is_stable_and_nonempty():
     cxx = build.find_compiler()
     cid = build.compiler_id(cxx)
     assert cxx in cid and len(cid) > len(cxx)
 
+@needs_toolchain
 def test_include_dirs_exist():
     import os
     for d in build.include_dirs():
@@ -433,8 +437,7 @@ git commit -m "feat(py): toolchain discovery (compiler, Eigen, tax headers)"
 - [ ] **Step 1: Write the failing test**
 
 ```python
-# add to python/tests/test_build.py  (build is already imported at the top from Task 3)
-from tests._helpers import needs_toolchain   # noqa
+# add to python/tests/test_build.py  (build + needs_toolchain already imported at the top from Task 3)
 
 def test_cache_key_is_deterministic_and_sensitive():
     k1 = build.cache_key("g", cid="c", flags="-O3")
