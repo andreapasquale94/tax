@@ -23,13 +23,14 @@ The pybind11 grid branch already proves "one Python type + static dense storage 
 1. **Codegen vehicle = trace → C++ source → compile.** The traced computation is emitted as one straight-line C++ translation unit calling the **existing** `tax` operators, compiled at `-O3` as a single TU. "Fusion" is whatever the C++ optimizer does given the whole expression in one TU: inline the recurrences, promote `std::array`s to registers/stack (SROA/mem2reg), drop intermediates. **No kernel is reimplemented.** (Chosen over hand-emitting LLVM IR or finishing the MLIR dialect, both of which reimplement every recurrence and add an LLVM/MLIR runtime dependency.)
 2. **Two modes, one mechanism.** Eager and `tax.jit` are the *same* trace→emit-C++→compile→cache pipeline at different granularities — **per-operation** (eager) vs **per-function** (jit). Eager is the default DACE-like experience and needs no `jit`; `tax.jit` is an opt-in accelerator that removes per-op FFI crossings and intermediate buffers for hot loops.
 3. **Single Python type pair.** `Expansion` (one truncated series) and `Array` (a vector of expansions over a shared scheme). Both are thin handles over a coefficient buffer + a runtime **scheme descriptor**; there is no per-`(N,M)` Python type.
-4. **Schemes in scope from v1:** isotropic `(order, size)`, **named** axes (`name="x"`), **integer-indexed** sized vectors, and **mixed / per-axis order** (`order=` per variable group). These map onto C++ factories that already exist on this branch — `tax::variable<"x",N>`, `tax::variables<N,M>(point)` (commit `05aa412`), and the `MixedScheme` / `MixedTaylorExpansion` named per-axis-order layer.
+4. **Schemes in scope from v1:** **unnamed / isotropic** `(order, size)` (integer-indexed coordinate variables) and **named** axes (`name="x"`), both with a **single global order** (joint-simplex). These map onto C++ types that **predate** this branch — `TE<N,M>` / `tax::variables<N,M>(point)` (free factory, commit `05aa412`) for unnamed, and the original named layer `NamedTaylorExpansion<T,N,Axes…>` / `tax::variable<"x",N>` / `tax::variables<"p",N>` for named. **Per-axis anisotropic (`mixed`) orders are out of scope here** (see Non-goals); the layer stays based on `feature/mixed-order-expansions` only for continuity and easy future exposure.
 5. **Static storage is preserved end to end.** Codegen instantiates a *fixed* scheme, so every kernel computes in `std::array`-backed `TaylorExpansion`; the FFI boundary is raw `double*` coefficient buffers. No dynamic-order C++ type ever exists.
 6. **Vectors are first-class.** `tax.concatenate`, indexing/slicing, elementwise math, `dot`/`matmul`, and `jacobian`/`hessian` of a vector — eager **and** inside `tax.jit` (multi-input / multi-output maps).
 7. **Thin, compiler-only deployment.** The calling path uses `ctypes`/`cffi` — **no compiled extension module** on the Python side. The base package is pure-Python plus vendored headers; the only runtime requirement is a **C++23 compiler** discoverable at runtime.
 
 ### Non-goals (v1)
 
+- **Per-axis anisotropic (mixed) orders.** The Python layer is single-global-order — unnamed isotropic + joint-simplex named. The C++ `MixedScheme`/`MixedTaylorExpansion` per-axis-order feature stays C++-only for now; exposing it later is a clean extension behind the same scheme descriptor (§17).
 - **ODE integration / time-stepping.** We JIT the *map* (e.g. a flow-map RHS); integrating it is the companion plugin's job or the user's loop. The two-body examples below define and evaluate the RHS map, not the integrator.
 - **Sparse storage** through the JIT (dense only; the eager engine could fall back to the existing sparse C++ later).
 - **GPU / SIMD-intrinsic codegen.** `batch=K` reuses the existing `Batch<double,K>` for lock-step multi-point evaluation; explicit vectorization is left to the C++ optimizer.
@@ -109,7 +110,7 @@ Each component has one purpose, a narrow interface, and is testable in isolation
 - **Factories** (mirror the C++ factories one-to-one):
   - `tax.variable(x0, order=, name=None)` — one variable; `name=` → named axis, else an isotropic univariate.
   - `tax.variables(x0_array, order=, size=None, name=None)` — vector of coordinate variables; `name=` → one *n-dim named axis*, else `size` integer-indexed isotropic axes. `size` defaults to `len(x0_array)`.
-  - Per-variable `order=` is allowed (→ mixed scheme); a scalar `order=` applies to all.
+  - `order=` is a single global value for the computation (all axes share it); combining expansions of differing orders promotes to the higher order (joint-simplex), never to a per-axis box.
   - `tax.constant(v, order=, ...)`, `tax.zeros(...)`.
 - **Free functions** — the full math surface (`sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, + inverses, exp, log, sqrt, cbrt, square, cube, erf, pow, atan2, reciprocal`) plus `tax.concatenate`, `tax.stack`, `tax.dot`. Each is overloaded to (a) record a node when given a tracer, (b) dispatch an eager kernel when given a concrete handle.
 
@@ -119,11 +120,10 @@ Each component has one purpose, a narrow interface, and is testable in isolation
 
 A small, hashable, canonical Python value describing the C++ scheme to instantiate. One of:
 
-- `Isotropic(order:int, vars:int)` → C++ `IsotropicScheme<order, vars>`.
-- `Mixed(groups: tuple[Group(dim, order), ...], joint_cap:int|None)` → `MixedScheme<Group<dim,order>…>`.
-- `Named(axes: tuple[Axis(name, dim, order), ...])` → the `MixedTaylorExpansion` named layer; **canonicalized sorted-by-name and unique** so `x*p` and `p*x` produce the same descriptor (matching the C++ canonical type).
+- `Isotropic(order:int, vars:int)` → C++ `IsotropicScheme<order, vars>` (the unnamed / integer-indexed case).
+- `Named(order:int, axes: tuple[Axis(name, dim), ...])` → the original joint-simplex named layer `NamedTaylorExpansion<T, order, Axis<name,dim>…>`; **canonicalized sorted-by-name and unique** so `x*p` and `p*x` produce the same descriptor (matching the C++ canonical type). A single global `order` across all axes — no per-axis order.
 
-Responsibilities: `nCoeff`, `vars`, `flat_layout` (for `coeff(...)` lookups and `numpy()` ordering), `union(other)` (axis-union + max-order-per-shared-axis promotion — the Python mirror of `embedMixed`), `cpp_type_string()`, and a stable `descriptor_hash()` for the cache key. This is the single source of truth for "what C++ type does this map to," shared by eager and jit.
+Responsibilities: `nCoeff`, `vars`, `flat_layout` (for `coeff(...)` lookups and `numpy()` ordering), `union(other)` (axis-union, order = max of the two — the original named promotion), `cpp_type_string()`, and a stable `descriptor_hash()` for the cache key. This is the single source of truth for "what C++ type does this map to," shared by eager and jit.
 
 ### 6.3 Tracer & Graph IR (`tax/_frontend/ir.py`, `trace.py`)
 
@@ -152,7 +152,7 @@ extern "C" int tax_kernel(const double* const* ins, double* const* outs) noexcep
 ```
 
 - **One C++ statement per IR Op**, in topological order; the C++ compiler inlines/fuses. No hand-written recurrence.
-- **Named/mixed schemes** emit the corresponding `MixedTaylorExpansion<…>` / `MixedScheme<…>` type and the matching `tax::variable<"name",Dim>` / `tax::variables` seeding; cross-axis operands are embedded into the union scheme by the same `embedMixed`-backed promotion the C++ binary operators already perform — so the generator emits the natural expression and the library handles promotion.
+- **Unnamed schemes** emit `TaylorExpansion<double, IsotropicScheme<N,M>>` with `tax::variable<I,N,M>` / `tax::variables<N,M>` seeding. **Named schemes** emit the original `NamedTaylorExpansion<double, N, Axis<"name",Dim>…>` type with `tax::variable<"name",N>` / `tax::variables<"name",N>` seeding; cross-axis operands are embedded into the union axis set by the promotion the C++ named binary operators already perform — so the generator emits the natural expression and the library handles it.
 - **Output marshaling:** `std::copy_n` each returned expansion's `coefficients()` into the matching `outs[k]` buffer (graded-lex order, the scheme's canonical layout). `Array` outputs write `K` consecutive rows.
 - Emits a **sidecar JSON** (scheme, ABI version, input/output shapes, opcode list) next to the TU for debugging and `dump=True`.
 
@@ -169,11 +169,12 @@ extern "C" int tax_kernel(const double* const* ins, double* const* outs) noexcep
 
 ### 6.7 Eager engine (`tax/_frontend/eager.py`)
 
-Given an op and concrete operand handles: compute the **result scheme** (`scheme.union(...)` for mixed/named operands; promotion for differing orders), build the one-node IR graph, obtain the cached kernel via 6.4–6.6, call it, wrap the result. A small in-process LRU memoizes `(opcode, operand-schemes) → loaded kernel` so steady-state eager is a dict lookup + one FFI call.
+Given an op and concrete operand handles: compute the **result scheme** (`scheme.union(...)` for named operands; order-promotion for differing orders), build the one-node IR graph, obtain the cached kernel via 6.4–6.6, call it, wrap the result. A small in-process LRU memoizes `(opcode, operand-schemes) → loaded kernel` so steady-state eager is a dict lookup + one FFI call.
 
 ### 6.8 `tax.jit` decorator (`tax/_frontend/jit.py`)
 
-- **Trace-on-first-call:** on first call, read each argument's kind — `Expansion`/`Array` → traced input `Var` (kind `general` or `coordinate`); plain Python scalar → runtime scalar input (or compile-time constant if listed in `static_argnums`). Build the graph, infer the result scheme(s), compile+cache, and memoize keyed by the **input signature** (per-arg scheme + staticness). Subsequent calls with a matching signature skip tracing.
+- **Trace-on-first-call (default):** on first call, read each argument's kind — `Expansion`/`Array` → traced input `Var` (kind `general` or `coordinate`); plain Python scalar → runtime scalar input (or compile-time constant if listed in `static_argnums`). Build the graph, infer the result scheme(s), compile+cache, and memoize keyed by the **input signature** (per-arg scheme + staticness). Subsequent calls with a matching signature skip tracing.
+- **Explicit signatures (numba-inspired, optional):** `@tax.jit(sig)` — or a list of sigs for overloads — pins the input types and compiles **eagerly at decoration time**: no first-call latency, errors caught early, AOT-cache-friendly. A signature is a per-parameter list reusing the eager factory kwargs as *type* specs: `tax.Array(order=4, size=4)` (unnamed), `tax.Array(order=4, name="x", size=4)` / `tax.Expansion(order=4, name="mu")` (named), `tax.f64` (runtime scalar), `tax.static` (compile-time constant). Given the input schemes, the graph is traced once at decoration to infer the outputs, then compiled+cached against the same key as the lazy path (so a later bare call is a cache hit). It also validates calls — a mismatched scheme raises. With no signature, the trace-on-first-call default applies. (A compact string form may be added later as sugar.)
 - **Options:** `opt` (`"O2"|"O3"|"fast"`, `march_native: bool`, `fastmath: bool`), `cache`/`cache_dir`/`force_recompile`, `compiler`, `scalar` (`"float64"|"float32"`), `batch` (`K` → coefficients become `Batch<double,K>` for lock-step multi-point evaluation), `static_argnums`, `dump` (emit generated C++ + `.so` path). All optional with library-sensible defaults.
 - **Multi-output maps:** a function returning a tuple/`Array` lowers to multiple `outs[k]`; this is the general buffer-in/buffer-out ABI, so composition and Jacobian-of-map need no signature change.
 
@@ -194,10 +195,10 @@ This ABI is intentionally the *general* (multi-in/multi-out, buffer-based) one, 
 
 ## 8. End-to-end data flow (example 2, named)
 
-1. `tax.variables(x0, order=4, size=4, name="x")` → `Array` over `Named(axes=[Axis("x",4,4)])`; `tax.variable(mu0, order=4, name="mu")` → `Expansion` over `Named(axes=[Axis("mu",1,4)])`.
-2. `rhs(0.0, x, mu)` under `@tax.jit`: `t=0.0` is a runtime scalar input; `x`,`mu` become traced `Var`s. Tracing runs the body, recording `Op`s; cross-axis ops promote to the **union** scheme `Named([Axis("mu",1,4), Axis("x",4,4)])` (canonical sorted), `M=5`, `order 4`.
+1. `tax.variables(x0, order=4, size=4, name="x")` → `Array` over `Named(order=4, axes=[Axis("x",4)])`; `tax.variable(mu0, order=4, name="mu")` → `Expansion` over `Named(order=4, axes=[Axis("mu",1)])`.
+2. `rhs(0.0, x, mu)` under `@tax.jit`: `t=0.0` is a runtime scalar input; `x`,`mu` become traced `Var`s. Tracing runs the body, recording `Op`s; cross-axis ops promote to the **union** scheme `Named(order=4, axes=[Axis("mu",1), Axis("x",4)])` (canonical sorted), `M=5`, `order 4`.
 3. Graph canonicalized + hashed; cache key formed with the union scheme descriptor.
-4. **Miss:** emit one TU instantiating `MixedTaylorExpansion<double, OrderedAxis<"mu",1,4>, OrderedAxis<"x",4,4>>` (or the `MixedScheme` equivalent), one statement per op, `std::copy_n` the 4 outputs; compile `-O3 -shared`; atomic-rename into cache.
+4. **Miss:** emit one TU instantiating `NamedTaylorExpansion<double, 4, Axis<"mu",1>, Axis<"x",4>>`, one statement per op, `std::copy_n` the 4 outputs; compile `-O3 -shared`; atomic-rename into cache.
 5. Load via `ctypes`; call with `ins = [point_for_x, buffer_for_mu]`, `outs = [4 buffers]`.
 6. Wrap the 4 output buffers as an `Array` over the union scheme. `dx.jacobian("x")` slices the linear coefficients of axis "x".
 7. **Next call** with the same arg schemes → memoized signature → cache hit → just the FFI call.
@@ -251,8 +252,8 @@ Because every emitted TU names a *fixed* scheme, the kernel's locals are `Taylor
 - **M0 — Spike / de-risk.** Hand-emit a TU for `sin(x)*exp(x)` at a fixed scheme; compile, `ctypes`-load, verify numerics + that `-O3` fuses; settle compiler discovery + cache plumbing + ABI v0. *Gate: the core assumption holds.*
 - **M1 — Eager scalar, isotropic.** `Expansion`, `variable/variables` (indexed), full math surface, eager engine + compile/cache/load. *Gate: eager numerics == C++ oracle.*
 - **M2 — Vectors.** `Array`, `concatenate`/`stack`/indexing/elementwise/`dot`, `value`/`eval`/`jacobian`/`hessian`. *Gate: vector eager numerics.*
-- **M3 — Named + mixed schemes.** Named/indexed/mixed scheme descriptors, union promotion, codegen for `MixedTaylorExpansion`/`MixedScheme`. *Gate: named eager two-body RHS.*
-- **M4 — `tax.jit` fusion.** Trace-on-first-call, whole-function graph, fused TU, options (`opt/cache/compiler/scalar/batch/static_argnums/dump`), multi-output maps. *Gate: jit numerics == eager; both two-body RHS maps run under jit.*
+- **M3 — Named schemes (single global order).** The joint-simplex `Named` scheme descriptor + axis-union promotion, codegen for `NamedTaylorExpansion<T,N,Axes…>`. *Gate: named eager two-body RHS.*
+- **M4 — `tax.jit` fusion.** Trace-on-first-call **and** explicit numba-style signatures (eager decoration-time compile), whole-function graph, fused TU, options (`opt/cache/compiler/scalar/batch/static_argnums/dump`), multi-output maps. *Gate: jit numerics == eager; both two-body RHS maps run under jit — bare and with a pinned signature.*
 - **M5 — Targets + regression + perf.** Both target examples as e2e tests; DACE/C++ regression; eager-vs-jit-vs-C++ benchmarks. *Gate: targets pass, perf characterized.*
 - **M6 — Packaging & docs.** Pure-Python wheel + vendored `tax`/Eigen headers, PCH warm-build, compiler discovery docs, examples, API reference. *Gate: `pip install` + a C++23 compiler runs the examples.*
 
@@ -260,7 +261,7 @@ Because every emitted TU names a *fixed* scheme, the kernel's locals are `Taylor
 
 - **Fusion effectiveness at large `(N,M)`.** For big schemes the `std::array`s stay in memory; the loops still fuse but register promotion won't. M0 quantifies where the crossover is. *Risk: medium; mitigated by measuring early.*
 - **Compile latency UX.** Even cached, the *first* run of a fresh program is seconds. PCH + a small shipped grid of the most common `(order,size)` could give zero first-touch for the hot cases. *Decide after M0 numbers.*
-- **Eager kernel cache cardinality.** `(op, operand-schemes)` can be large with many distinct mixed schemes; bounded in practice by the schemes a program actually uses, and each entry is small. *Risk: low.*
+- **Eager kernel cache cardinality.** `(op, operand-schemes)` grows with the distinct schemes a program uses; bounded in practice (a handful of orders × axis sets), each entry small. *Risk: low.*
 - **Tracer limitations.** Data-dependent Python control flow over `Expansion` values can't be traced (standard JAX caveat); documented, with a clear `TraceError`.
 - **Eigen vendoring & licensing.** MPL2 redistribution is fine but must be documented in the wheel. *Risk: low.*
 - **`t` (time) semantics in non-autonomous RHS.** A plain-float `t` is a runtime scalar input; making `t` an axis (for ∂/∂t) is just passing a named/indexed `Expansion` — both supported by the input-kind mechanism. *No blocker.*
@@ -270,3 +271,4 @@ Because every emitted TU names a *fixed* scheme, the kernel's locals are `Taylor
 
 - **Supersedes** the nanobind/sparse and pybind11/grid bindings as the dense, static-storage, unbounded-scheme path — but **borrows** their packaging learnings (scikit-build-core config, test layout) and may lift the `tax::la`-based gradient/jacobian marshaling.
 - **Does not** depend on or merge the MLIR branch; it deliberately stays in the header-library world. If, later, cross-op *mathematical* fusion (sin/cos pairing, degree scheduling) proves worth more than the C++ optimizer delivers, the MLIR pipeline becomes an *alternative codegen backend* behind the same Graph IR — a clean future extension, not a v1 commitment.
+- **Based on `feature/mixed-order-expansions`** for continuity, but the exposed layer only uses features that predate it (`TE<N,M>` and the original `NamedTaylorExpansion`). **Per-axis mixed orders** can be exposed later by adding a `Mixed` scheme descriptor lowering to the `MixedScheme`/`MixedTaylorExpansion` already on the base branch — no pipeline change, just a new descriptor + codegen case behind the same Graph IR.
