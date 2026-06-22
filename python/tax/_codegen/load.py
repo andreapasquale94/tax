@@ -27,7 +27,9 @@ def _as_pointer_array(buffers):
 def call_kernel(fn, in_buffers, out_sizes):
     ins = [np.ascontiguousarray(b, dtype=np.float64) for b in in_buffers]
     outs = [np.zeros(n, dtype=np.float64) for n in out_sizes]
-    rc = fn(_as_pointer_array(ins), _as_pointer_array(outs))
+    c_ins = _as_pointer_array(ins)
+    c_outs = _as_pointer_array(outs)
+    rc = fn(c_ins, c_outs)
     if rc != 0:
         raise DomainError(f"kernel returned {rc}")
     return outs
