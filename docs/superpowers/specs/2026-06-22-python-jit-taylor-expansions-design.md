@@ -108,13 +108,14 @@ Each component has one purpose, a narrow interface, and is testable in isolation
 ### 6.1 Python surface types (`tax/_frontend/`)
 
 - **`Expansion`** — handle over `(coeffs: np.ndarray[float64], scheme: Scheme)`. Methods mirror the C++ surface: `value()`, `coeff(...)`/`coeff(x=…, y=…)`, `derivative(...)`, `eval(dx)`, `deriv(name|idx)`, `integ(...)`, `truncate(...)`, `gradient()`, `hessian()`, `__add__`/`__mul__`/… `numpy()`.
-- **`Array`** — handle over `(coeffs: np.ndarray[float64] shape (K, nCoeff), scheme: Scheme)` (one shared scheme). `__getitem__` (→ `Expansion` or `Array`), elementwise arithmetic/math (broadcast a scalar `Expansion` over the vector), `dot`/`matmul`, `value()` (→ `(K,)` array), `eval(dx)`, `jacobian(axis=None)`, `hessian(...)`, `numpy()`.
+- **`Array`** — handle over `(coeffs: np.ndarray[float64] shape (K, nCoeff), scheme: Scheme)` (one shared scheme). `__getitem__` (→ `Expansion` or `Array`), elementwise arithmetic/math (broadcast a scalar `Expansion` over the vector), `dot`/`cross`/`norm`/`matmul`, `value()` (→ `(K,)` array), `eval(dx)`, `jacobian(axis=None)`, `hessian(...)`, `numpy()`.
 - **Factories** (mirror the C++ factories one-to-one):
   - `tax.variable(x0, order=, name=None)` — one variable; `name=` → named axis, else an isotropic univariate.
   - `tax.variables(x0_array, order=, size=None, name=None)` — vector of coordinate variables; `name=` → one *n-dim named axis*, else `size` integer-indexed isotropic axes. `size` defaults to `len(x0_array)`.
   - `order=` is a single global value for the computation (all axes share it); combining expansions of differing orders promotes to the higher order (joint-simplex), never to a per-axis box.
   - `tax.constant(v, order=, ...)`, `tax.zeros(...)`.
-- **Free functions** — the full math surface (`sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, + inverses, exp, log, sqrt, cbrt, square, cube, erf, pow, atan2, reciprocal`) plus `tax.concatenate`, `tax.stack`, `tax.dot`. Each is overloaded to (a) record a node when given a tracer, (b) dispatch an eager kernel when given a concrete handle.
+- **Free functions** — the full math surface (`sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, + inverses, exp, log, sqrt, cbrt, square, cube, erf, pow, atan2, reciprocal`) plus the vector ops `tax.concatenate`, `tax.stack`, `tax.dot`, `tax.cross`, `tax.norm` (and `matmul`). Each is overloaded to (a) record a node when given a tracer, (b) dispatch an eager kernel when given a concrete handle.
+- **Vector reductions are composite** — `dot`/`norm`/`cross` are built from the scalar primitives (`square`, `+`, `-`, `*`, `sqrt`), so they need **no new kernel**: they expand into graph nodes (jit) or a short sequence of eager ops, and fuse with their surroundings under `tax.jit`. Shapes follow numpy: `dot`/`norm` → `Expansion`; `cross` → a scalar `Expansion` for 2-vectors, an `Array` (3-vector) for 3-vectors.
 
 **Interface contract:** the surface types never touch C++ directly — they emit graph nodes (jit/tracing) or call the **Eager engine** (6.7), which is the only component that knows about kernels.
 
@@ -255,7 +256,7 @@ Because every emitted TU names a *fixed* scheme, the kernel's locals are `Taylor
 
 - **M0 — Spike / de-risk.** Hand-emit a TU for `sin(x)*exp(x)` at a fixed scheme; compile, `ctypes`-load, verify numerics + that `-O3` fuses; settle compiler discovery + cache plumbing + ABI v0. *Gate: the core assumption holds.*
 - **M1 — Eager scalar, isotropic.** `Expansion`, `variable/variables` (indexed), full math surface, eager engine + compile/cache/load. *Gate: eager numerics == C++ oracle.*
-- **M2 — Vectors.** `Array`, `concatenate`/`stack`/indexing/elementwise/`dot`, `value`/`eval`/`jacobian`/`hessian`. *Gate: vector eager numerics.*
+- **M2 — Vectors.** `Array`, `concatenate`/`stack`/indexing/elementwise/`dot`/`cross`/`norm`/`matmul`, `value`/`eval`/`jacobian`/`hessian`. *Gate: vector eager numerics (incl. `norm`/`cross` vs a numpy/C++ oracle).*
 - **M3 — Named schemes (single global order).** The joint-simplex `Named` scheme descriptor + axis-union promotion, codegen for `NamedTaylorExpansion<T,N,Axes…>`. *Gate: named eager two-body RHS.*
 - **M4 — `tax.jit` fusion.** Trace-on-first-call **and** explicit numba-style signatures (eager decoration-time compile), whole-function graph, fused TU, options (`opt/cache/compiler/scalar/batch/static_argnums/dump`), multi-output maps. *Gate: jit numerics == eager; both two-body RHS maps run under jit — bare and with a pinned signature.*
 - **M5 — Targets + regression + perf.** Both target examples as e2e tests; DACE/C++ regression; eager-vs-jit-vs-C++ benchmarks. *Gate: targets pass, perf characterized.*
