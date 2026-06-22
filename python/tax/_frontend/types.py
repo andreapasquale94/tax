@@ -1,6 +1,7 @@
 from __future__ import annotations
 import math
 import numpy as np
+from .scheme import flat_index, unflat_index
 
 class Expansion:
     __slots__ = ("coeffs", "scheme")
@@ -19,15 +20,53 @@ class Expansion:
     def numpy(self) -> np.ndarray:
         return self.coeffs.copy()
 
-    def coeff(self, k: int) -> float:
-        if self.scheme.vars != 1:
-            raise NotImplementedError("multivariate coeff() arrives in M2")
-        if not (0 <= k < self.scheme.n_coeff):
-            raise IndexError(f"coeff index {k} out of range [0, {self.scheme.n_coeff})")
-        return float(self.coeffs[k])
+    def coeff(self, *alpha) -> float:
+        if len(alpha) != self.scheme.vars:
+            raise ValueError(
+                f"coeff expects {self.scheme.vars} exponents, got {len(alpha)}"
+            )
+        if any(a < 0 for a in alpha):
+            raise ValueError("coeff: negative exponent")
+        k = flat_index(alpha)
+        return float(self.coeffs[k]) if k < self.scheme.n_coeff else 0.0
 
-    def derivative(self, k: int) -> float:
-        return self.coeff(k) * math.factorial(k)
+    def derivative(self, *alpha) -> float:
+        fac = 1
+        for a in alpha:
+            fac *= math.factorial(a)
+        return self.coeff(*alpha) * fac
+
+    def gradient(self) -> np.ndarray:
+        M = self.scheme.vars
+        g = np.empty(M, dtype=np.float64)
+        for i in range(M):
+            e = tuple(1 if j == i else 0 for j in range(M))
+            g[i] = self.coeff(*e)            # ∂f/∂xᵢ = coeff(eᵢ) · 1!
+        return g
+
+    def hessian(self) -> np.ndarray:
+        M = self.scheme.vars
+        H = np.empty((M, M), dtype=np.float64)
+        for i in range(M):
+            for j in range(M):
+                a = [0] * M
+                a[i] += 1
+                a[j] += 1
+                H[i, j] = self.derivative(*a)
+        return H
+
+    def eval(self, dx) -> float:
+        M = self.scheme.vars
+        if len(dx) != M:
+            raise ValueError(f"eval expects {M} displacements, got {len(dx)}")
+        total = 0.0
+        for k in range(self.scheme.n_coeff):
+            a = unflat_index(k, M)
+            term = float(self.coeffs[k])
+            for i in range(M):
+                term *= dx[i] ** a[i]
+            total += term
+        return total
 
     # --- arithmetic: delegate to the eager engine (Task 11) ---
     def __add__(self, other):
