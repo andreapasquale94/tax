@@ -79,3 +79,19 @@ def test_named_coeff_keyword_validation():
         f.coeff(x=1)                       # dim>1 axis via keyword -> error
     with pytest.raises(ValueError):
         f.coeff(0, 0, x=1)                 # positional + keyword mixed
+
+@needs_toolchain
+def test_pow_nonpositive_base_raises():
+    import pytest, tax
+    x = tax.variable(0.0, order=3)
+    base = x - 2.0                    # constant term -2 < 0
+    with pytest.raises(ValueError):
+        base ** 2
+    with pytest.raises(ValueError):
+        tax.pow(base, 2)
+
+def test_axis_name_must_be_ascii():
+    import pytest
+    from tax._frontend.scheme import Axis
+    with pytest.raises(ValueError):
+        Axis("μ", 1)                  # non-ASCII

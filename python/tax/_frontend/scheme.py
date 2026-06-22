@@ -81,6 +81,8 @@ class Axis:
     def __post_init__(self) -> None:
         if self.dim < 1:
             raise ValueError("Axis.dim must be >= 1")
+        if not self.name.isascii():
+            raise ValueError(f"Axis.name must be ASCII (got {self.name!r})")
 
 
 @dataclass(frozen=True)

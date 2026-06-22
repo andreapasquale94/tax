@@ -66,6 +66,11 @@ def unary(opcode: str, x) -> Expansion:
 def binary(opcode: str, a, b) -> Expansion:
     ref = a.scheme if isinstance(a, Expansion) else b.scheme
     ea, eb = _as_expansion(a, ref), _as_expansion(b, ref)
+    if opcode == "pow" and ea.value() <= 0.0:
+        raise ValueError(
+            f"pow/**: base constant term must be > 0 (got {ea.value()}); "
+            "integer powers of a non-positive base are not yet supported"
+        )
     result_scheme = ea.scheme.union(eb.scheme)
     graph = single_op_graph(opcode, [result_scheme, result_scheme], result_scheme)
     ba, bb = _embed(ea, result_scheme), _embed(eb, result_scheme)
