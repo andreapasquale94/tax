@@ -29,12 +29,13 @@ def run(graph, in_buffers, out_sizes):
     canon = graph.canonical()
     cxx = build.find_compiler()
     cid = build.compiler_id(cxx)
-    flags = "-std=c++23 -O3"
+    opt_flags = ["-O3"]
+    flags = build.flags_for_key(opt_flags)
     key = build.cache_key(canon, cid=cid, flags=flags)
     cached = _KERNEL_CACHE.get(key)
     if cached is None:
         so = build.compile_kernel(emit(graph), key, cxx=cxx,
-                                  includes=build.include_dirs(), opt_flags=["-O3"])
+                                  includes=build.include_dirs(), opt_flags=opt_flags)
         cached = load.load_kernel(so)
         _KERNEL_CACHE[key] = cached
     return load.call_kernel(cached, in_buffers, out_sizes)

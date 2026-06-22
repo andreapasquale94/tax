@@ -30,6 +30,11 @@ def test_cache_key_is_deterministic_and_sensitive():
     assert k1 == k2 and k1 != k3
     assert len(k1) == 64   # sha256 hex digest
 
+    base = build.cache_key("g", cid="c", flags="-O3")
+    assert base != build.cache_key("g", cid="DIFF", flags="-O3")
+    assert base != build.cache_key("g", cid="c", flags="-O2")
+    assert base != build.cache_key("g", cid="c", flags="-O3", scalar="float32")
+
 
 @needs_toolchain
 def test_compile_kernel_builds_and_caches(tmp_path, monkeypatch):

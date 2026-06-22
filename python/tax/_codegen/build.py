@@ -69,6 +69,12 @@ def include_dirs() -> list[str]:
 
 ABI_VERSION = "0"
 TAX_LIB_VERSION = "0.1.0"
+STD_FLAG = "-std=c++23"
+
+
+def flags_for_key(opt_flags: list[str]) -> str:
+    """The canonical flag string for the cache key — mirrors what compile_kernel passes."""
+    return " ".join([STD_FLAG, *opt_flags])
 
 
 def cache_dir() -> pathlib.Path:
@@ -89,11 +95,11 @@ def compile_kernel(source: str, key: str, *, cxx: str, includes: list[str],
     if so_path.exists():
         return so_path
     out_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(dir=out_dir) as td:
         cpp = pathlib.Path(td) / "kernel.cpp"
         cpp.write_text(source)
         tmp_so = pathlib.Path(td) / "kernel.so"
-        cmd = [cxx, "-std=c++23", *opt_flags, "-shared", "-fPIC",
+        cmd = [cxx, STD_FLAG, *opt_flags, "-shared", "-fPIC",
                *[f"-I{i}" for i in includes], str(cpp), "-o", str(tmp_so)]
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0:
