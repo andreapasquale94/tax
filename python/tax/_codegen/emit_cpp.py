@@ -24,13 +24,14 @@ def emit(graph) -> str:
     ]
     for i, node in enumerate(graph.nodes):
         cpp_type = node.scheme.cpp_type_string()
+        expansion_type = f"tax::TaylorExpansion<double, {cpp_type}>"
         if isinstance(node, Var):
             n = node.scheme.n_coeff
-            lines.append(f"    {cpp_type}::Data d{i}; "
+            lines.append(f"    {expansion_type}::Data d{i}; "
                          f"std::copy_n(ins[{node.slot}], {n}, d{i}.data());")
-            lines.append(f"    {cpp_type} n{i}{{d{i}}};")
+            lines.append(f"    {expansion_type} n{i}{{d{i}}};")
         elif isinstance(node, Const):
-            lines.append(f"    auto n{i} = {cpp_type}::constant({node.value!r});")
+            lines.append(f"    auto n{i} = {expansion_type}::constant({node.value!r});")
         elif isinstance(node, Op):
             expr = CPP_EXPR[node.opcode].format(*[f"n{o}" for o in node.operands])
             lines.append(f"    auto n{i} = {expr};")

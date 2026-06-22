@@ -1,12 +1,14 @@
 from tax._frontend.ir import single_op_graph
 from tax._frontend.scheme import Isotropic
 from tax._codegen.emit_cpp import emit, CPP_EXPR
+from tests._helpers import needs_toolchain
 
 def test_emit_contains_scheme_and_signature():
     s = Isotropic(5, 1)
     src = emit(single_op_graph("sin", [s], s))
     assert "#include <tax/tax.hpp>" in src
     assert "tax::IsotropicScheme<5, 1>" in src
+    assert "tax::TaylorExpansion<double, tax::IsotropicScheme<5, 1>>" in src
     assert 'extern "C" int tax_kernel' in src
     assert "sin(n0)" in src
     assert "std::copy_n(n1.coefficients().data()" in src
@@ -21,3 +23,13 @@ def test_cpp_expr_table_complete():
                 "atan","sinh","cosh","tanh","asinh","acosh","atanh","exp","log",
                 "sqrt","cbrt","square","cube","erf","reciprocal","pow","atan2"]:
         assert opc in CPP_EXPR
+
+@needs_toolchain
+def test_emitted_kernel_compiles(tmp_path, monkeypatch):
+    monkeypatch.setenv("TAX_CACHE_DIR", str(tmp_path))
+    from tax._codegen import build
+    s = Isotropic(3, 1)
+    src = emit(single_op_graph("sin", [s], s))
+    so = build.compile_kernel(src, "emit_compile_smoke", cxx=build.find_compiler(),
+                              includes=build.include_dirs(), opt_flags=["-O3"])
+    assert so.exists()
