@@ -1,7 +1,7 @@
 import numpy as np
 import tax
 from tax._frontend.array import Array
-from tax._frontend.scheme import Isotropic
+from tax._frontend.scheme import Isotropic, Named, Axis
 from tests._helpers import needs_toolchain
 
 def test_variable_seeds_linear_term():
@@ -30,3 +30,22 @@ def test_multivariate_eager_product():
         f.numpy(), np.array([2.0, 2.0, 1.0, 0.0, 1.0, 0.0]), atol=1e-12
     )
     assert np.array_equal(f.gradient(), np.array([2.0, 1.0]))
+
+def test_named_variable_1d():
+    mu = tax.variable(398600.4418, order=4, name="mu")
+    assert mu.scheme == Named.of(4, [Axis("mu", 1)])
+    expected = np.zeros(mu.scheme.n_coeff)
+    expected[0] = 398600.4418
+    expected[1] = 1.0                       # var 0 -> flat 1
+    assert np.array_equal(mu.numpy(), expected)
+
+def test_named_variables_axis():
+    X = tax.variables([1.0, 0.0, 0.0, 1.0], order=4, name="x")
+    assert X.scheme == Named.of(4, [Axis("x", 4)])
+    assert len(X) == 4
+    assert X[0].numpy()[0] == 1.0 and X[0].numpy()[1] == 1.0      # x0 = 1 + dx0
+    assert X[3].numpy()[0] == 1.0 and X[3].numpy()[4] == 1.0      # x3 = 1 + dx3 (var3 -> flat 4)
+
+def test_name_none_still_isotropic():
+    x = tax.variable(2.5, order=4)           # unchanged M1 path
+    assert x.scheme == Isotropic(4, 1)
