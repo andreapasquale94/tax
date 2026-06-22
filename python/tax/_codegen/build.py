@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import functools
+import hashlib
 import os
 import pathlib
 import shutil
 import subprocess
+import tempfile
 
-from .._errors import CompilerNotFound, EigenNotFound, TaxIncludeNotFound
+from .._errors import CompilerNotFound, EigenNotFound, TaxIncludeNotFound, JitCompileError
 
 
 @functools.lru_cache(maxsize=None)
@@ -63,3 +65,38 @@ def find_tax_include() -> str:
 
 def include_dirs() -> list[str]:
     return [find_tax_include(), find_eigen_include()]
+
+
+ABI_VERSION = "0"
+TAX_LIB_VERSION = "0.1.0"
+
+
+def cache_dir() -> pathlib.Path:
+    d = os.environ.get("TAX_CACHE_DIR")
+    base = pathlib.Path(d) if d else pathlib.Path.home() / ".cache" / "tax"
+    return base
+
+
+def cache_key(canonical: str, *, cid: str, flags: str, scalar: str = "float64") -> str:
+    blob = "\x1f".join([ABI_VERSION, TAX_LIB_VERSION, cid, flags, scalar, canonical])
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def compile_kernel(source: str, key: str, *, cxx: str, includes: list[str],
+                   opt_flags: list[str]) -> pathlib.Path:
+    out_dir = cache_dir()
+    so_path = out_dir / f"{key}.so"
+    if so_path.exists():
+        return so_path
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as td:
+        cpp = pathlib.Path(td) / "kernel.cpp"
+        cpp.write_text(source)
+        tmp_so = pathlib.Path(td) / "kernel.so"
+        cmd = [cxx, "-std=c++23", *opt_flags, "-shared", "-fPIC",
+               *[f"-I{i}" for i in includes], str(cpp), "-o", str(tmp_so)]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            raise JitCompileError(cmd, proc.stderr, source)
+        os.replace(tmp_so, so_path)   # atomic publish into the cache
+    return so_path
