@@ -39,9 +39,9 @@ The pybind11 grid branch already proves "one Python type + static dense storage 
 
 ## Target examples (the north star)
 
-Both must work; they drive the whole design.
+Both must work; they drive the whole design — and together they exercise both `@tax.jit` modes: **(1)** the bare, lazy *trace-on-first-call* form and **(2)** an explicit *numba-style signature* that compiles eagerly at decoration.
 
-**(1) Unnamed planar two-body RHS (state = [r₂, v₂], M=4), jit-compiled map:**
+**(1) Unnamed planar two-body RHS (state = [r₂, v₂], M=4), lazy `@tax.jit`:**
 
 ```python
 import numpy as np, tax
@@ -60,13 +60,15 @@ dx = rhs(0.0, x, 398600.4418)                   # Array of 4 expansions (the RHS
 dx.value(); dx.jacobian()                        # constants and state-transition block
 ```
 
-**(2) Named two-body RHS, with a named parameter axis:**
+**(2) Named two-body RHS with a named parameter axis — pinned with an explicit numba-style signature (compiles eagerly at decoration; bare `@tax.jit` would work identically, just lazily):**
 
 ```python
 x  = tax.variables(x0, order=4, size=4, name="x")   # 4-dim named axis "x"
 mu = tax.variable(398600.4418, order=4, name="mu")  # 1-dim named axis "mu"
 
-@tax.jit
+@tax.jit([tax.f64,                                  # t  : runtime scalar
+          tax.Array(order=4, name="x", size=4),     # x  : named axis "x", dim 4
+          tax.Expansion(order=4, name="mu")])       # mu : named axis "mu", dim 1
 def rhs(t, x, mu):
     r3 = (x[0]*x[0] + x[1]*x[1]) ** 1.5
     return tax.concatenate([x[2], x[3], -mu*x[0]/r3, -mu*x[1]/r3])
