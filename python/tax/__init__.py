@@ -4,13 +4,14 @@ from ._errors import (
 )
 from ._frontend.factories import variable
 from ._frontend.types import Expansion
+from ._frontend.array import Array
 
 __all__ = [
     "TaxError", "CompilerNotFound", "EigenNotFound", "TaxIncludeNotFound",
     "JitCompileError", "DomainError",
 ]
 
-__all__ += ["variable", "Expansion"]
+__all__ += ["variable", "Expansion", "Array"]
 
 from ._frontend import mathfns as _mathfns
 for _n in _mathfns.__all__:
