@@ -80,6 +80,7 @@ class Array:
         rows = self._rows()
         results = [eager.binary("div", other, a) for a in rows]
         return Array(np.stack([r.coeffs for r in results]), results[0].scheme)
+    def __pow__(self, p): return self._map_binary("pow", p)
     def __neg__(self): return self._map_unary("neg")
 
     def __repr__(self):

@@ -122,6 +122,10 @@ class Expansion:
         from .eager import binary
         return binary("div", other, self)
 
+    def __pow__(self, p):
+        from .eager import binary
+        return binary("pow", self, p)
+
     def __neg__(self):
         from .eager import unary
         return unary("neg", self)

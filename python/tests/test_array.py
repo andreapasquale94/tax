@@ -85,3 +85,18 @@ def test_array_hessian_shape_and_values():
     assert H.shape == (2, 2, 2)
     np.testing.assert_allclose(H[0], np.array([[0.0, 1.0], [1.0, 0.0]]), atol=1e-12)  # x0*x1
     np.testing.assert_allclose(H[1], np.zeros((2, 2)), atol=1e-12)                    # x0+x1
+
+@needs_toolchain
+def test_pow_operator_matches_pow_function():
+    import numpy as np, tax
+    x = tax.variable(0.0, order=4)
+    b = x * x + 1.0                       # 1 + dx^2 (value 1 > 0)
+    np.testing.assert_allclose((b ** 1.5).numpy(), tax.pow(b, 1.5).numpy(), atol=1e-12)
+    np.testing.assert_allclose(((x + 2.0) ** 2).numpy(), tax.pow(x + 2.0, 2).numpy(), atol=1e-12)
+
+@needs_toolchain
+def test_array_pow_operator_elementwise():
+    import numpy as np, tax
+    X = tax.variables([2.0, 3.0], order=2)
+    Y = X ** 2                            # elementwise square
+    np.testing.assert_allclose(Y.value(), np.array([4.0, 9.0]), atol=1e-12)
