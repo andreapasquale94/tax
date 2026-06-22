@@ -35,8 +35,15 @@ class Array:
     def eval(self, dx) -> np.ndarray:
         return np.array([r.eval(dx) for r in self._rows()], dtype=np.float64)
 
-    def jacobian(self) -> np.ndarray:
-        return np.stack([r.gradient() for r in self._rows()])
+    def jacobian(self, name=None) -> np.ndarray:
+        J = np.stack([r.gradient() for r in self._rows()])   # (K, vars)
+        if name is None:
+            return J
+        from .scheme import Named
+        if not isinstance(self.scheme, Named):
+            raise ValueError("jacobian(name): requires a named Array")
+        off = self.scheme.var_offset(name)
+        return J[:, off: off + self.scheme.dim_of(name)]
 
     def hessian(self) -> np.ndarray:
         return np.stack([r.hessian() for r in self._rows()])

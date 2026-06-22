@@ -57,3 +57,25 @@ def test_named_unary_preserves_axes():
     f = tax.sin(x)
     assert f.scheme == Named.of(5, [Axis("t", 1)])
     np.testing.assert_allclose(f.numpy()[1], 1.0, atol=1e-12)
+
+@needs_toolchain
+def test_named_coeff_keyword_and_gradient_axis():
+    # f = a*b for two 1-D axes a, b at (a0,b0) = (2, 3), order 2 -> axes {a, b}
+    a = tax.variable(2.0, order=2, name="a")
+    b = tax.variable(3.0, order=2, name="b")
+    f = a * b
+    # union {a, b}: a var0, b var1; f = (2+da)(3+db)
+    assert f.coeff(a=0, b=0) == 6.0
+    assert f.coeff(a=1, b=0) == 3.0       # ∂/∂a coeff = b0 = 3
+    assert f.coeff(a=1, b=1) == 1.0       # mixed da*db coeff
+    assert np.allclose(f.gradient(), [3.0, 2.0])      # [b0, a0]
+    assert np.allclose(f.gradient("a"), [3.0])
+    assert np.allclose(f.gradient("b"), [2.0])
+
+def test_named_coeff_keyword_validation():
+    X = tax.variables([1.0, 2.0], order=2, name="x")   # x is dim 2 (not 1-D)
+    f = X[0]
+    with pytest.raises(ValueError):
+        f.coeff(x=1)                       # dim>1 axis via keyword -> error
+    with pytest.raises(ValueError):
+        f.coeff(0, 0, x=1)                 # positional + keyword mixed

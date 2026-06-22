@@ -20,12 +20,27 @@ class Expansion:
     def numpy(self) -> np.ndarray:
         return self.coeffs.copy()
 
-    def coeff(self, *alpha) -> float:
+    def coeff(self, *alpha, **axes) -> float:
+        if axes:
+            if alpha:
+                raise ValueError("coeff: pass positional exponents OR axis keywords, not both")
+            from .scheme import Named
+            if not isinstance(self.scheme, Named):
+                raise ValueError("coeff(**axes): keyword form requires a named expansion")
+            a = [0] * self.scheme.vars
+            for name, e in axes.items():
+                if self.scheme.dim_of(name) != 1:
+                    raise ValueError(
+                        f"coeff keyword form supports 1-D axes only; {name!r} is multi-dim "
+                        "— use positional coeff(*exponents)"
+                    )
+                a[self.scheme.var_offset(name)] = int(e)
+            alpha = tuple(a)
         if len(alpha) != self.scheme.vars:
             raise ValueError(
                 f"coeff expects {self.scheme.vars} exponents, got {len(alpha)}"
             )
-        if any(a < 0 for a in alpha):
+        if any(x < 0 for x in alpha):
             raise ValueError("coeff: negative exponent")
         k = flat_index(alpha)
         return float(self.coeffs[k]) if k < self.scheme.n_coeff else 0.0
@@ -36,13 +51,19 @@ class Expansion:
             fac *= math.factorial(a)
         return self.coeff(*alpha) * fac
 
-    def gradient(self) -> np.ndarray:
+    def gradient(self, name=None) -> np.ndarray:
         M = self.scheme.vars
         g = np.empty(M, dtype=np.float64)
         for i in range(M):
             e = tuple(1 if j == i else 0 for j in range(M))
-            g[i] = self.coeff(*e)            # ∂f/∂xᵢ = coeff(eᵢ) · 1!
-        return g
+            g[i] = self.coeff(*e)
+        if name is None:
+            return g
+        from .scheme import Named
+        if not isinstance(self.scheme, Named):
+            raise ValueError("gradient(name): requires a named expansion")
+        off = self.scheme.var_offset(name)
+        return g[off: off + self.scheme.dim_of(name)]
 
     def hessian(self) -> np.ndarray:
         M = self.scheme.vars
