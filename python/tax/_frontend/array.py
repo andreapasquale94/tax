@@ -88,3 +88,34 @@ def concatenate(items) -> Array:
 
 
 stack = concatenate
+
+
+def dot(a, b):
+    from . import eager
+    ra, rb = a._rows(), b._rows()
+    if len(ra) != len(rb):
+        raise ValueError(f"dot: length mismatch {len(ra)} vs {len(rb)}")
+    acc = eager.binary("mul", ra[0], rb[0])
+    for i in range(1, len(ra)):
+        acc = eager.binary("add", acc, eager.binary("mul", ra[i], rb[i]))
+    return acc                              # Expansion
+
+
+def norm(a):
+    from . import eager
+    return eager.unary("sqrt", dot(a, a))   # Expansion
+
+
+def cross(a, b):
+    from . import eager
+    ra, rb = a._rows(), b._rows()
+    if len(ra) != len(rb) or len(ra) not in (2, 3):
+        raise ValueError("cross requires two 2- or 3-vectors of equal length")
+    mul = lambda x, y: eager.binary("mul", x, y)
+    sub = lambda x, y: eager.binary("sub", x, y)
+    if len(ra) == 2:
+        return sub(mul(ra[0], rb[1]), mul(ra[1], rb[0]))     # scalar Expansion
+    c0 = sub(mul(ra[1], rb[2]), mul(ra[2], rb[1]))
+    c1 = sub(mul(ra[2], rb[0]), mul(ra[0], rb[2]))
+    c2 = sub(mul(ra[0], rb[1]), mul(ra[1], rb[0]))
+    return Array(np.stack([c0.coeffs, c1.coeffs, c2.coeffs]), c0.scheme)
