@@ -108,11 +108,11 @@ def pch_path(cxx: str, includes: list[str], opt_flags: list[str]):
         return out
     out.parent.mkdir(parents=True, exist_ok=True)
     try:
+        # Write the wrapper header into the cache dir (permanent) so that
+        # clang's embedded path reference remains valid after the tempdir is gone.
+        hdr = out.with_suffix(".hpp")
+        hdr.write_text("#include <tax/tax.hpp>\n")
         with tempfile.TemporaryDirectory(dir=cache_dir()) as td:
-            # Write the wrapper header into the cache dir (permanent) so that
-            # clang's embedded path reference remains valid after the tempdir is gone.
-            hdr = out.with_suffix(".hpp")
-            hdr.write_text("#include <tax/tax.hpp>\n")
             tmp = pathlib.Path(td) / "tax.pch"
             cmd = [cxx, STD_FLAG, *opt_flags, "-x", "c++-header",
                    *[f"-I{i}" for i in includes], str(hdr), "-o", str(tmp)]
