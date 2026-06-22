@@ -32,6 +32,15 @@ class Array:
     def numpy(self) -> np.ndarray:
         return self.coeffs.copy()
 
+    def eval(self, dx) -> np.ndarray:
+        return np.array([r.eval(dx) for r in self._rows()], dtype=np.float64)
+
+    def jacobian(self) -> np.ndarray:
+        return np.stack([r.gradient() for r in self._rows()])
+
+    def hessian(self) -> np.ndarray:
+        return np.stack([r.hessian() for r in self._rows()])
+
     def _map_unary(self, op):
         from . import eager
         results = [eager.unary(op, r) for r in self._rows()]

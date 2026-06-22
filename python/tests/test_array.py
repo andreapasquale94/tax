@@ -45,3 +45,22 @@ def test_array_arithmetic_and_broadcast():
     np.testing.assert_allclose(Y.value(), np.array([3.0, 6.0]), atol=1e-12)
     Z = X + X[0]                            # broadcast an Expansion over the Array
     np.testing.assert_allclose(Z.value(), np.array([2.0, 3.0]), atol=1e-12)
+
+@needs_toolchain
+def test_array_jacobian_and_eval():
+    X = tax.variables([1.0, 2.0], order=2)
+    Y = tax.concatenate([X[0] * X[1], X[0] + X[1]])    # [x0*x1, x0+x1]
+    # value [2, 3]; jacobian [[x1, x0],[1,1]] = [[2,1],[1,1]]
+    np.testing.assert_allclose(Y.value(), np.array([2.0, 3.0]), atol=1e-12)
+    np.testing.assert_allclose(Y.jacobian(), np.array([[2.0, 1.0], [1.0, 1.0]]), atol=1e-12)
+    # eval at dx=(0.1,0.2): row0 (1.1)(2.2)=2.42 ; row1 1.1+2.2=3.3
+    np.testing.assert_allclose(Y.eval([0.1, 0.2]), np.array([2.42, 3.3]), atol=1e-12)
+
+@needs_toolchain
+def test_array_hessian_shape_and_values():
+    X = tax.variables([1.0, 2.0], order=2)
+    Y = tax.concatenate([X[0] * X[1], X[0] + X[1]])
+    H = Y.hessian()
+    assert H.shape == (2, 2, 2)
+    np.testing.assert_allclose(H[0], np.array([[0.0, 1.0], [1.0, 0.0]]), atol=1e-12)  # x0*x1
+    np.testing.assert_allclose(H[1], np.zeros((2, 2)), atol=1e-12)                    # x0+x1
