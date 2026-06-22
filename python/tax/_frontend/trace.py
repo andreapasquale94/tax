@@ -1,4 +1,5 @@
 from __future__ import annotations
+from dataclasses import dataclass
 from .ir import Var, Const, Op, Graph
 
 class TraceBuilder:
@@ -38,6 +39,57 @@ class Tracer:
         from .eager import unary; return unary("neg", self)
     def __pow__(self, p):
         from .eager import binary; return binary("pow", self, p)
+
+
+@dataclass(frozen=True)
+class TraceResult:
+    graph: object
+    global_scheme: object
+    out_kind: str          # "exp" or "arr"
+    out_nrows: int
+
+
+def _global_scheme(arg_specs):
+    schemes = [spec[1] for spec in arg_specs if spec[0] in ("exp", "arr")]
+    if not schemes:
+        raise ValueError("tax.jit: at least one Expansion/Array argument is required")
+    g = schemes[0]
+    for s in schemes[1:]:
+        g = g.union(s)
+    return g
+
+
+def trace_function(fn, arg_specs) -> TraceResult:
+    g = _global_scheme(arg_specs)
+    builder = TraceBuilder()
+    slot = 0
+    call_args = []
+    for spec in arg_specs:
+        kind = spec[0]
+        if kind == "exp":
+            call_args.append(Tracer(builder, builder.add(Var(slot, g)), g)); slot += 1
+        elif kind == "arr":
+            nrows = spec[2]
+            rows = [Tracer(builder, builder.add(Var(slot + r, g)), g) for r in range(nrows)]
+            slot += nrows
+            call_args.append(ArrayTracer(rows, g))
+        elif kind == "scalar":
+            call_args.append(spec[1])            # raw scalar, baked when used
+        else:
+            raise ValueError(f"unknown arg spec kind {kind!r}")
+    result = fn(*call_args)
+    if isinstance(result, ArrayTracer):
+        outputs = [t.node for t in result._rows()]
+        out_kind, out_nrows = "arr", len(result)
+    elif isinstance(result, Tracer):
+        outputs = [result.node]
+        out_kind, out_nrows = "exp", 1
+    else:
+        raise TypeError("tax.jit: function must return an Expansion or Array (got "
+                        f"{type(result).__name__})")
+    graph = Graph(builder.nodes, outputs, slot)
+    return TraceResult(graph, g, out_kind, out_nrows)
+
 
 def _trace_operand(builder, v, scheme) -> int:
     """A Tracer contributes its node; a Python scalar becomes a Const node."""

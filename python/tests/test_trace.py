@@ -42,3 +42,28 @@ def test_array_tracer_elementwise_and_math():
     assert isinstance(S, ArrayTracer) and len(S) == 2
     Z = 2.0 * X + X                                    # broadcast scalar + elementwise add
     assert isinstance(Z, ArrayTracer) and len(Z) == 2
+
+from tax._frontend.trace import trace_function
+
+def test_trace_function_global_scheme_and_outputs():
+    s = Isotropic(4, 4)
+    specs = [("scalar", 0.0), ("arr", s, 4), ("scalar", 398600.4418)]
+    def rhs(t, x, mu):
+        r3 = (x[0] * x[0] + x[1] * x[1]) ** 1.5
+        return tax.concatenate([x[2], x[3], -mu * x[0] / r3, -mu * x[1] / r3])
+    tr = trace_function(rhs, specs)
+    assert tr.global_scheme == s                  # only the Array contributes axes
+    assert tr.out_kind == "arr" and tr.out_nrows == 4
+    assert len(tr.graph.outputs) == 4
+    assert tr.graph.n_inputs == 4                 # 4 Var slots (the Array rows); scalars baked
+
+def test_trace_function_named_union():
+    from tax._frontend.scheme import Named, Axis
+    xs = Named.of(4, [Axis("x", 4)])
+    mus = Named.of(4, [Axis("mu", 1)])
+    specs = [("arr", xs, 4), ("exp", mus)]
+    def f(x, mu):
+        return mu * x[0]
+    tr = trace_function(f, specs)
+    assert tr.global_scheme == Named.of(4, [Axis("mu", 1), Axis("x", 4)])   # union
+    assert tr.out_kind == "exp"
