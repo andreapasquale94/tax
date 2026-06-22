@@ -33,7 +33,11 @@ def emit(graph) -> str:
         elif isinstance(node, Const):
             lines.append(f"    auto n{i} = {expansion_type}::constant({node.value!r});")
         elif isinstance(node, Op):
-            expr = CPP_EXPR[node.opcode].format(*[f"n{o}" for o in node.operands])
+            if node.opcode.startswith("powint:"):
+                n = int(node.opcode.split(":", 1)[1])
+                expr = f"pow(n{node.operands[0]}, {n})"     # C++ pow(TE, int) = seriesPowInt
+            else:
+                expr = CPP_EXPR[node.opcode].format(*[f"n{o}" for o in node.operands])
             lines.append(f"    auto n{i} = {expr};")
         else:
             raise TypeError(f"unknown node type {type(node)!r}")

@@ -20,6 +20,10 @@ for _name in _UNARY:
 
 def pow(x, y):
     from .trace import ArrayTracer
+    if isinstance(y, int) and not isinstance(y, bool):
+        if isinstance(x, (Array, ArrayTracer)):
+            return x._map_unary(f"powint:{y}")
+        return unary(f"powint:{y}", x)
     if isinstance(x, (Array, ArrayTracer)):
         return x._map_binary("pow", y)
     return binary("pow", x, y)

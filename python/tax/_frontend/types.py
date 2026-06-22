@@ -123,7 +123,9 @@ class Expansion:
         return binary("div", other, self)
 
     def __pow__(self, p):
-        from .eager import binary
+        from .eager import unary, binary
+        if isinstance(p, int) and not isinstance(p, bool):
+            return unary(f"powint:{p}", self)
         return binary("pow", self, p)
 
     def __neg__(self):

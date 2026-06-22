@@ -38,7 +38,10 @@ class Tracer:
     def __neg__(self):
         from .eager import unary; return unary("neg", self)
     def __pow__(self, p):
-        from .eager import binary; return binary("pow", self, p)
+        from .eager import unary, binary
+        if isinstance(p, int) and not isinstance(p, bool):
+            return unary(f"powint:{p}", self)
+        return binary("pow", self, p)
 
 
 @dataclass(frozen=True)
@@ -147,4 +150,7 @@ class ArrayTracer:
     def __truediv__(self, o): return self._map_binary("div", o)
     def __rtruediv__(self, o): return ArrayTracer([trace_binary("div", o, a) for a in self.rows], self.scheme)
     def __neg__(self): return self._map_unary("neg")
-    def __pow__(self, p): return self._map_binary("pow", p)
+    def __pow__(self, p):
+        if isinstance(p, int) and not isinstance(p, bool):
+            return self._map_unary(f"powint:{p}")
+        return self._map_binary("pow", p)
