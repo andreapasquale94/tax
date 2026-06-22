@@ -56,6 +56,9 @@ def run(graph, in_buffers, out_sizes):
     return load.call_kernel(cached, in_buffers, out_sizes)
 
 def unary(opcode: str, x) -> Expansion:
+    from .trace import Tracer, trace_unary
+    if isinstance(x, Tracer):
+        return trace_unary(opcode, x)
     if not isinstance(x, Expansion):
         raise TypeError(f"{opcode}: expected Expansion, got {type(x)!r}")
     result_scheme = x.scheme
@@ -64,6 +67,9 @@ def unary(opcode: str, x) -> Expansion:
     return Expansion(out, result_scheme)
 
 def binary(opcode: str, a, b) -> Expansion:
+    from .trace import Tracer, trace_binary
+    if isinstance(a, Tracer) or isinstance(b, Tracer):
+        return trace_binary(opcode, a, b)
     ref = a.scheme if isinstance(a, Expansion) else b.scheme
     ea, eb = _as_expansion(a, ref), _as_expansion(b, ref)
     if opcode == "pow" and ea.value() <= 0.0:
