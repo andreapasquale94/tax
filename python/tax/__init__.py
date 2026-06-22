@@ -19,5 +19,5 @@ for _n in _mathfns.__all__:
     globals()[_n] = getattr(_mathfns, _n)
 __all__ += list(_mathfns.__all__)
 
-from ._frontend.jit import jit
-__all__ += ["jit"]
+from ._frontend.jit import jit, f64, ExpansionType, ArrayType
+__all__ += ["jit", "f64", "ExpansionType", "ArrayType"]

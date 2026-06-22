@@ -25,6 +25,26 @@ def test_jit_matches_eager_vector_map():
     np.testing.assert_allclose(got.jacobian(), want.jacobian(), atol=1e-12)
 
 @needs_toolchain
+def test_jit_explicit_signature_compiles_and_matches_lazy():
+    sig = [tax.ArrayType(order=4, size=2)]
+    @tax.jit(sig)
+    def g(X):
+        return tax.concatenate([X[0] * X[1], X[0] + X[1]])
+    X = tax.variables([1.0, 2.0], order=4)
+    got = g(X)
+    want = tax.concatenate([X[0] * X[1], X[0] + X[1]])
+    np.testing.assert_allclose(got.numpy(), want.numpy(), atol=1e-12)
+
+@needs_toolchain
+def test_jit_dump_returns_source():
+    @tax.jit(dump=True)
+    def f(x):
+        return tax.sin(x)
+    x = tax.variable(0.0, order=4)
+    f(x)
+    assert "tax_kernel" in f.dump_source()         # the generated TU is retrievable
+
+@needs_toolchain
 def test_jit_retraces_on_new_signature_but_reuses_match(monkeypatch):
     from tax._frontend import trace as tracemod
     calls = {"n": 0}
