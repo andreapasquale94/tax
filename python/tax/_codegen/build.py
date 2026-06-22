@@ -88,6 +88,43 @@ def cache_key(canonical: str, *, cid: str, flags: str, scalar: str = "float64") 
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
+def _pch_enabled() -> bool:
+    return os.environ.get("TAX_USE_PCH", "1") != "0"
+
+
+def pch_path(cxx: str, includes: list[str], opt_flags: list[str]):
+    """Path to a cached <tax/tax.hpp> PCH built with `opt_flags`, or None.
+
+    Built once per (compiler, flags) and reused; the PCH must use the SAME
+    opt_flags as the kernel compile (clang bakes __OPTIMIZE__ into it). Any
+    failure returns None so kernel compilation proceeds without a PCH.
+    """
+    if not _pch_enabled():
+        return None
+    key = cache_key("__pch__:tax/tax.hpp", cid=compiler_id(cxx),
+                    flags=flags_for_key(opt_flags))
+    out = cache_dir() / f"{key}.pch"
+    if out.exists():
+        return out
+    out.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with tempfile.TemporaryDirectory(dir=cache_dir()) as td:
+            # Write the wrapper header into the cache dir (permanent) so that
+            # clang's embedded path reference remains valid after the tempdir is gone.
+            hdr = out.with_suffix(".hpp")
+            hdr.write_text("#include <tax/tax.hpp>\n")
+            tmp = pathlib.Path(td) / "tax.pch"
+            cmd = [cxx, STD_FLAG, *opt_flags, "-x", "c++-header",
+                   *[f"-I{i}" for i in includes], str(hdr), "-o", str(tmp)]
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+            if proc.returncode != 0:
+                return None
+            os.replace(tmp, out)        # atomic publish
+        return out
+    except OSError:
+        return None
+
+
 def compile_kernel(source: str, key: str, *, cxx: str, includes: list[str],
                    opt_flags: list[str]) -> pathlib.Path:
     out_dir = cache_dir()
@@ -99,7 +136,9 @@ def compile_kernel(source: str, key: str, *, cxx: str, includes: list[str],
         cpp = pathlib.Path(td) / "kernel.cpp"
         cpp.write_text(source)
         tmp_so = pathlib.Path(td) / "kernel.so"
-        cmd = [cxx, STD_FLAG, *opt_flags, "-shared", "-fPIC",
+        pch = pch_path(cxx, includes, opt_flags)
+        pch_flags = ["-include-pch", str(pch)] if pch is not None else []
+        cmd = [cxx, STD_FLAG, *opt_flags, *pch_flags, "-shared", "-fPIC",
                *[f"-I{i}" for i in includes], str(cpp), "-o", str(tmp_so)]
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0:
