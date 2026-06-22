@@ -1,17 +1,32 @@
 from __future__ import annotations
 import numpy as np
 from .ir import single_op_graph
-from .scheme import Isotropic
+from .scheme import Isotropic, flat_index, unflat_index
 from .types import Expansion
 from .._codegen.emit_cpp import emit
 from .._codegen import build, load
 
 _KERNEL_CACHE: dict[str, tuple] = {}
 
-def _embed(x: Expansion, target: Isotropic) -> np.ndarray:
-    """Embed an isotropic expansion into a (>=) order target via the graded-lex prefix."""
+def _embed(x: Expansion, target) -> np.ndarray:
+    """Embed an expansion into `target`. Isotropic: graded-lex prefix. Named: axis-remap scatter."""
     if x.scheme == target:
         return x.coeffs
+    from .scheme import Named
+    if isinstance(target, Named):
+        src = x.scheme  # a Named scheme over a subset of target's axes
+        vmap = src.axis_var_map(target)
+        out = np.zeros(target.n_coeff, dtype=np.float64)
+        for k in range(src.n_coeff):
+            c = x.coeffs[k]
+            if c == 0.0:
+                continue
+            a_src = unflat_index(k, src.vars)
+            a_dst = [0] * target.vars
+            for j in range(src.vars):
+                a_dst[vmap[j]] = a_src[j]
+            out[flat_index(a_dst)] = c
+        return out
     if x.scheme.vars != target.vars or x.scheme.order > target.order:
         raise ValueError(f"cannot embed {x.scheme} into {target}")
     out = np.zeros(target.n_coeff, dtype=np.float64)
