@@ -6,6 +6,14 @@ build-backend = "hatchling.build"
 name = "tax"
 version = "0.1.0"
 description = "JIT-compiled Python layer for tax Taylor expansions"
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+keywords = ["taylor", "automatic-differentiation", "jit"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: BSD License",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.23"]
 
@@ -14,6 +22,9 @@ test = ["pytest>=7"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["tax"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
