@@ -67,3 +67,17 @@ def test_trace_function_named_union():
     tr = trace_function(f, specs)
     assert tr.global_scheme == Named.of(4, [Axis("mu", 1), Axis("x", 4)])   # union
     assert tr.out_kind == "exp"
+
+def test_cross_in_trace_returns_arraytracer():
+    from tax._frontend.trace import TraceBuilder, Tracer, ArrayTracer
+    from tax._frontend.ir import Var
+    from tax._frontend.scheme import Isotropic
+    import tax
+    b = TraceBuilder()
+    s = Isotropic(1, 3)
+    A = ArrayTracer([Tracer(b, b.add(Var(i, s)), s) for i in range(3)], s)
+    B = ArrayTracer([Tracer(b, b.add(Var(3 + i, s)), s) for i in range(3)], s)
+    C = tax.cross(A, B)
+    assert isinstance(C, ArrayTracer) and len(C) == 3      # 3D cross -> 3-vector ArrayTracer
+    z = tax.cross(A[:2], B[:2])
+    assert isinstance(z, Tracer)                            # 2D cross -> scalar Tracer

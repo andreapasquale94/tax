@@ -34,8 +34,8 @@ def emit(graph) -> str:
             lines.append(f"    auto n{i} = {expansion_type}::constant({node.value!r});")
         elif isinstance(node, Op):
             if node.opcode.startswith("powint:"):
-                n = int(node.opcode.split(":", 1)[1])
-                expr = f"pow(n{node.operands[0]}, {n})"     # C++ pow(TE, int) = seriesPowInt
+                exp_n = int(node.opcode.split(":", 1)[1])
+                expr = f"pow(n{node.operands[0]}, {exp_n})"     # C++ pow(TE, int) = seriesPowInt
             else:
                 expr = CPP_EXPR[node.opcode].format(*[f"n{o}" for o in node.operands])
             lines.append(f"    auto n{i} = {expr};")

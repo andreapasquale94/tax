@@ -81,6 +81,10 @@ def _build(fn, signature, dump):
         specs = _classify_args(args)
         if signature is not None:
             want = [_spec_of_type(t) for t in signature]
+            if len(specs) != len(want):
+                raise TypeError(
+                    f"tax.jit signature expects {len(want)} arguments, got {len(specs)}"
+                )
             # Validate schemes match the pinned signature (scalars compare loosely).
             for got, exp in zip(specs, want):
                 if got[0] != exp[0] or (got[0] != "scalar" and got[1] != exp[1]):

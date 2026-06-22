@@ -44,6 +44,15 @@ def test_jit_dump_returns_source():
     f(x)
     assert "tax_kernel" in f.dump_source()         # the generated TU is retrievable
 
+def test_jit_signature_arity_mismatch_raises():
+    import pytest, tax
+    @tax.jit([tax.ArrayType(order=2, size=2)])
+    def g(X):
+        return X[0] * X[1]
+    X = tax.variables([1.0, 2.0], order=2)
+    with pytest.raises(TypeError):
+        g(X, X)                                            # 2 args vs 1-arg signature
+
 @needs_toolchain
 def test_jit_retraces_on_new_signature_but_reuses_match(monkeypatch):
     from tax._frontend import trace as tracemod
