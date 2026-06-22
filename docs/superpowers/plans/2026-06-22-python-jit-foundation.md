@@ -113,6 +113,7 @@ packages = ["tax"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 ```
 
 ```python
@@ -277,7 +278,7 @@ git commit -m "feat(py): Isotropic scheme descriptor"
 
 **Files:**
 - Create: `python/tax/_codegen/build.py`
-- Create: `python/tests/conftest.py`
+- Create: `python/tests/_helpers.py`
 - Test: `python/tests/test_build.py`
 
 **Interfaces:**
@@ -292,17 +293,18 @@ git commit -m "feat(py): Isotropic scheme descriptor"
 - [ ] **Step 1: Write the failing test**
 
 ```python
-# python/tests/conftest.py
-import os, pathlib, shutil, subprocess, pytest
+# python/tests/_helpers.py
+import os, pathlib, pytest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+# Set at IMPORT time (before any skipif marker below is evaluated) so the
+# codegen finds the repo headers and writes the JIT cache to a gitignored
+# scratch dir. A session fixture would run too late — markers evaluate at
+# collection/import.
+os.environ.setdefault("TAX_INCLUDE", str(REPO_ROOT / "include"))
+os.environ.setdefault("TAX_CACHE_DIR", str(REPO_ROOT / "python" / ".tax_cache"))
 
-@pytest.fixture(autouse=True, scope="session")
-def _set_tax_include():
-    # Point the codegen at the repo's headers during development.
-    os.environ.setdefault("TAX_INCLUDE", str(REPO_ROOT / "include"))
-
-def _have_toolchain():
+def _have_toolchain() -> bool:
     from tax._codegen import build
     try:
         build.find_compiler(); build.find_eigen_include(); build.find_tax_include()
@@ -408,7 +410,7 @@ Expected: PASS (on a machine with a compiler + Eigen; otherwise these specific t
 - [ ] **Step 5: Commit**
 
 ```bash
-git add python/tax/_codegen/build.py python/tests/conftest.py python/tests/test_build.py
+git add python/tax/_codegen/build.py python/tests/_helpers.py python/tests/test_build.py
 git commit -m "feat(py): toolchain discovery (compiler, Eigen, tax headers)"
 ```
 
@@ -431,17 +433,15 @@ git commit -m "feat(py): toolchain discovery (compiler, Eigen, tax headers)"
 - [ ] **Step 1: Write the failing test**
 
 ```python
-# add to python/tests/test_build.py
-import hashlib, tempfile, pathlib
-from tax._codegen import build
-from tests.conftest import needs_toolchain   # noqa
+# add to python/tests/test_build.py  (build is already imported at the top from Task 3)
+from tests._helpers import needs_toolchain   # noqa
 
 def test_cache_key_is_deterministic_and_sensitive():
     k1 = build.cache_key("g", cid="c", flags="-O3")
     k2 = build.cache_key("g", cid="c", flags="-O3")
     k3 = build.cache_key("h", cid="c", flags="-O3")
     assert k1 == k2 and k1 != k3
-    assert k1 == hashlib.sha256(k1.encode()).hexdigest() or len(k1) == 64
+    assert len(k1) == 64   # sha256 hex digest
 
 @needs_toolchain
 def test_compile_kernel_builds_and_caches(tmp_path, monkeypatch):
@@ -536,7 +536,7 @@ git commit -m "feat(py): compile generated TU and cache .so atomically"
 # python/tests/test_load.py
 import numpy as np
 from tax._codegen import build, load
-from tests.conftest import needs_toolchain   # noqa
+from tests._helpers import needs_toolchain   # noqa
 
 @needs_toolchain
 def test_load_and_call_roundtrip(tmp_path, monkeypatch):
@@ -621,7 +621,7 @@ git commit -m "feat(py): ctypes kernel loader and caller"
 # python/tests/test_spike_m0.py
 import numpy as np
 from tax._codegen import build, load
-from tests.conftest import needs_toolchain   # noqa
+from tests._helpers import needs_toolchain   # noqa
 
 SRC = r'''
 #include <tax/tax.hpp>
@@ -1119,7 +1119,7 @@ git commit -m "feat(py): univariate variable() factory"
 # python/tests/test_eager.py
 import numpy as np
 import tax
-from tests.conftest import needs_toolchain   # noqa
+from tests._helpers import needs_toolchain   # noqa
 
 @needs_toolchain
 def test_eager_sin_univariate():
@@ -1272,6 +1272,7 @@ git commit -m "feat(py): eager engine and math surface (univariate isotropic)"
 
 ```python
 # add to python/tests/test_eager.py
+@needs_toolchain
 def test_eager_sin_times_exp_composition():
     import numpy as np, tax
     x = tax.variable(0.0, order=5)
@@ -1279,6 +1280,7 @@ def test_eager_sin_times_exp_composition():
     expected = np.array([0, 1, 1, 1/3, 0, -1/30], dtype=float)
     np.testing.assert_allclose(f.numpy(), expected, atol=1e-12)
 
+@needs_toolchain
 def test_kernel_cache_avoids_recompile(monkeypatch):
     import tax
     from tax._frontend import eager
@@ -1298,7 +1300,7 @@ def test_kernel_cache_avoids_recompile(monkeypatch):
     assert calls["n"] == before
 ```
 
-The first test (`test_eager_sin_times_exp_composition`) requires the toolchain; mark it with `@needs_toolchain` (import already present at the top of the file). The cache test does not strictly need the toolchain because the in-process cache short-circuits before compiling on the second call; keep it unmarked so it runs everywhere a first compile is possible, and add `@needs_toolchain` if the cold call must compile in your environment.
+Both tests require the toolchain (the cold path compiles a kernel); they are marked `@needs_toolchain`, imported at the top of the file from Task 11. The cache assertion holds whether the first call compiles (cold) or hits the on-disk cache: it captures the compile count after the first call and asserts the second call adds none, because the in-process `_KERNEL_CACHE` short-circuits before `compile_kernel`.
 
 - [ ] **Step 2: Run test to verify it fails**
 
