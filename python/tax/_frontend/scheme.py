@@ -71,3 +71,88 @@ class Isotropic:
                 f"isotropic union requires equal vars ({self.vars} != {other.vars})"
             )
         return Isotropic(max(self.order, other.order), self.vars)
+
+
+@dataclass(frozen=True)
+class Axis:
+    name: str
+    dim: int
+
+    def __post_init__(self) -> None:
+        if self.dim < 1:
+            raise ValueError("Axis.dim must be >= 1")
+
+
+@dataclass(frozen=True)
+class Named:
+    order: int
+    axes: tuple  # tuple[Axis, ...], canonical: sorted by name, unique
+
+    def __post_init__(self) -> None:
+        if self.order < 0:
+            raise ValueError("Named.order must be >= 0")
+        names = [a.name for a in self.axes]
+        if names != sorted(names):
+            raise ValueError("Named.axes must be sorted by name (use Named.of)")
+        if len(set(names)) != len(names):
+            raise ValueError("Named.axes has duplicate axis names")
+
+    @classmethod
+    def of(cls, order: int, axes) -> "Named":
+        by_name: dict[str, Axis] = {}
+        for a in axes:
+            if a.name in by_name and by_name[a.name].dim != a.dim:
+                raise ValueError(f"axis {a.name!r} used with conflicting dim")
+            by_name[a.name] = a
+        ordered = tuple(sorted(by_name.values(), key=lambda a: a.name))
+        return cls(order, ordered)
+
+    @property
+    def vars(self) -> int:
+        return sum(a.dim for a in self.axes)
+
+    @property
+    def n_coeff(self) -> int:
+        return num_monomials(self.order, self.vars)
+
+    def isotropic(self) -> Isotropic:
+        return Isotropic(self.order, self.vars)
+
+    def cpp_type_string(self) -> str:
+        return self.isotropic().cpp_type_string()
+
+    def descriptor_hash(self) -> str:
+        # Identical emitted C++ to the isotropic twin -> share the cached .so.
+        return self.isotropic().descriptor_hash()
+
+    def axis_names(self) -> tuple:
+        return tuple(a.name for a in self.axes)
+
+    def dim_of(self, name: str) -> int:
+        for a in self.axes:
+            if a.name == name:
+                return a.dim
+        raise KeyError(name)
+
+    def var_offset(self, name: str) -> int:
+        off = 0
+        for a in self.axes:
+            if a.name == name:
+                return off
+            off += a.dim
+        raise KeyError(name)
+
+    def union(self, other: "Named") -> "Named":
+        merged = Named.of(max(self.order, other.order), (*self.axes, *other.axes))
+        return merged
+
+    def axis_var_map(self, target: "Named") -> list:
+        """Map each of this scheme's variable indices to the target's variable layout."""
+        m = [0] * self.vars
+        src = 0
+        for a in self.axes:
+            to = target.var_offset(a.name)
+            for l in range(a.dim):
+                m[src] = to + l
+                src += 1
+        return m
