@@ -21,10 +21,10 @@ class Array:
     def __getitem__(self, i):
         if isinstance(i, slice):
             return Array(self.coeffs[i], self.scheme)
-        return Expansion(self.coeffs[i], self.scheme)
+        return Expansion(self.coeffs[i].copy(), self.scheme)
 
     def _rows(self) -> list:
-        return [Expansion(self.coeffs[i], self.scheme) for i in range(len(self))]
+        return [Expansion(self.coeffs[i].copy(), self.scheme) for i in range(len(self))]
 
     def value(self) -> np.ndarray:
         return self.coeffs[:, 0].copy()
@@ -85,8 +85,10 @@ def concatenate(items) -> Array:
     for it in items:
         if isinstance(it, Array):
             exps.extend(it._rows())
+        elif isinstance(it, Expansion):
+            exps.append(it)
         else:
-            exps.append(it)            # Expansion
+            raise TypeError(f"concatenate: expected Expansion or Array, got {type(it).__name__}")
     if not exps:
         raise ValueError("concatenate(): empty input")
     target = exps[0].scheme

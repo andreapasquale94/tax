@@ -28,6 +28,27 @@ def test_array_shape_validation():
     with pytest.raises(ValueError):
         Array(np.zeros((2, 5)), Isotropic(2, 2))   # nCoeff(2,2)=6, not 5
 
+def test_array_getitem_returns_independent_copy():
+    import numpy as np
+    from tax._frontend.array import Array
+    from tax._frontend.scheme import Isotropic
+    a = Array(np.array([[1.0, 2.0, 3.0, 0, 0, 0]]), Isotropic(2, 2))
+    row = a[0]
+    row.coeffs[0] = 999.0
+    assert a.value()[0] == 1.0      # parent unchanged -> getitem copied
+
+
+def test_array_binary_length_mismatch_raises():
+    import pytest
+    from tax._frontend.array import Array
+    from tax._frontend.scheme import Isotropic
+    import numpy as np
+    a = Array(np.zeros((2, 6)), Isotropic(2, 2))
+    b = Array(np.zeros((3, 6)), Isotropic(2, 2))
+    with pytest.raises(ValueError):
+        a + b
+
+
 @needs_toolchain
 def test_array_elementwise_math():
     X = tax.variables([0.0, 0.0], order=3)
