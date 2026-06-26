@@ -54,6 +54,7 @@ tax_add_test(test_sparse_subs       SOURCES sparse/test_sparse_subs.cpp)
 # Basis-generic series (Taylor + Chebyshev redesign)
 tax_add_test(test_series_taylor      SOURCES series/test_series_taylor.cpp)
 tax_add_test(test_series_chebyshev   SOURCES series/test_series_chebyshev.cpp)
+tax_add_test(test_chebyshev_math     SOURCES series/test_chebyshev_math.cpp)
 tax_add_test(test_series_convert     SOURCES series/test_series_convert.cpp)
 tax_add_test(test_chebyshev_interp   SOURCES series/test_chebyshev_interp.cpp)
 

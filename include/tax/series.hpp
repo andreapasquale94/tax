@@ -5,6 +5,7 @@
 #include <tax/series/basis.hpp>
 #include <tax/series/chebyshev_basis.hpp>
 #include <tax/series/chebyshev_interp.hpp>
+#include <tax/series/chebyshev_math.hpp>
 #include <tax/series/convert.hpp>
 #include <tax/series/io.hpp>
 #include <tax/series/operators.hpp>

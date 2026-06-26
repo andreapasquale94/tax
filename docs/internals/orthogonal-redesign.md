@@ -90,16 +90,23 @@ Plus two Chebyshev-specific capabilities with no Taylor analogue:
 | `+ - *` scalar, `+= -= *=`      |   ✓    |     ✓     |
 | `Series * Series` (product)     |   ✓    |     ✓     |
 | `eval`, `deriv`, `integ`        |   ✓    |     ✓     |
-| `pow(f, n)` (n ≥ 0)             |   ✓    |     ✓     |
-| series `/`, `reciprocal`, `pow(f, −n)` | ✓ |     —     |
-| `exp, sin, sqrt, …`             |   ✓    |     —¹    |
+| `pow(f, n)` integer             |   ✓    |     ✓     |
+| series `/`, `reciprocal`        |   ✓    |     ✓     |
+| `square`, `cube` (exact)        |   ✓    |     ✓     |
+| `exp, log, sin, sqrt, …`        |   ✓    |     ✓¹    |
+| `pow(f, p)` real exponent       |   —    |     ✓¹    |
 | function interpolation          |   —    |     ✓     |
 | `toChebyshev` / `toTaylor`      |   ✓    |     ✓     |
 
-¹ Composing a transcendental with a *general* Chebyshev series is the natural
-next step — see below. Today, transcendentals of a Chebyshev argument are
-reached either through `chebyshevInterpolate` (for the identity argument) or by
-converting to/from the Taylor basis.
+¹ **How the two bases compose differently.** The Taylor surface composes `g(f)`
+through the classical triangular ODE recurrences (reused from the existing
+kernels), so it is exact-to-truncation and `constexpr`. The Chebyshev surface
+has no such recurrence, so it composes the way a spectral library does — sample
+`g(f(x))` at the Chebyshev–Gauss–Lobatto nodes and re-interpolate
+(`detail::chebCompose`). That yields a *near-best uniform* approximation of
+`g(f)` over `[-1,1]` (spectrally accurate for analytic `g`, `f`) at the cost of
+being runtime rather than `constexpr`. Pure-algebraic Chebyshev ops (`*`,
+`square`, `cube`) stay exact and `constexpr`.
 
 ## How the existing types fit
 
