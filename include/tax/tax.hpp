@@ -20,3 +20,4 @@
 #include <tax/la.hpp>
 #include <tax/la/mixed_named.hpp>
 #include <tax/io/series.hpp>
+#include <tax/series.hpp>
