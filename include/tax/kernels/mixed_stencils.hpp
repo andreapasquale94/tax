@@ -40,17 +40,24 @@ template < typename... Groups >
 inline constexpr std::size_t mixedRecurrenceEntries =
     mixedCauchyEntries< Groups... > - tax::MixedScheme< Groups... >::nCoeff;
 
-/// Precomputed (out, a, b) table for the box Cauchy product of MixedScheme<Groups...>, in graded
-/// output order (ai = 0 … nCoeff-1).
+/// True iff the box Cauchy stencil for MixedScheme<Groups...> fits the configured budget.
+template < typename... Groups >
+inline constexpr bool mixedCauchyStencilFits =
+    mixedCauchyEntries< Groups... > * sizeof( StencilPair ) <= ( TAX_STENCIL_MAX_BYTES );
+
+/// Compressed (CSR-like) table for the box Cauchy product of MixedScheme<Groups...>,
+/// in graded output order (ai = 0 … nCoeff-1). Each output's (a, b) operand pairs
+/// occupy the contiguous run `pairs[offsets[ai] .. offsets[ai + 1])`, so the kernel
+/// accumulates each output in a register and writes it once — no scattered
+/// read-modify-write, and a third less memory than a per-entry out_idx.
 template < typename... Groups >
 struct MixedBoxCauchyStencil
 {
     static constexpr std::size_t kNCoeff = tax::MixedScheme< Groups... >::nCoeff;
     static constexpr std::size_t kEntries = mixedCauchyEntries< Groups... >;
-    static_assert( kEntries * sizeof( StencilEntry ) <= ( std::size_t{ 128 } << 20 ),
-                   "MixedBoxCauchyStencil exceeds 128 MB — reduce group orders." );
 
-    std::array< StencilEntry, kEntries > entries{};
+    std::array< StencilPair, kEntries > pairs{};
+    std::array< std::uint32_t, kNCoeff + 1 > offsets{};
 
     using Scheme = tax::MixedScheme< Groups... >;
     static constexpr int V = Scheme::vars;
@@ -65,6 +72,7 @@ struct MixedBoxCauchyStencil
         // loop-vs-stencil contract documented for the isotropic kernels.
         for ( std::size_t ai = 0; ai < kNCoeff; ++ai )
         {
+            offsets[ai] = static_cast< std::uint32_t >( n );
             const MultiIndex< V > alpha = Scheme::multiOf( ai );
             for ( std::size_t bi = 0; bi < kNCoeff; ++bi )
             {
@@ -81,11 +89,11 @@ struct MixedBoxCauchyStencil
                 MultiIndex< V > gamma{};
                 for ( int v = 0; v < V; ++v )
                     gamma[std::size_t( v )] = alpha[std::size_t( v )] - beta[std::size_t( v )];
-                entries[n++] = StencilEntry{
-                    static_cast< std::uint32_t >( ai ), static_cast< std::uint32_t >( bi ),
-                    static_cast< std::uint32_t >( Scheme::flatOf( gamma ) ) };
+                pairs[n++] = StencilPair{ static_cast< std::uint32_t >( bi ),
+                                          static_cast< std::uint32_t >( Scheme::flatOf( gamma ) ) };
             }
         }
+        offsets[kNCoeff] = static_cast< std::uint32_t >( n );
         // n == kEntries: each (β,γ) pair with β+γ ∈ Box contributes one entry.
     }
 };

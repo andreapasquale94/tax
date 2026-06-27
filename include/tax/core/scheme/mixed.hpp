@@ -198,14 +198,23 @@ struct MixedScheme
                                          const std::array< T, nCoeff >& b ) noexcept
     {
 #if TAX_USE_STENCIL
-        if !consteval
-        {
-            const auto& st = detail::kernels::mixedBoxCauchyStencil< Groups... >();
-            out = {};
-            for ( const detail::kernels::StencilEntry& e : st.entries )
-                out[e.out_idx] += a[e.a_idx] * b[e.b_idx];
-            return;
-        }
+        // Oversized box stencils (many variables at high order) fall back to the
+        // constexpr enumeration below instead of a hard compile error.
+        if constexpr ( detail::kernels::mixedCauchyStencilFits< Groups... > )
+            if !consteval
+            {
+                const auto& st = detail::kernels::mixedBoxCauchyStencil< Groups... >();
+                const detail::kernels::StencilPair* const pairs = st.pairs.data();
+                for ( std::size_t ai = 0; ai < nCoeff; ++ai )
+                {
+                    T acc{};
+                    const std::size_t end = st.offsets[ai + 1];
+                    for ( std::size_t j = st.offsets[ai]; j < end; ++j )
+                        acc += a[pairs[j].a_idx] * b[pairs[j].b_idx];
+                    out[ai] = acc;
+                }
+                return;
+            }
 #endif
         // Constexpr fallback: enumerate sub-indices on the fly.
         out = {};
