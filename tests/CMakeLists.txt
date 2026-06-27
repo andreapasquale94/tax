@@ -64,6 +64,3 @@ tax_add_test(test_eigen_jacobian    SOURCES eigen/test_eigen_jacobian.cpp)
 tax_add_test(test_eigen_invert      SOURCES eigen/test_eigen_invert.cpp)
 tax_add_test(test_named_la          SOURCES eigen/test_named_la.cpp)
 tax_add_test(test_expansion_vectors SOURCES eigen/test_expansion_vectors.cpp)
-
-# Experimental — fused elementwise expression templates
-tax_add_test(test_fused             SOURCES experimental/test_fused.cpp)

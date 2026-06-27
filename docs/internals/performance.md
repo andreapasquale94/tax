@@ -76,44 +76,23 @@ length (`maxRecurrenceRow`), independent of `nCoeff`, so it stays small.
 > The loop and stencil paths sum each output in different orders, so they agree
 > only to round-off (the long-standing loop-vs-stencil contract).
 
-### 3. Elementwise fusion via expression templates (experimental, opt-in)
-
-Eager elementwise chains (`2*a + 3*b - c + 0.5*d`) materialise one full
-temporary array per operator. At large `nCoeff` those passes spill to memory.
-`<tax/experimental/fused.hpp>` adds a lazy expression layer for the elementwise
-family (`+`, `-`, unary `-`, scalar `*` / `/`, constant shift) so a whole
-linear combination fuses into a single pass:
-
-```cpp
-#include <tax/experimental/fused.hpp>
-using tax::fuse;
-TEn<6,4> r = 2.0 * fuse(a) + 3.0 * fuse(b) - fuse(c) + 0.5 * fuse(d);
-```
-
-It is **opt-in and additive** — the lazy operators engage only once an operand
-is a fused node (via `fuse()`), so bare `expansion OP expansion` still resolves
-to the eager operators (no ODR / overload conflict). Materialisation back into a
-`TaylorExpansion` (implicit or `.eval()`) runs the single fused loop. Works for
-any `IndexScheme`, for `Batch` coefficients, and in constant evaluation; results
-are bit-identical to eager.
-
-Linear combination (5 terms), dense operands:
-
-| shape     | N30 M1 | N4 M6 | N6 M6 | N8 M6 | N6 M9 | N8 M9 |
-|-----------|-------:|------:|------:|------:|------:|------:|
-| speedup   | 0.85×  | 1.8×  | 2.0×  | 1.7×  | 1.8×  | **2.9×** |
-
-The win tracks `nCoeff`: solid across the many-variable regime, but **slightly
-negative for small univariate** (the node indirection costs more than the
-temporaries it removes), so reach for it on multivariate elementwise chains.
-
-The Cauchy product (`expansion * expansion`) is not elementwise and stays eager;
-evaluate it first and `fuse()` the result. Scope is dense `TaylorExpansion`;
-named / mixed-named wrappers are not yet covered.
-
 ## Proposed (not yet implemented)
 
-### A. Common-subexpression reuse
+### A. Expression templates for elementwise fusion
+
+Eager elementwise chains (`2*a + 3*b - c + 0.5*d`) materialise one full
+temporary array per operator. At large `nCoeff` those passes spill to memory; a
+single fused loop (what an expression-template layer would emit) recovers it.
+A prototype measured 1.7–2.9× on the many-variable regime (M=6/9) for a 5-term
+linear combination, with no benefit (slightly negative) for small univariate
+where temporaries stay in registers.
+
+An ET layer should therefore target `+`, `-`, scalar `*`, and `axpy`-shaped
+nodes for the large-`nCoeff` (many-variable) case; the `*` (Cauchy) node stays
+eager. Caveat: it interacts with the Eigen `NumTraits` surface and the
+named/mixed wrappers, so it needs a design pass before landing.
+
+### B. Common-subexpression reuse
 
 Eager evaluation cannot reuse a repeated subexpression: `sin(x)*cos(x) + sin(x)`
 computes `sin(x)` twice. Binding it manually recovers ~1.3–1.45× consistently:
@@ -127,7 +106,7 @@ Short term: document this (a single transcendental at high `M` is one of the
 most expensive calls in the library). Long term: a lazy expression DAG with
 hashing could automate CSE, but that is a large architectural change.
 
-### B. Loop-fallback performance for very large `M`
+### C. Loop-fallback performance for very large `M`
 
 When the stencil budget is exceeded the loop kernel recomputes `flatIndex`/
 sub-index decompositions per call. For the upper end of the many-variable range
