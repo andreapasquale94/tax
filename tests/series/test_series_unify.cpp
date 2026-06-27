@@ -4,9 +4,17 @@
 #include <cmath>
 #include <tax/tax.hpp>
 
-// The new basis-generic carrier over TaylorBasis must reproduce the legacy
-// TaylorExpansion bit-for-bit (same monomial layout, same kernels) — this is
-// the "folding onto the Basis abstraction" made checkable.
+// After the destructive merge, `TaylorExpansion` IS `Expansion` over TaylorBasis
+// — one class, not two that happen to agree.
+static_assert(
+    std::is_same_v< tax::TaylorExpansion< double, tax::IsotropicScheme< 5, 2 > >,
+                    tax::Expansion< double, tax::TaylorBasis, tax::IsotropicScheme< 5, 2 > > > );
+static_assert(
+    std::is_same_v< tax::TE< 4 >,
+                    tax::Expansion< double, tax::TaylorBasis, tax::IsotropicScheme< 4, 1 > > > );
+
+// The basis-generic carrier over TaylorBasis must still reproduce the same
+// monomial mathematics through the shared kernels.
 
 TEST( SeriesUnify, TaylorBasisMatchesLegacyUnivariate )
 {
@@ -44,13 +52,10 @@ TEST( SeriesUnify, TaylorBasisMatchesLegacyMultivariate )
 
 TEST( SeriesUnify, IoStreamsInBasis )
 {
-    auto x = tax::TaylorSeries< 3 >::variable();
-    auto f = 1.0 + 2.0 * x;  // monomial labels
-    EXPECT_EQ( tax::to_string( f ), "1 + 2*x" );
-
+    // The generic series IO labels terms in the basis (here Chebyshev).
     tax::ChebyshevSeries< 2 > g{ std::array< double, 3 >{ 1.0, 0.0, 3.0 } };
     EXPECT_EQ( tax::to_string( g ), "1 + 3*T_2" );
 
-    tax::TaylorSeries< 2 > zero{};
+    tax::ChebyshevSeries< 2 > zero{};
     EXPECT_EQ( tax::to_string( zero ), "0" );
 }

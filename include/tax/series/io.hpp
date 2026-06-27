@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string>
 #include <tax/series/series.hpp>
+#include <tax/series/taylor_basis.hpp>
+#include <type_traits>
 
 namespace tax
 {
@@ -12,7 +14,7 @@ namespace tax
 /// "1 + 2*T_1 + 3*T_2". Zero coefficients are omitted; the zero series prints
 /// as "0".
 template < typename T, typename B, typename Scheme >
-    requires( Scheme::isUnivariate )
+    requires( Scheme::isUnivariate && !std::is_same_v< B, TaylorBasis > )
 [[nodiscard]] std::string to_string( const Expansion< T, B, Scheme >& f )
 {
     std::ostringstream os;
@@ -33,7 +35,7 @@ template < typename T, typename B, typename Scheme >
 }
 
 template < typename T, typename B, typename Scheme >
-    requires( Scheme::isUnivariate )
+    requires( Scheme::isUnivariate && !std::is_same_v< B, TaylorBasis > )
 std::ostream& operator<<( std::ostream& os, const Expansion< T, B, Scheme >& f )
 {
     return os << to_string( f );

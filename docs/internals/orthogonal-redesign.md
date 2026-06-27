@@ -135,29 +135,42 @@ being runtime rather than `constexpr`. Pure-algebraic Chebyshev ops (`*`,
 
 ## How the existing types fit
 
-The legacy `tax::TaylorExpansion<T, Scheme, Storage>` is the *feature-rich*
-Taylor instance of this same idea — its `Scheme` already owns the product
-(`Scheme::cauchyProduct`), and it carries the named-axis / sparse / batch / Eigen
-ecosystem. `Expansion<T, TaylorBasis, Scheme>` is the same mathematics on the
-generic carrier; the bridge test (`test_series_unify`) confirms they agree
-coefficient-for-coefficient for `+`, `*`, and the transcendentals, univariate
-and multivariate. The legacy type is retained (not deleted) precisely because of
-that ecosystem; a literal alias merge would force the basis-generic carrier to
-carry Taylor-only value semantics (`k!`-scaled derivative *values*, gradient /
-Hessian) that don't generalise — so the unification is by **shared kernels +
-proven equivalence**, not by collapsing the class.
+The merge is **done**: there is one class, `Expansion<T, Basis, Scheme,
+Storage>`, and
+
+```cpp
+template < typename T, typename Scheme, typename Storage = storage::Dense >
+using TaylorExpansion = Expansion< T, TaylorBasis, Scheme, Storage >;
+```
+
+is a transparent alias (a `static_assert` in `test_series_unify` pins the type
+identity). The whole legacy ecosystem — named axes, mixed-order, sparse storage,
+`Batch` coefficients, the Eigen `NumTraits` / gradient / Jacobian surface, and
+every existing operator — now rides on the unified class unchanged, because the
+Taylor instance reproduces the previous behaviour exactly:
+
+- the basis-specific operations (`eval`, `deriv`, `integ`) delegate to
+  `TaylorBasis`, which is the same monomial arithmetic the class used inline;
+- the Taylor-only *value* semantics that don't generalise (`k!`-scaled
+  derivative values, `gradient`, `hessian`, displacement `eval`) remain members
+  — they are simply not part of the basis-generic contract;
+- the legacy free operators stay authoritative for `TaylorBasis`; the
+  basis-generic operator surface (`series/operators.hpp`) is gated on
+  `!is_same_v<B, TaylorBasis>`, so Chebyshev (and future families) get their own
+  non-conflicting set.
+
+Sparse storage remains `TaylorBasis`-only (a `static_assert` enforces it);
+generalising the sparse recurrences to other families is future work.
 
 ## Roadmap
 
-- **Migrate the ecosystem onto `Expansion`**: sparse `Storage`, `Batch`
-  coefficients, named axes, and `tax::la` (Eigen `NumTraits`, gradient /
-  Jacobian) for the basis-generic carrier — then `TaylorExpansion` can become a
-  thin convenience layer over `Expansion<…, TaylorBasis, …>`.
 - **More families**: Legendre, Hermite, Laguerre — each is one policy
   (recurrence-defined product + Gauss-quadrature evaluation/projection).
 - **Transcendentals in any basis, exactly**: solve `y' = g'·y` etc. as a banded
   linear system in coefficient space (replacing Chebyshev's sample-and-fit with
   a `constexpr` exact path); multivariate Chebyshev composition.
-- **Per-axis Chebyshev domains** and spectral utilities (Clenshaw–Curtis
-  quadrature, rootfinding, adaptive degree).
+- **Chebyshev on the ecosystem**: named axes, sparse, and `tax::la` for
+  non-Taylor bases; per-axis Chebyshev domains.
+- **Spectral utilities**: Clenshaw–Curtis quadrature, rootfinding, adaptive
+  degree.
 ```
