@@ -1,8 +1,10 @@
 #pragma once
 
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <string_view>
+#include <tax/core/scheme/isotropic.hpp>
 
 namespace tax
 {
@@ -51,11 +53,23 @@ namespace tax
 // per basis and are supplied by free functions constrained on the policy.
 // ===========================================================================
 
-/// Marks `B` as a tax basis policy. A policy opts in with `is_tax_basis = true`.
+/// Conforming basis policy: opts in with `is_tax_basis`, names itself, and
+/// supplies the four scheme-templated operations the carrier delegates to
+/// (checked here against a representative scheme so a malformed policy fails at
+/// the concept boundary, not deep inside instantiation).
 template < typename B >
-concept Basis = requires {
-    { B::is_tax_basis } -> std::convertible_to< bool >;
-    { B::name() } -> std::convertible_to< std::string_view >;
-} && B::is_tax_basis;
+concept Basis =
+    requires {
+        { B::is_tax_basis } -> std::convertible_to< bool >;
+        { B::name() } -> std::convertible_to< std::string_view >;
+    } && B::is_tax_basis &&
+    requires( std::array< double, IsotropicScheme< 2, 1 >::nCoeff > c, std::array< double, 1 > x ) {
+        B::template product< double, IsotropicScheme< 2, 1 > >( c, c, c );
+        {
+            B::template eval< double, IsotropicScheme< 2, 1 > >( c, x )
+        } -> std::convertible_to< double >;
+        B::template derivative< double, IsotropicScheme< 2, 1 > >( c, c, 0 );
+        B::template integral< double, IsotropicScheme< 2, 1 > >( c, c, 0 );
+    };
 
 }  // namespace tax

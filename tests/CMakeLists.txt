@@ -57,6 +57,9 @@ tax_add_test(test_series_chebyshev   SOURCES series/test_series_chebyshev.cpp)
 tax_add_test(test_chebyshev_math     SOURCES series/test_chebyshev_math.cpp)
 tax_add_test(test_series_convert     SOURCES series/test_series_convert.cpp)
 tax_add_test(test_chebyshev_interp   SOURCES series/test_chebyshev_interp.cpp)
+tax_add_test(test_series_unify       SOURCES series/test_series_unify.cpp)
+tax_add_test(test_chebyshev_domain   SOURCES series/test_chebyshev_domain.cpp)
+tax_add_test(test_series_multivar    SOURCES series/test_series_multivar.cpp)
 
 # Eigen integration — slice 11
 tax_add_test(test_eigen_numtraits   SOURCES eigen/test_eigen_numtraits.cpp)

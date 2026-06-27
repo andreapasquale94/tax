@@ -8,15 +8,16 @@
 namespace tax
 {
 
-/// Human-readable series in its own basis, e.g. "1 + 2*x + 3*x^2" or
+/// Human-readable univariate series in its own basis, e.g. "1 + 2*x + 3*x^2" or
 /// "1 + 2*T_1 + 3*T_2". Zero coefficients are omitted; the zero series prints
 /// as "0".
-template < typename B, int N, typename T >
-[[nodiscard]] std::string to_string( const Series< B, N, T >& f )
+template < typename T, typename B, typename Scheme >
+    requires( Scheme::isUnivariate )
+[[nodiscard]] std::string to_string( const Expansion< T, B, Scheme >& f )
 {
     std::ostringstream os;
     bool first = true;
-    for ( int k = 0; k <= N; ++k )
+    for ( int k = 0; k <= Scheme::order; ++k )
     {
         const T ck = f[std::size_t( k )];
         if ( ck == T{ 0 } ) continue;
@@ -31,8 +32,9 @@ template < typename B, int N, typename T >
     return os.str();
 }
 
-template < typename B, int N, typename T >
-std::ostream& operator<<( std::ostream& os, const Series< B, N, T >& f )
+template < typename T, typename B, typename Scheme >
+    requires( Scheme::isUnivariate )
+std::ostream& operator<<( std::ostream& os, const Expansion< T, B, Scheme >& f )
 {
     return os << to_string( f );
 }

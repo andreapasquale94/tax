@@ -1,33 +1,42 @@
 #pragma once
 
 #include <array>
-#include <cmath>
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <tax/core/multi_index.hpp>
+#include <tax/core/scheme/concept.hpp>
 #include <tax/series/basis.hpp>
 
 namespace tax
 {
 
 // ===========================================================================
-// ChebyshevBasis — Chebyshev polynomials of the first kind  P_k(x) = T_k(x)
+// ChebyshevBasisOn< Lo, Hi > — Chebyshev polynomials of the first kind T_k,
+// mapped onto the interval [Lo, Hi] (tensored over variables).
 // ===========================================================================
 //
-// Stores  f = sum_{k=0}^{N} c_k T_k(x)  with the *plain* (un-normalised)
-// convention — no factor of 1/2 on the constant term. Every coefficient-space
-// routine below is derived for that convention and unit-tested against closed
-// forms.
+// Stores  f(x) = Σ_α c_α Π_i T_{α_i}( u(x_i) )  in the plain (un-normalised)
+// convention, where  u(x) = (2x − (Hi+Lo)) / (Hi−Lo)  maps [Lo,Hi] → [−1,1].
+// The domain lives in the *type* (floating-point NTTP), so two models on
+// different intervals are different types and cannot be silently mixed; the
+// canonical default `ChebyshevBasis` is [−1, 1].
 //
-// Identities used:
-//   T_0 = 1, T_1 = x, T_{k+1} = 2x T_k - T_{k-1}            (recurrence)
-//   T_i T_j = (T_{i+j} + T_{|i-j|}) / 2                     (product)
-//   evaluation by Clenshaw recurrence
+// 1-D identities (in the canonical variable u):
+//   T_0 = 1, T_1 = u, T_{k+1} = 2u T_k − T_{k−1}
+//   T_i T_j = (T_{i+j} + T_{|i−j|}) / 2
+// The multivariate product is the tensor of the 1-D product:
+//   T_α T_β = 2^{−M} Σ_{s∈{+,−}^M} T_{γ(s)},  γ_i(+) = α_i+β_i,  γ_i(−) = |α_i−β_i|.
+// Derivative / integral act one axis at a time by the 1-D recurrences, with the
+// affine chain-rule factor du/dx = 2/(Hi−Lo).
 // ===========================================================================
 
-struct ChebyshevBasis
+template < double Lo, double Hi >
+struct ChebyshevBasisOn
 {
     static constexpr bool is_tax_basis = true;
+    static constexpr double domainLo = Lo;
+    static constexpr double domainHi = Hi;
 
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "chebyshev"; }
 
@@ -37,88 +46,191 @@ struct ChebyshevBasis
         return "T_" + std::to_string( k );
     }
 
-    /// Truncated Chebyshev product via  T_i T_j = (T_{i+j} + T_{|i-j|})/2.
-    /// Modes with i+j > N fold only their |i-j| part back into range; the
-    /// out-of-range sum part is dropped (the inherent truncation).
-    template < typename T, int N >
-    static constexpr void product( std::array< T, std::size_t( N ) + 1 >& out,
-                                   const std::array< T, std::size_t( N ) + 1 >& a,
-                                   const std::array< T, std::size_t( N ) + 1 >& b ) noexcept
+    /// Map a physical coordinate to the canonical variable u ∈ [−1, 1].
+    template < typename T >
+    [[nodiscard]] static constexpr T toCanonical( T x ) noexcept
     {
+        return ( T( 2 ) * x - T( Hi + Lo ) ) / T( Hi - Lo );
+    }
+
+    /// du/dx — the chain-rule factor applied per differentiation.
+    template < typename T >
+    [[nodiscard]] static constexpr T canonicalSlope() noexcept
+    {
+        return T( 2 ) / T( Hi - Lo );
+    }
+
+    // ------------------------------------------------------------------
+    // Tensor Chebyshev product
+    // ------------------------------------------------------------------
+    template < typename T, typename Scheme >
+    static constexpr void product( std::array< T, Scheme::nCoeff >& out,
+                                   const std::array< T, Scheme::nCoeff >& a,
+                                   const std::array< T, Scheme::nCoeff >& b ) noexcept
+    {
+        constexpr int M = Scheme::vars;
         out = {};
-        for ( int i = 0; i <= N; ++i )
+        T scale = T{ 1 };
+        for ( int d = 0; d < M; ++d ) scale *= T( 0.5 );
+
+        for ( std::size_t i = 0; i < Scheme::nCoeff; ++i )
         {
-            if ( a[std::size_t( i )] == T{ 0 } ) continue;
-            for ( int j = 0; j <= N; ++j )
+            if ( a[i] == T{ 0 } ) continue;
+            const MultiIndex< M > alpha = Scheme::multiOf( i );
+            for ( std::size_t j = 0; j < Scheme::nCoeff; ++j )
             {
-                const T p = T( 0.5 ) * a[std::size_t( i )] * b[std::size_t( j )];
-                if ( p == T{ 0 } ) continue;
-                const int s = i + j;
-                if ( s <= N ) out[std::size_t( s )] += p;
-                out[std::size_t( i < j ? j - i : i - j )] += p;
+                if ( b[j] == T{ 0 } ) continue;
+                const MultiIndex< M > beta = Scheme::multiOf( j );
+                const T base = scale * a[i] * b[j];
+                // Enumerate the 2^M sign combinations of the per-axis fold.
+                const unsigned combos = 1u << unsigned( M );
+                for ( unsigned mask = 0; mask < combos; ++mask )
+                {
+                    MultiIndex< M > gamma{};
+                    for ( int d = 0; d < M; ++d )
+                    {
+                        const int ad = alpha[std::size_t( d )];
+                        const int bd = beta[std::size_t( d )];
+                        gamma[std::size_t( d )] = ( mask >> unsigned( d ) ) & 1u
+                                                      ? ad + bd
+                                                      : ( ad < bd ? bd - ad : ad - bd );
+                    }
+                    const std::size_t kk = Scheme::flatOf( gamma );
+                    if ( kk != Scheme::kNotInBox ) out[kk] += base;
+                }
             }
         }
     }
 
-    /// Clenshaw evaluation of  f(x) = sum_k c_k T_k(x).
-    template < typename T, int N >
-    [[nodiscard]] static constexpr T eval( const std::array< T, std::size_t( N ) + 1 >& c,
-                                           T x ) noexcept
+    // ------------------------------------------------------------------
+    // Evaluation
+    // ------------------------------------------------------------------
+    template < typename T, typename Scheme >
+    [[nodiscard]] static constexpr T eval(
+        const std::array< T, Scheme::nCoeff >& c,
+        const std::array< T, std::size_t( Scheme::vars ) >& x ) noexcept
     {
-        T b1 = T{ 0 };
-        T b2 = T{ 0 };
-        const T two_x = T( 2 ) * x;
-        for ( int k = N; k >= 1; --k )
+        constexpr int N = Scheme::order;
+        constexpr int M = Scheme::vars;
+        // Per-axis Chebyshev value table Tt[i][m] = T_m( u(x_i) ).
+        std::array< std::array< T, std::size_t( N ) + 1 >, std::size_t( M ) > Tt{};
+        for ( int i = 0; i < M; ++i )
         {
-            const T bk = c[std::size_t( k )] + two_x * b1 - b2;
-            b2 = b1;
-            b1 = bk;
+            const T u = toCanonical( x[std::size_t( i )] );
+            Tt[std::size_t( i )][0] = T{ 1 };
+            if constexpr ( N >= 1 ) Tt[std::size_t( i )][1] = u;
+            for ( int m = 2; m <= N; ++m )
+                Tt[std::size_t( i )][std::size_t( m )] =
+                    T( 2 ) * u * Tt[std::size_t( i )][std::size_t( m - 1 )] -
+                    Tt[std::size_t( i )][std::size_t( m - 2 )];
         }
-        return c[0] + x * b1 - b2;
+        T r{};
+        for ( std::size_t k = 0; k < Scheme::nCoeff; ++k )
+        {
+            if ( c[k] == T{ 0 } ) continue;
+            const MultiIndex< M > alpha = Scheme::multiOf( k );
+            T term = c[k];
+            for ( int i = 0; i < M; ++i )
+                term *= Tt[std::size_t( i )][std::size_t( alpha[std::size_t( i )] )];
+            r += term;
+        }
+        return r;
     }
 
-    /// Coefficient-space derivative (Chebyshev "chder" recurrence, plain
-    /// convention): given c (degree N) produce the degree-(N-1) coefficients of
-    /// f'(x), stored back into an order-N array with the top term zero.
-    template < typename T, int N >
-    static constexpr void derivative( std::array< T, std::size_t( N ) + 1 >& out,
-                                      const std::array< T, std::size_t( N ) + 1 >& c ) noexcept
+    // ------------------------------------------------------------------
+    // Per-axis derivative / integral (fiber-wise 1-D recurrences)
+    // ------------------------------------------------------------------
+    template < typename T, typename Scheme >
+    static constexpr void derivative( std::array< T, Scheme::nCoeff >& out,
+                                      const std::array< T, Scheme::nCoeff >& c, int axis ) noexcept
     {
         out = {};
-        if constexpr ( N >= 1 )
-        {
-            // out[k] = (k+2 <= N ? out[k+2] : 0) + 2(k+1) c[k+1], walked downwards.
-            for ( int k = N - 1; k >= 0; --k )
-            {
-                T v = T( 2 * ( k + 1 ) ) * c[std::size_t( k + 1 )];
-                if ( k + 2 <= N ) v += out[std::size_t( k + 2 )];
-                out[std::size_t( k )] = v;
-            }
-            out[0] *= T( 0.5 );
-        }
+        const T slope = canonicalSlope< T >();
+        forEachFiber< T, Scheme >(
+            c, axis,
+            [&]( const std::array< T, std::size_t( Scheme::order ) + 1 >& a, int L,
+                 std::array< T, std::size_t( Scheme::order ) + 1 >& b ) {
+                // chder (plain convention): degree-(L-1) input -> derivative.
+                b = {};
+                if ( L >= 2 )
+                {
+                    for ( int m = L - 2; m >= 0; --m )
+                    {
+                        T v = T( 2 * ( m + 1 ) ) * a[std::size_t( m + 1 )];
+                        if ( m + 2 <= L - 1 ) v += b[std::size_t( m + 2 )];
+                        b[std::size_t( m )] = v;
+                    }
+                    b[0] *= T( 0.5 );
+                }
+                for ( int m = 0; m < L; ++m ) b[std::size_t( m )] *= slope;
+            },
+            out );
     }
 
-    /// Coefficient-space indefinite integral (constant of integration 0), plain
-    /// convention. Inverse of `derivative` up to the integration constant:
-    ///   B_1 = c_0 - c_2/2,   B_k = (c_{k-1} - c_{k+1}) / (2k)  for k >= 2.
-    template < typename T, int N >
-    static constexpr void integral( std::array< T, std::size_t( N ) + 1 >& out,
-                                    const std::array< T, std::size_t( N ) + 1 >& c ) noexcept
+    template < typename T, typename Scheme >
+    static constexpr void integral( std::array< T, Scheme::nCoeff >& out,
+                                    const std::array< T, Scheme::nCoeff >& c, int axis ) noexcept
     {
         out = {};
-        if constexpr ( N >= 1 )
+        const T inv_slope = T{ 1 } / canonicalSlope< T >();  // dx/du = (Hi-Lo)/2
+        forEachFiber< T, Scheme >(
+            c, axis,
+            [&]( const std::array< T, std::size_t( Scheme::order ) + 1 >& a, int L,
+                 std::array< T, std::size_t( Scheme::order ) + 1 >& b ) {
+                // chint (plain convention), constant of integration 0.
+                b = {};
+                if ( L >= 2 )
+                {
+                    b[1] = a[0];
+                    if ( L >= 3 ) b[1] -= T( 0.5 ) * a[2];
+                    for ( int m = 2; m <= L - 1; ++m )
+                    {
+                        T v = a[std::size_t( m - 1 )];
+                        if ( m + 1 <= L - 1 ) v -= a[std::size_t( m + 1 )];
+                        b[std::size_t( m )] = v / T( 2 * m );
+                    }
+                }
+                for ( int m = 0; m < L; ++m ) b[std::size_t( m )] *= inv_slope;
+            },
+            out );
+    }
+
+   private:
+    // Walk every fiber along `axis` (lines of constant other-axis indices),
+    // hand the 1-D coefficient run to `op`, and scatter the transformed run.
+    template < typename T, typename Scheme, typename Op >
+    static constexpr void forEachFiber( const std::array< T, Scheme::nCoeff >& c, int axis, Op&& op,
+                                        std::array< T, Scheme::nCoeff >& out ) noexcept
+    {
+        constexpr int M = Scheme::vars;
+        constexpr std::size_t MAXL = std::size_t( Scheme::order ) + 1;
+        for ( std::size_t k = 0; k < Scheme::nCoeff; ++k )
         {
-            out[1] = c[0];
-            if constexpr ( N >= 2 ) out[1] -= T( 0.5 ) * c[2];
-            for ( int k = 2; k <= N; ++k )
+            MultiIndex< M > base = Scheme::multiOf( k );
+            if ( base[std::size_t( axis )] != 0 ) continue;  // only fiber origins
+            // Gather the contiguous run along the axis.
+            std::array< T, MAXL > a{};
+            std::array< std::size_t, MAXL > slot{};
+            int L = 0;
+            for ( int m = 0; m < int( MAXL ); ++m )
             {
-                T v = c[std::size_t( k - 1 )];
-                if ( k + 1 <= N ) v -= c[std::size_t( k + 1 )];
-                out[std::size_t( k )] = v / T( 2 * k );
+                MultiIndex< M > idx = base;
+                idx[std::size_t( axis )] = m;
+                const std::size_t kk = Scheme::flatOf( idx );
+                if ( kk == Scheme::kNotInBox ) break;
+                a[std::size_t( m )] = c[kk];
+                slot[std::size_t( m )] = kk;
+                ++L;
             }
+            std::array< T, MAXL > b{};
+            op( a, L, b );
+            for ( int m = 0; m < L; ++m ) out[slot[std::size_t( m )]] = b[std::size_t( m )];
         }
     }
 };
+
+/// Canonical Chebyshev basis on [−1, 1].
+using ChebyshevBasis = ChebyshevBasisOn< -1.0, 1.0 >;
 
 static_assert( Basis< ChebyshevBasis > );
 

@@ -2,27 +2,25 @@
 
 #include <array>
 #include <cstddef>
+#include <tax/core/scheme/isotropic.hpp>
 #include <tax/series/series.hpp>
 
 namespace tax
 {
 
 // ===========================================================================
-// Exact basis conversion between the Taylor (monomial) and Chebyshev families.
-//
-// A degree-N polynomial has an exact representation in either basis, so these
-// conversions are lossless for the kept modes. They are the bridge that lets a
-// function built in one basis (e.g. exp via the Taylor recurrences) be moved
-// into the other.
+// Exact basis conversion between the Taylor (monomial) and Chebyshev families
+// (univariate). A degree-N polynomial has an exact image in either basis, so
+// these are lossless for the kept modes — the bridge that lets a function built
+// in one basis be moved into the other.
 // ===========================================================================
 
-/// Monomial coefficients -> Chebyshev coefficients.
-/// Builds the Chebyshev image of each power x^k by repeatedly multiplying by
-/// x == T_1 with the Chebyshev product, then accumulates.
-template < int N, typename T >
-[[nodiscard]] constexpr ChebyshevSeries< N, T > toChebyshev(
-    const TaylorSeries< N, T >& f ) noexcept
+/// Monomial coefficients -> Chebyshev coefficients (canonical [-1,1]).
+template < int N, typename T = double >
+[[nodiscard]] constexpr ChebyshevSeries< N, 1, T > toChebyshev(
+    const TaylorSeries< N, 1, T >& f ) noexcept
 {
+    using Iso = IsotropicScheme< N, 1 >;
     using Arr = std::array< T, std::size_t( N ) + 1 >;
     Arr out{};
     Arr xpow{};
@@ -38,18 +36,17 @@ template < int N, typename T >
         if ( k < N )
         {
             Arr next{};
-            ChebyshevBasis::template product< T, N >( next, xpow, xcheb );
+            ChebyshevBasis::template product< T, Iso >( next, xpow, xcheb );
             xpow = next;
         }
     }
-    return ChebyshevSeries< N, T >{ out };
+    return ChebyshevSeries< N, 1, T >{ out };
 }
 
-/// Chebyshev coefficients -> monomial coefficients.
-/// Generates the monomial image of each T_k via the three-term recurrence
-/// T_{k+1} = 2x T_k - T_{k-1}, then accumulates.
-template < int N, typename T >
-[[nodiscard]] constexpr TaylorSeries< N, T > toTaylor( const ChebyshevSeries< N, T >& f ) noexcept
+/// Chebyshev coefficients -> monomial coefficients (canonical [-1,1]).
+template < int N, typename T = double >
+[[nodiscard]] constexpr TaylorSeries< N, 1, T > toTaylor(
+    const ChebyshevSeries< N, 1, T >& f ) noexcept
 {
     using Arr = std::array< T, std::size_t( N ) + 1 >;
     Arr out{};
@@ -65,7 +62,7 @@ template < int N, typename T >
         for ( int k = 2; k <= N; ++k )
         {
             Arr next{};
-            // next = 2 * x * cur - prev   (x* == shift coefficients up by one)
+            // next = 2 x cur - prev   (x* == shift coefficients up by one)
             for ( int i = N; i >= 1; --i )
                 next[std::size_t( i )] = T{ 2 } * cur[std::size_t( i - 1 )];
             for ( std::size_t i = 0; i < next.size(); ++i ) next[i] -= prev[i];
@@ -74,7 +71,7 @@ template < int N, typename T >
             cur = next;
         }
     }
-    return TaylorSeries< N, T >{ out };
+    return TaylorSeries< N, 1, T >{ out };
 }
 
 }  // namespace tax
