@@ -1,11 +1,11 @@
 # Kernels & Recurrences
 
 The kernel layer is where the math lives in code. Each function in
-`tax/kernels/` implements one of the degree-by-degree recurrence relations
-from [Recurrence Relations](recurrences.md), operating on raw coefficient
-buffers rather than the user-facing `TaylorExpansion` type. The operator layer
-in `tax/operators/` is a thin wrapper that calls a kernel and returns a fresh
-`TaylorExpansion`.
+`tax/expansion/detail/` implements one of the degree-by-degree recurrence
+relations from [Recurrence Relations](recurrences.md), operating on raw
+coefficient buffers rather than the user-facing `TaylorExpansion` type. The
+operator layer in `tax/expansion/ops/` is a thin wrapper that calls a kernel
+and returns a fresh `TaylorExpansion`.
 
 ---
 
@@ -13,15 +13,16 @@ in `tax/operators/` is a thin wrapper that calls a kernel and returns a fresh
 
 | Header | Kernels | Operations |
 |---|---|---|
-| `tax/kernels/cauchy.hpp` | `seriesCauchy`, `seriesCauchyAccumulate`, `seriesSquare`, `seriesCube` | multiplication, integer powers |
-| `tax/kernels/cauchy_unroll.hpp` | unrolled `M==1` Dense Cauchy | tight univariate hot path (`TAX_USE_UNROLL`) |
-| `tax/kernels/cauchy_stencil.hpp` | precomputed stencil-driven `M≥2` Dense Cauchy | multivariate hot path (`TAX_USE_STENCIL`) |
-| `tax/kernels/recurrence_stencil.hpp` | `RecurrenceStencil`, `forEachRecurrenceRow` | shared decomposition table driving every `M≥2` recurrence |
-| `tax/kernels/algebra.hpp` | `seriesReciprocal`, `seriesSqrt`, `seriesCbrt`, `seriesSquare`, `seriesCube` | algebraic recurrences |
-| `tax/kernels/trigonometric.hpp` | coupled `seriesSinCos`, `seriesTan`, inverse trig | trig and inverse trig |
-| `tax/kernels/transcendental.hpp` | `seriesExp`, `seriesLog`, `seriesSinhCosh`, `seriesTanh`, `seriesErf`, `seriesPow` | exp/log/hyperbolic/erf/power |
-| `tax/kernels/sparse_cauchy.hpp` | `seriesCauchy` for the sparse storage | multiplication on sparse polynomials |
-| `tax/kernels/sparse_subs.hpp` | shared sparse subroutines (add/sub merges, etc.) | sparse arithmetic helpers |
+| `tax/expansion/detail/cauchy.hpp` | `seriesCauchy`, `seriesCauchyAccumulate`, `seriesSquare`, `seriesCube` | multiplication, integer powers |
+| `tax/expansion/detail/cauchy_unroll.hpp` | unrolled `M==1` Dense Cauchy | tight univariate hot path (`TAX_USE_UNROLL`) |
+| `tax/expansion/detail/cauchy_stencil.hpp` | precomputed stencil-driven `M≥2` Dense Cauchy | multivariate hot path (`TAX_USE_STENCIL`) |
+| `tax/expansion/detail/recurrence_stencil.hpp` | `RecurrenceStencil`, `forEachRecurrenceRow` | shared decomposition table driving every `M≥2` recurrence |
+| `tax/expansion/detail/stencil_config.hpp` | `TAX_USE_UNROLL`, `TAX_USE_STENCIL`, `TAX_STENCIL_MAX_BYTES` | in-header kernel-dispatch configuration |
+| `tax/expansion/detail/algebra.hpp` | `seriesReciprocal`, `seriesSqrt`, `seriesCbrt`, `seriesSquare`, `seriesCube` | algebraic recurrences |
+| `tax/expansion/detail/trigonometric.hpp` | coupled `seriesSinCos`, `seriesTan`, inverse trig | trig and inverse trig |
+| `tax/expansion/detail/transcendental.hpp` | `seriesExp`, `seriesLog`, `seriesSinhCosh`, `seriesTanh`, `seriesErf`, `seriesPow` | exp/log/hyperbolic/erf/power |
+| `tax/expansion/detail/sparse_cauchy.hpp` | `seriesCauchy` for the sparse storage | multiplication on sparse polynomials |
+| `tax/expansion/detail/sparse_subs.hpp` | shared sparse subroutines (add/sub merges, etc.) | sparse arithmetic helpers |
 
 ---
 
@@ -42,7 +43,8 @@ Every recurrence picks one of two paths via `if constexpr (M == 1)`:
   [Recurrence Relations](recurrences.md) needs; the weight
   ($1$, $|\beta|$, $|\gamma|$, $c|\beta| - |\gamma|$, …) stays in the kernel.
 
-With `TAX_USE_STENCIL=1` (the in-header default) the rows come from a
+With `TAX_USE_STENCIL=1` (the in-header default from
+`tax/expansion/detail/stencil_config.hpp`) the rows come from a
 `RecurrenceStencil<N, M>` table built once at first use — no multi-index
 arithmetic remains in the inner loops. The general Cauchy product uses its
 own flat `CauchyStencil` table. With the macro off — and always in constant

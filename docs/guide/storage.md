@@ -85,7 +85,8 @@ class TaylorExpansion<T, Scheme, storage::Sparse>;
 - Addition / subtraction is an $O(\text{nnz}_a + \text{nnz}_b)$ two-pointer
   merge; element lookup is $O(\log \text{nnz})$ via binary search.
 - Multiplication uses the dedicated sparse Cauchy kernel
-  (`tax/kernels/sparse_cauchy.hpp`).
+  (`tax/expansion/detail/sparse_cauchy.hpp`); the sparse operator surface
+  lives in `tax/expansion/ops/sparse.hpp`.
 - A conversion helper is provided:
 
 ```cpp
@@ -117,7 +118,7 @@ ordering effects in the Cauchy sum but the agreement is tested via the
 
 | You're doing | Use |
 |---|---|
-| ODE integration (`tax::ode`)              | Dense (`TE<N>`) — kernels are tuned for it |
+| Tight inner loops over many evaluations   | Dense (`TE<N>`) — kernels are tuned for it |
 | One-off symbolic derivatives, low $N$   | Dense |
 | Reading polynomials produced elsewhere with structural zeros | Sparse |
 | Storing thousands of polynomials in memory at $N \ge 8$ | Sparse |

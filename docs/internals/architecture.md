@@ -12,17 +12,17 @@ eigen           │ NumTraits + variables/value/eval/       │  Eigen interop
                 └────────────────┬────────────────────────┘
                                  │
                 ┌────────────────▼────────────────────────┐
-operators       │ +, −, ·, /, sin, exp, log, sqrt, …      │  user-facing surface
+ops             │ +, −, ·, /, sin, exp, log, sqrt, …      │  user-facing surface
                 └────────────────┬────────────────────────┘
                                  │
                 ┌────────────────▼────────────────────────┐
-kernels         │ degree-by-degree recurrences            │  computational core
+detail/kernels  │ degree-by-degree recurrences            │  computational core
                 │ cauchy, algebra, trig, transcendental,  │
                 │ sparse_cauchy, sparse_subs              │
                 └────────────────┬────────────────────────┘
                                  │
                 ┌────────────────▼────────────────────────┐
-core            │ TaylorExpansion<T,Scheme,Storage>       │  data type
+expansion       │ TaylorExpansion<T,Scheme,Storage>       │  data type
                 │ IndexScheme: IsotropicScheme<N,M>       │
                 │           / MixedScheme<Groups...>      │
                 │ MultiIndex, enumeration, concepts       │
@@ -48,13 +48,14 @@ while `MixedScheme<Groups...>` supports anisotropic per-axis order caps
 
 Both expose the same public API (`value`, `coeff`, `derivative`, `eval`,
 `deriv`, `integ`). `MultiIndex<M>` and the graded-lexicographic flat indexing
-in `tax/core/enumeration.hpp` are storage-agnostic.
+in `tax/expansion/enumeration.hpp` are storage-agnostic.
 
 ---
 
 ## Kernels
 
-Every mathematical recurrence lives in `tax/kernels/`. A kernel takes raw
+Every mathematical recurrence lives in `tax/expansion/detail/` (the private
+kernel layer, `tax::detail::kernels`). A kernel takes raw
 coefficient buffers — `T*` for dense, sorted index/value pairs for sparse —
 plus the compile-time shape $(N, M)$ and writes directly into the result.
 The kernel layer is the one place where the recurrences of
@@ -68,9 +69,14 @@ representation for two-pointer merges.
 
 See [Kernels & Recurrences](kernels.md) for the file-by-file map.
 
-### Build-time toggles
+### Dispatch toggles
 
-| CMake option | What it changes |
+The dispatch macros are configured **in-header** in
+`tax/expansion/detail/stencil_config.hpp` (`TAX_USE_UNROLL`,
+`TAX_USE_STENCIL`, `TAX_STENCIL_MAX_BYTES`) — never injected from the build
+system, so every translation unit sees identical inline definitions (ODR).
+
+| Macro | What it changes |
 |---|---|
 | `TAX_USE_UNROLL`  | Switches the Dense `M == 1` Cauchy kernel to a compile-time-unrolled variant — faster for small $N$. |
 | `TAX_USE_STENCIL` | For Dense `M ≥ 2`, precomputes the sub-multi-index stencil at compile time and reuses it across every Cauchy call. |
@@ -82,7 +88,7 @@ for cross-validation in `tests/kernels/`.
 
 ## Operators
 
-`tax/operators/` is a thin facade that wraps each kernel in a free function
+`tax/expansion/ops/` is a thin facade that wraps each kernel in a free function
 returning a fresh `TaylorExpansion`:
 
 ```cpp
@@ -108,7 +114,7 @@ control-flow predicates that branch on a representative value.
 
 ## Eigen integration
 
-`tax/eigen.hpp` does two things:
+`tax/la.hpp` (namespace `tax::la`, sources under `tax/la/`) does two things:
 
 1. **NumTraits specialisation** so `Eigen::Matrix<TE, R, C>` is a first-class
    Eigen type. Add/mul cost is set to the monomial count so Eigen's

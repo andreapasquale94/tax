@@ -202,7 +202,7 @@ For multivariate dense expansions, on-object convenience helpers are provided:
 ```
 
 Vector-valued counterparts (Jacobian of a vector function) live in
-`tax/eigen.hpp` — see [Eigen / API Reference](eigen.md).
+`tax/la.hpp` — see [Eigen / API Reference](eigen.md).
 
 ---
 

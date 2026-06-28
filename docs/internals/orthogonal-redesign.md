@@ -43,7 +43,7 @@ The carrier is
 ```cpp
 template < typename T, typename Basis, typename Scheme, typename Storage = storage::Dense >
 class tax::Expansion;
-// aliases: Series<Basis,N,T>; TaylorExpansion<T,Scheme>; ChebyshevExpansion<N,M,T>
+// aliases: Series<Basis,N,M,T>; TaylorExpansion<T,Scheme>; ChebyshevExpansion<N,M,T>
 ```
 
 It owns the `std::array<T, Scheme::nCoeff>` and everything **basis-independent**:
@@ -66,7 +66,7 @@ checks they agree coefficient-for-coefficient, univariate **and** multivariate.
 Wired straight onto the **existing kernel layer**: the product calls the
 library's `cauchyProduct` and the transcendental surface (`exp`, `sin`, `sqrt`,
 …) delegates to the existing univariate `series*` recurrence kernels — a
-`Series<TaylorBasis,N,T>` carries the exact same coefficient layout as
+`Series<TaylorBasis,N,1,T>` carries the exact same coefficient layout as
 `IsotropicScheme<N,1>`. This proves the policy *wraps* the engine rather than
 duplicating it: the new Taylor series gets the whole elementary-function
 catalogue and the unrolled hot path for free.
@@ -145,7 +145,7 @@ using TaylorExpansion = Expansion< T, TaylorBasis, Scheme, Storage >;
 
 is a transparent alias (a `static_assert` in `test_series_unify` pins the type
 identity). The whole legacy ecosystem — named axes, mixed-order, sparse storage,
-`Batch` coefficients, the Eigen `NumTraits` / gradient / Jacobian surface, and
+the Eigen `NumTraits` / gradient / Jacobian surface, and
 every existing operator — now rides on the unified class unchanged, because the
 Taylor instance reproduces the previous behaviour exactly:
 
@@ -155,7 +155,7 @@ Taylor instance reproduces the previous behaviour exactly:
   derivative values, `gradient`, `hessian`, displacement `eval`) remain members
   — they are simply not part of the basis-generic contract;
 - the legacy free operators stay authoritative for `TaylorBasis`; the
-  basis-generic operator surface (`series/operators.hpp`) is gated on
+  basis-generic operator surface (`bases/operators.hpp`) is gated on
   `!is_same_v<B, TaylorBasis>`, so Chebyshev (and future families) get their own
   non-conflicting set.
 
@@ -172,7 +172,7 @@ generalising the sparse recurrences to other families is future work.
 | Hermite (He_n)    | ✓                     | ✓            | ✓         | ✓          |
 
 Legendre and Hermite are driven by a **generic orthogonal engine**
-(`series/ortho.hpp`): a family supplies only its three-term recurrence
+(`bases/ortho.hpp`): a family supplies only its three-term recurrence
 `x·P_n = α_n P_{n+1} + β_n P_n + γ_n P_{n-1}` (`Rec::xmul`), and the engine
 derives multiplication-by-coordinate (Jacobi operator), the truncated product
 (multiply-by-P_n ladder, tensored over axes) and evaluation; the basis adds its
@@ -191,8 +191,8 @@ point-form operators.
 - **Transcendentals in any basis, exactly**: solve `y' = g'·y` etc. as a banded
   linear system in coefficient space (replacing Chebyshev's sample-and-fit with
   a `constexpr` exact path); multivariate Chebyshev composition.
-- **Sparse / Batch for non-Taylor**: generalise the sparse recurrences and SIMD
-  batch coefficients beyond `TaylorBasis`.
+- **Sparse for non-Taylor**: generalise the sparse recurrences beyond
+  `TaylorBasis`.
 - **Spectral utilities**: Clenshaw–Curtis / Gauss quadrature, rootfinding,
   adaptive degree; per-axis Chebyshev domains.
 ```

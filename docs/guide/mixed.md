@@ -200,15 +200,9 @@ For the classical joint-simplex named layer (same order on all axes) see
   `Group<3, 4>` group keeps all monomials in its three variables whose total
   degree (within those three variables) is ≤ 4. The per-axis cap operates
   *across* groups, not *within* a single multi-dimensional group.
-- **Batch coefficients.** `Batch<T, K>` (SIMD lanes) and `MixedScheme` are
-  structurally compatible, but `BoxTE<…>` with a `Batch` scalar is not a
-  shipped convenience alias. If you need ensemble propagation on a mixed-order
-  box, construct the `TaylorExpansion<Batch<double,K>, MixedScheme<…>>` type
-  directly.
 - **Full math surface.** Because `BoxTE` is a `TaylorExpansion`, every
   operator and math function that works for `TE` also works for `BoxTE`: the
   kernel dispatch is driven by the scheme's `cauchyProduct` /
   `forEachRecurrenceRow`, not by any special-casing in the operator layer.
 
-See also [Batch (SIMD) Coefficients](batch.md) for the lane-parallel form and
-[Named Expansions](named.md) for the joint-simplex named layer.
+See also [Named Expansions](named.md) for the joint-simplex named layer.

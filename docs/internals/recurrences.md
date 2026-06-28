@@ -1,6 +1,6 @@
 # Recurrence Relations
 
-This page is the **recurrence reference** for **tax**: for every supported operation it gives the degree-by-degree recurrence relation used to propagate truncated Taylor polynomials. Each entry lists the univariate ($M = 1$) form and its multivariate generalisation, matching the kernels in `include/tax/kernels/`. See [Kernels & Recurrences](kernels.md) for how these are dispatched and implemented.
+This page is the **recurrence reference** for **tax**: for every supported operation it gives the degree-by-degree recurrence relation used to propagate truncated Taylor polynomials. Each entry lists the univariate ($M = 1$) form and its multivariate generalisation, matching the kernels in `include/tax/expansion/detail/`. See [Kernels & Recurrences](kernels.md) for how these are dispatched and implemented.
 
 For the underlying theory — what truncated Taylor polynomials are, the graded-lexicographic coefficient ordering, and how univariate recurrences extend to many variables — see [Foundations & Ordering](../concepts/foundations.md). For truncation-error bounds and convergence diagnostics, see [Convergence & Truncation](../concepts/convergence.md).
 

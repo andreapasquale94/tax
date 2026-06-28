@@ -18,45 +18,66 @@
 ```
 tax/
 ├── include/tax/              # Header-only library (the entire library lives here)
-│   ├── tax.hpp               # Umbrella header — users include only this
+│   ├── tax.hpp               # Umbrella header — users include only this (5 facades)
+│   ├── version.hpp           # Version macros
+│   ├── expansion.hpp         # Facade for the expansion subtree
+│   ├── bases.hpp             # Facade for orthogonal bases + IO-in-basis
 │   ├── la.hpp                # Facade: linear-algebra / Eigen helpers (tax::la)
-│   ├── core/                 # The TaylorExpansion type and its foundations
+│   ├── expansion/            # The carrier type and its foundations
 │   │   ├── concepts.hpp      #   Scalar, TaylorPolynomial, DensePolynomial concepts
 │   │   ├── multi_index.hpp   #   MultiIndex<M>, flatIndex/unflatIndex, numMonomials
 │   │   ├── enumeration.hpp   #   forEachMonomial / forEachSubIndex
+│   │   ├── meta.hpp          #   template metaprogramming helpers
+│   │   ├── axis.hpp          #   Axis<Name,Dim> / OrderedAxis<Name,Dim,Order>
+│   │   ├── basis.hpp         #   polynomial-basis concept / tags
+│   │   ├── taylor_basis.hpp  #   the Taylor (monomial) basis
 │   │   ├── scheme.hpp        #   index-scheme facade; scheme/{concept,isotropic,mixed}.hpp
 │   │   │                     #   IsotropicScheme<N,M> (single order) + MixedScheme (per-axis)
-│   │   ├── taylor_expansion.hpp  # TaylorExpansion<T, Scheme, Storage>: Dense + Sparse
-│   │   ├── named.hpp         #   NamedTaylorExpansion<T,N,Axes...>: single-order named axes
-│   │   ├── mixed_named.hpp   #   MixedExpansion<T,Axes...>: per-axis-order named axes
+│   │   ├── expansion.hpp     #   Expansion<T, Basis, Scheme, Storage>: the carrier (Dense + Sparse)
+│   │   ├── named.hpp         #   NamedExpansion<T,Basis,N,Axes...>: single-order named axes
+│   │   ├── mixed.hpp         #   MixedExpansion<T,Axes...>: per-axis-order named axes (tax::mixed)
 │   │   ├── promote.hpp       #   promote_t<Ts...>: common (union-of-axes) expansion type
-│   │   └── storage/          #   Dense (std::array) and Sparse (sorted idx/val) policies
-│   ├── kernels/              # Series recurrence kernels (tax::detail::kernels)
-│   │   ├── cauchy.hpp        #   cauchyProduct dispatch (+ in-header config macros)
-│   │   ├── cauchy_unroll.hpp #   fully unrolled univariate (M == 1) product
-│   │   ├── cauchy_stencil.hpp#   precomputed stencil table product (M >= 2)
-│   │   ├── recurrence_stencil.hpp # shared decomposition table for M>=2 recurrences
-│   │   ├── mixed_stencils.hpp#   Cauchy / recurrence stencils for MixedScheme
-│   │   ├── algebra.hpp       #   self-product, square/cube, reciprocal, sqrt, cbrt, pow
-│   │   ├── trigonometric.hpp #   sin, cos, tan, asin, acos, atan
-│   │   ├── transcendental.hpp#   exp, log, sinh, cosh, tanh + inverses, erf
-│   │   ├── sparse_cauchy.hpp #   sparse Cauchy product / self-product
-│   │   └── sparse_subs.hpp   #   sparse substitution helpers
-│   ├── operators/            # Free-function operator surface over the kernels
-│   │   ├── arithmetic.hpp        #   +, -, *, /, compound assignment (dense + sparse)
-│   │   ├── math_unary.hpp        #   sin, exp, sqrt, square, …
-│   │   ├── math_binary.hpp       #   pow, atan2, …
-│   │   └── named_{arithmetic,math_unary,math_binary}.hpp  # same surface for named/mixed
+│   │   ├── scheme/           #   {concept,isotropic,mixed}.hpp
+│   │   ├── storage/          #   {dense,sparse}.hpp — std::array vs sorted idx/val policies
+│   │   ├── detail/           # Series-recurrence kernels (PRIVATE; tax::detail::kernels)
+│   │   │   ├── cauchy.hpp           #   cauchyProduct dispatch
+│   │   │   ├── cauchy_unroll.hpp    #   fully unrolled univariate (M == 1) product
+│   │   │   ├── cauchy_stencil.hpp   #   precomputed stencil table product (M >= 2)
+│   │   │   ├── recurrence_stencil.hpp # shared decomposition table for M>=2 recurrences
+│   │   │   ├── mixed_stencils.hpp   #   Cauchy / recurrence stencils for MixedScheme
+│   │   │   ├── stencil_config.hpp   #   TAX_USE_UNROLL/TAX_USE_STENCIL/TAX_STENCIL_MAX_BYTES
+│   │   │   ├── algebra.hpp          #   self-product, square/cube, reciprocal, sqrt, cbrt, pow
+│   │   │   ├── trigonometric.hpp    #   sin, cos, tan, asin, acos, atan
+│   │   │   ├── transcendental.hpp   #   exp, log, sinh, cosh, tanh + inverses, erf
+│   │   │   ├── sparse_cauchy.hpp    #   sparse Cauchy product / self-product
+│   │   │   └── sparse_subs.hpp      #   sparse substitution helpers
+│   │   └── ops/              # Free-function operator surface over the kernels
+│   │       ├── arithmetic.hpp       #   +, -, *, /, compound assignment (dense)
+│   │       ├── math_unary.hpp       #   sin, exp, sqrt, square, …
+│   │       ├── math_binary.hpp      #   pow, atan2, …
+│   │       ├── sparse.hpp           #   sparse operator surface
+│   │       ├── unary_functions.def  #   the 20 unary math functions, listed once
+│   │       ├── named_{arithmetic,math_unary,math_binary}.hpp  # same surface for named
+│   │       └── mixed_{arithmetic,math_unary,math_binary}.hpp  # same surface for mixed
+│   ├── bases/                # Orthogonal polynomial families
+│   │   ├── aliases.hpp       #   ChebyshevExpansion / LegendreExpansion / HermiteExpansion / Series
+│   │   ├── chebyshev_basis.hpp / chebyshev_math.hpp / chebyshev_interp.hpp
+│   │   ├── legendre_basis.hpp / hermite_basis.hpp
+│   │   ├── ortho.hpp         #   shared orthogonal-basis machinery
+│   │   ├── convert.hpp       #   basis ↔ basis conversion
+│   │   └── operators.hpp     #   operator surface in a given basis
 │   ├── la/                   # Eigen integration (namespace tax::la; some re-exported as tax::)
 │   │   ├── types.hpp         #   Vec, Mat, VecNT<N,T>, MatNT, MatNMT
 │   │   ├── expansion_vectors.hpp #   TEVec<D,N,M>, NEVec<D,N,Axes...>, MTEVec<D,Axes...>
-│   │   ├── num_traits.hpp    #   Eigen::NumTraits<TaylorExpansion>
+│   │   ├── num_traits.hpp    #   Eigen::NumTraits<Expansion>
 │   │   ├── values.hpp        #   variables(x0), value(), eval()
 │   │   ├── truncate.hpp      #   free tax::truncate<N2>(scalar | Eigen vector/matrix)
 │   │   ├── derivatives.hpp   #   derivative, gradient, hessian, jacobian
 │   │   ├── named.hpp         #   NumTraits + gradient/hessian/jacobian by axis name
-│   │   ├── mixed_named.hpp   #   the same for mixed-order named expansions
-│   │   └── invert.hpp        #   formal polynomial-map inversion (Picard)
+│   │   ├── mixed.hpp         #   the same for mixed-order named expansions
+│   │   ├── axis_diff.hpp     #   axis-addressed differential helpers
+│   │   ├── invert.hpp        #   formal polynomial-map inversion (Picard)
+│   │   └── exports.hpp       #   tax:: re-exports of tax::la helpers
 │   └── io/series.hpp         # human-readable streaming: operator<<, series(), to_string()
 ├── tests/                    # Google Test suite
 │   ├── core/                 #   ctor/accessors, multi-index, enumeration, deriv/integ, named
@@ -98,8 +119,9 @@ ctest --test-dir build --output-on-failure
 | `TAX_BUILD_UNITTESTS`   | `ON`  | Build Google Test unit-test suite |
 | `TAX_BUILD_REGRESSIONS` | `OFF` | Build DACE-based regression tests (fetches DACE v2.1.0) |
 
-Kernel dispatch (`TAX_USE_UNROLL` / `TAX_USE_STENCIL`) is configured **in-header**
-in `<tax/kernels/cauchy.hpp>` and defaults to ON for every consumer. It is
+Kernel dispatch (`TAX_USE_UNROLL` / `TAX_USE_STENCIL` / `TAX_STENCIL_MAX_BYTES`) is
+configured **in-header** in `<tax/expansion/detail/stencil_config.hpp>` and defaults
+to ON for every consumer. It is
 deliberately *not* injected from the build system: differing values across
 translation units would change inline function definitions (ODR). A project may
 pre-define either macro to `0`, but the value must be identical project-wide.
@@ -191,7 +213,7 @@ auto   F   = f.integ<0>();        // symbolic integral
 ## Kernels
 
 All math operations are degree-by-degree recurrence relations in
-`include/tax/kernels/` (`tax::detail::kernels`), operating directly on the
+`include/tax/expansion/detail/` (`tax::detail::kernels`), operating directly on the
 coefficient arrays. The Cauchy product has three dense variants behind one
 dispatch (`cauchyProduct`):
 
@@ -212,7 +234,8 @@ on the fly — bit-identical results. Sparse variants live in
 per-call heap allocation).
 
 When adding a new math function: implement the recurrence in the right
-kernel file, expose it via `operators/math_unary.hpp` or `math_binary.hpp`,
+kernel file, expose it via `expansion/ops/math_unary.hpp` or `math_binary.hpp`
+(unary functions are listed once in `expansion/ops/unary_functions.def`),
 and add tests under `tests/operators/` (plus `tests/kernels/` if it has its
 own kernel).
 
@@ -240,7 +263,7 @@ scalars (`tax::la::VecNT<D, TE>` is a convenient Eigen vector of TE).
 
 ## Named Expansions (`tax::named`)
 
-`tax::NamedTaylorExpansion<T, N, Axes...>` wraps a dense
+`tax::NamedExpansion<T, Basis, N, Axes...>` wraps a dense
 `TaylorExpansion<T, N, M>` and attaches a compile-time list of **named axes**
 (`Axis<Name, Dim>`, where `Name` is a `FixedString` NTTP and `Dim` is a block of
 consecutive variables). It is implemented in `tax::named` and the whole API —
@@ -266,7 +289,7 @@ auto J = tax::jacobian<"x">(F);               // Jacobian of Eigen vector F w.r.
   `slice<Names...>()`; LA helpers `gradient<"name">`, `hessian<"name">`,
   `jacobian<"name">` in `la/named.hpp`.
 
-Key files: `core/named.hpp` (the type + `variable`/`variables` factories,
+Key files: `expansion/named.hpp` (the type + `variable`/`variables` factories,
 embed/slice/compose) and `la/named.hpp` (Eigen `NumTraits` + name-addressed
 gradient/hessian/jacobian).
 
@@ -277,12 +300,12 @@ but each axis carries its **own** truncation order via `OrderedAxis<Name, Dim,
 Order>` and a `MixedScheme` layout. Factories live in `tax::mixed`
 (`tax::mixed::variable<"x", Order>(...)`, `tax::mixed::variables<...>`). Axis
 lists are sorted/unique (canonical type) and operands embed into the union just
-like `NE`. Key files: `core/mixed_named.hpp`, `kernels/mixed_stencils.hpp`,
-`la/mixed_named.hpp`.
+like `NE`. Key files: `expansion/mixed.hpp`, `expansion/detail/mixed_stencils.hpp`,
+`la/mixed.hpp`.
 
 ### Cross-cutting utilities
 
-- `tax::promote_t<Ts...>` (`core/promote.hpp`) — the common type operands
+- `tax::promote_t<Ts...>` (`expansion/promote.hpp`) — the common type operands
   promote into (union of axes; scalars promote into the expansion). Handy for
   declaring a homogeneous container that must hold a mix of axis sets.
 - `tax::truncate<N2>(x)` (`la/truncate.hpp`) — free order-reducing truncation

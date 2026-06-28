@@ -1,6 +1,6 @@
 # Eigen API Reference
 
-All helpers live in `namespace tax` (header `tax/eigen.hpp`, transitively
+All helpers live in `namespace tax` (header `tax/la.hpp`, transitively
 included by `tax/tax.hpp`). These helpers are templated over the `IndexScheme`
 parameter; where signatures below write `TaylorExpansion<T, N, M, S>` or use
 `<T, N, M, S>` shorthands, they denote the isotropic `TE<N,M>` form

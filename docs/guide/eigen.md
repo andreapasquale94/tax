@@ -46,7 +46,7 @@ Dense and Sparse TE scalars.
 
 ## NumTraits
 
-The specialisation in `tax/eigen.hpp` reports `IsComplex = 0`, `IsInteger = 0`,
+The specialisation in `tax/la.hpp` reports `IsComplex = 0`, `IsInteger = 0`,
 `IsSigned = 1`, `RequireInitialization = 1`, and cost estimates proportional to
 the monomial count $\binom{N+M}{M}$. This makes Eigen prefer cache-friendly
 algorithms when working with TE-valued matrices.

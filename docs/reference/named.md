@@ -6,7 +6,7 @@ operations, composition rules, and Eigen helpers.
 The names are implemented in `namespace tax::named`, but the entire public API
 is **re-exported under `tax`** and that is the spelling you should use:
 `tax::NE`, `tax::variable`, `tax::variables`, `tax::Axis`,
-`tax::NamedTaylorExpansion`, and the Eigen helpers `tax::gradient`,
+`tax::NamedExpansion`, and the Eigen helpers `tax::gradient`,
 `tax::hessian`, `tax::jacobian`, `tax::value`, `tax::eval` are all reachable
 directly from `<tax/tax.hpp>`.
 
@@ -19,22 +19,25 @@ For the narrative how-to, see the [Named Expansions guide](../guide/named.md).
 ```cpp
 namespace tax::named {
 
-template <typename T, int N, typename... Axes>
-    requires Scalar<T>
-class NamedTaylorExpansion;
+template <typename T, typename Basis, int N, typename... Axes>
+    requires Scalar<T> && BasisPolicy<Basis>
+class NamedExpansion;
 
 }  // namespace tax::named
 ```
 
-A `NamedTaylorExpansion` wraps a dense `TaylorExpansion<T, N, M>` and attaches a
-compile-time list of **named axes** to it. Each axis is a contiguous block of the
-underlying $M$ variables identified by a compile-time string.
+A `NamedExpansion` wraps a dense `Expansion<T, Basis, IsotropicScheme<N, M>>` and
+attaches a compile-time list of **named axes** to it. It is **basis-generic**: the
+underlying polynomial family is the `Basis` parameter (`TaylorBasis` for the terse
+`NE` alias). Each axis is a contiguous block of the underlying $M$ variables
+identified by a compile-time string.
 
 ### Template parameters
 
 | Parameter | Description |
 |---|---|
 | `T`       | Scalar coefficient type — must satisfy `tax::Scalar` |
+| `Basis`   | Polynomial family — must satisfy `tax::BasisPolicy` (e.g. `TaylorBasis`) |
 | `N`       | Maximum total polynomial order, $N \ge 0$ |
 | `Axes...` | A pack of `Axis<Name, Dim>` types, **canonically ordered** (sorted by name, unique) |
 
@@ -50,8 +53,9 @@ pack by hand (a `static_assert` enforces canonical order).
 | `vars_v`       | `int` | Total underlying variables (sum of axis dimensions) |
 | `order_v`      | `int` | Truncation order $N$ |
 | `scalar_type`  | type alias | `T` |
+| `basis`        | type alias | `Basis` |
 | `axis_list`    | type alias | Internal `TypeList<Axes...>` |
-| `Inner`        | type alias | Underlying `TaylorExpansion<T, N, vars_v, storage::Dense>` |
+| `Inner`        | type alias | Underlying `Expansion<T, Basis, IsotropicScheme<N, vars_v>, storage::Dense>` |
 | `Input`        | type alias | `Inner::Input` — expansion-point / displacement vector |
 | `nCoefficients`| `std::size_t` | `Inner::nCoefficients` |
 
@@ -59,8 +63,11 @@ pack by hand (a `static_assert` enforces canonical order).
 
 ```cpp
 template <int N, typename... Axes>
-using NE = NamedTaylorExpansion<double, N, Axes...>;   // double-valued
+using NE = NamedExpansion<double, TaylorBasis, N, Axes...>;   // double-valued, Taylor basis
 ```
+
+A `NamedTaylorExpansion<T, N, Axes...>` alias (`= NamedExpansion<T, TaylorBasis,
+N, Axes...>`) is also provided for the explicit-`T` Taylor case.
 
 e.g. `tax::NE<4, tax::Axis<"x", 3>>`.
 
@@ -110,15 +117,15 @@ Free functions in `namespace tax::named` (re-exported as `tax::variable` /
 `tax::variables`).
 
 ```cpp
-// Single coordinate of a 1-D named axis: returns one NamedTaylorExpansion
-//   over Axis<Name, 1>, expanded about x0.
-template <FixedString Name, int N, typename T>
+// Single coordinate of a 1-D named axis: returns one NamedExpansion
+//   over Axis<Name, 1>, expanded about x0. Basis defaults to TaylorBasis.
+template <FixedString Name, int N, typename Basis = TaylorBasis, typename T>
     requires Scalar<T>
 [[nodiscard]] constexpr auto variable(T x0) noexcept;
 
 // The D coordinate variables of a single named axis Name:
-//   returns std::array<NamedTaylorExpansion<T, N, Axis<Name, D>>, D>.
-template <FixedString Name, int N, typename T, std::size_t D>
+//   returns std::array<NamedExpansion<T, Basis, N, Axis<Name, D>>, D>.
+template <FixedString Name, int N, typename Basis = TaylorBasis, typename T, std::size_t D>
 [[nodiscard]] constexpr auto variables(const std::array<T, D>& x0) noexcept;
 ```
 
@@ -136,8 +143,8 @@ Declared in `<tax/la/named.hpp>` (pulled in by `<tax/tax.hpp>`), reachable as
 
 ```cpp
 // Build the D coordinate variables of axis Name from an Eigen vector
-//   expansion point; returns Eigen::Matrix<NamedTaylorExpansion<T,N,Axis<Name,D>>, D, 1>.
-template <FixedString Name, int N, typename Derived>
+//   expansion point; returns Eigen::Matrix<NamedExpansion<T,Basis,N,Axis<Name,D>>, D, 1>.
+template <FixedString Name, int N, typename Basis = TaylorBasis, typename Derived>
 [[nodiscard]] auto variables(const Eigen::MatrixBase<Derived>& x0);
 ```
 
@@ -155,7 +162,7 @@ The expansion point must have a compile-time size.
 ```cpp
 // I-th coordinate variable of the joint variable space at p   (0 <= I < vars_v)
 template <int I>
-[[nodiscard]] static constexpr NamedTaylorExpansion variable(const Input& p) noexcept;
+[[nodiscard]] static constexpr NamedExpansion variable(const Input& p) noexcept;
 ```
 
 Equivalent to `Inner::variable<I>(p)` lifted into the named type — used
@@ -204,12 +211,12 @@ auto h = f.slice<"x">();        // drop every axis except "x"
 ```cpp
 // Partial derivative w.r.t. coordinate Local of named axis Name (axis set preserved).
 template <FixedString Name, int Local = 0>
-[[nodiscard]] constexpr NamedTaylorExpansion deriv() const noexcept;
+[[nodiscard]] constexpr NamedExpansion deriv() const noexcept;
 
 // Indefinite integral w.r.t. coordinate Local of named axis Name (axis set preserved,
-//   order stays N; degree-N terms are dropped, matching TaylorExpansion::integ).
+//   order stays N; degree-N terms are dropped, matching Expansion::integ).
 template <FixedString Name, int Local = 0>
-[[nodiscard]] constexpr NamedTaylorExpansion integ() const noexcept;
+[[nodiscard]] constexpr NamedExpansion integ() const noexcept;
 ```
 
 Composing `deriv` with `slice` yields the "sub-derivative" projection:
@@ -223,7 +230,7 @@ Composing `deriv` with `slice` yields the "sub-derivative" projection:
 // Promote from an expansion over a *subset* of these axes (value-preserving).
 template <typename... B>
     requires(/* TypeList<B...> is a proper subset of axis_list */)
-/*implicit*/ constexpr NamedTaylorExpansion(const NamedTaylorExpansion<T, N, B...>& other) noexcept;
+/*implicit*/ constexpr NamedExpansion(const NamedExpansion<T, Basis, N, B...>& other) noexcept;
 ```
 
 A value depending on **fewer** axes promotes implicitly into a wider axis set
@@ -340,7 +347,7 @@ template <typename Derived, typename DxDerived>
 
 | Header | Contents |
 |---|---|
-| `tax/core/named.hpp` | `NamedTaylorExpansion`, `Axis`, `FixedString`, `NE`, `variable`/`variables`, embed/slice/deriv/integ, composition + math |
+| `tax/expansion/named.hpp` | `NamedExpansion`, `Axis`, `FixedString`, `NE`, `variable`/`variables`, embed/slice/deriv/integ, composition + math |
 | `tax/la/named.hpp`   | `NumTraits` for named expansions, Eigen `variables` overload, `gradient`/`hessian`/`jacobian`/`value`/`eval` by axis name |
 
 Both are pulled in by the umbrella `<tax/tax.hpp>`.

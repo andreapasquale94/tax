@@ -34,7 +34,7 @@ up to order \(N\) in a single evaluation pass.
 - **Eigen integration** — `NumTraits` specialisation plus helpers for
   variables, value extraction, evaluation, gradient, Jacobian, Hessian, and
   formal map inversion.
-- **Named expansions** — `NamedTaylorExpansion<T, N, Axes...>` attaches
+- **Named expansions** — `NamedExpansion<T, Basis, N, Axes...>` attaches
   compile-time *named axes* to an expansion; values over different axis sets
   compose in their union, and `slice`/`deriv`/`integ` are addressed by name.
   `MixedExpansion<T, Axes...>` gives each axis its own truncation order.
@@ -186,8 +186,9 @@ ctest --test-dir build --output-on-failure
 | `TAX_BUILD_REGRESSIONS` | `OFF` | Build DACE-based regression tests |
 
 The fast Cauchy kernel paths (`TAX_USE_UNROLL` for M=1, `TAX_USE_STENCIL`
-for M≥2) are enabled by default in `<tax/kernels/cauchy.hpp>` itself — no
-build-system configuration needed. To opt out, pre-define the macro to `0`
+for M≥2) are enabled by default in
+`<tax/expansion/detail/stencil_config.hpp>` itself — no build-system
+configuration needed. To opt out, pre-define the macro to `0`
 identically in **every** translation unit (differing values are an ODR
 violation).
 
