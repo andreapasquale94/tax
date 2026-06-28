@@ -33,6 +33,26 @@ template < typename T, typename Basis, int N, typename... A >
     return NamedExpansion< T, Basis, N, A... >{ pow( x.inner(), p ) };
 }
 
+/// `x^p` for a Taylor-valued exponent over the union of the operands' axes.
+template < typename T, typename Basis, int N, typename... A, typename... B >
+[[nodiscard]] auto pow( const NamedExpansion< T, Basis, N, A... >& x,
+                        const NamedExpansion< T, Basis, N, B... >& p ) noexcept
+{
+    using R = detail::MergedNamedExpansion< T, Basis, N, detail::TypeList< A... >,
+                                            detail::TypeList< B... > >;
+    using tax::pow;
+    return R{ pow( x.template embed< R >().inner(), p.template embed< R >().inner() ) };
+}
+
+/// `s^x` for a scalar base (axis set unchanged).
+template < typename T, typename Basis, int N, typename... A >
+[[nodiscard]] NamedExpansion< T, Basis, N, A... > pow(
+    std::type_identity_t< T > s, const NamedExpansion< T, Basis, N, A... >& x ) noexcept
+{
+    using tax::pow;
+    return NamedExpansion< T, Basis, N, A... >{ pow( s, x.inner() ) };
+}
+
 /// `atan2(y, x)` over the union of the two operands' axis sets.
 template < typename T, typename Basis, int N, typename... A, typename... B >
 [[nodiscard]] auto atan2( const NamedExpansion< T, Basis, N, A... >& y,
@@ -42,6 +62,24 @@ template < typename T, typename Basis, int N, typename... A, typename... B >
                                             detail::TypeList< B... > >;
     using tax::atan2;
     return R{ atan2( y.template embed< R >().inner(), x.template embed< R >().inner() ) };
+}
+
+/// `atan2(y, x)` with a constant `x` (axis set unchanged).
+template < typename T, typename Basis, int N, typename... A >
+[[nodiscard]] NamedExpansion< T, Basis, N, A... > atan2(
+    const NamedExpansion< T, Basis, N, A... >& y, std::type_identity_t< T > x ) noexcept
+{
+    using tax::atan2;
+    return NamedExpansion< T, Basis, N, A... >{ atan2( y.inner(), x ) };
+}
+
+/// `atan2(y, x)` with a constant `y` (axis set unchanged).
+template < typename T, typename Basis, int N, typename... A >
+[[nodiscard]] NamedExpansion< T, Basis, N, A... > atan2(
+    std::type_identity_t< T > y, const NamedExpansion< T, Basis, N, A... >& x ) noexcept
+{
+    using tax::atan2;
+    return NamedExpansion< T, Basis, N, A... >{ atan2( y, x.inner() ) };
 }
 
 }  // namespace tax::named
