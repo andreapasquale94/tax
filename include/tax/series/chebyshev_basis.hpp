@@ -6,7 +6,7 @@
 #include <string_view>
 #include <tax/core/multi_index.hpp>
 #include <tax/core/scheme/concept.hpp>
-#include <tax/series/basis.hpp>
+#include <tax/core/basis.hpp>
 #include <tax/series/ortho.hpp>
 
 namespace tax

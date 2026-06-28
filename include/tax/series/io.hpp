@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 #include <tax/series/aliases.hpp>
-#include <tax/series/taylor_basis.hpp>
+#include <tax/core/taylor_basis.hpp>
 #include <type_traits>
 
 namespace tax

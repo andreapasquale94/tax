@@ -10,8 +10,8 @@
 #include <tax/core/storage/dense.hpp>
 #include <tax/core/storage/sparse.hpp>
 #include <Eigen/Core>
-#include <tax/series/basis.hpp>
-#include <tax/series/taylor_basis.hpp>
+#include <tax/core/basis.hpp>
+#include <tax/core/taylor_basis.hpp>
 #include <type_traits>
 #include <utility>
 

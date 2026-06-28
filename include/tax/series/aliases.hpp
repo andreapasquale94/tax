@@ -6,11 +6,11 @@
 
 #include <tax/core/scheme/isotropic.hpp>
 #include <tax/core/expansion.hpp>
-#include <tax/series/basis.hpp>
+#include <tax/core/basis.hpp>
 #include <tax/series/chebyshev_basis.hpp>
 #include <tax/series/hermite_basis.hpp>
 #include <tax/series/legendre_basis.hpp>
-#include <tax/series/taylor_basis.hpp>
+#include <tax/core/taylor_basis.hpp>
 
 namespace tax
 {

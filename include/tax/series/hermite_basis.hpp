@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
-#include <tax/series/basis.hpp>
+#include <tax/core/basis.hpp>
 #include <tax/series/ortho.hpp>
 
 namespace tax

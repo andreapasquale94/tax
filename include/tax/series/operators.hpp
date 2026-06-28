@@ -2,7 +2,7 @@
 
 #include <tax/operators/arithmetic.hpp>
 #include <tax/series/aliases.hpp>
-#include <tax/series/taylor_basis.hpp>
+#include <tax/core/taylor_basis.hpp>
 #include <type_traits>
 
 namespace tax

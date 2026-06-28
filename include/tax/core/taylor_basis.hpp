@@ -7,7 +7,7 @@
 #include <tax/core/multi_index.hpp>
 #include <tax/core/scheme/concept.hpp>
 #include <tax/kernels/cauchy.hpp>
-#include <tax/series/basis.hpp>
+#include <tax/core/basis.hpp>
 
 namespace tax
 {
