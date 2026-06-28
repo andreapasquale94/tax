@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstddef>
+#include <tax/operators/arithmetic.hpp>
 #include <tax/series/series.hpp>
 #include <tax/series/taylor_basis.hpp>
 #include <type_traits>
@@ -9,147 +9,20 @@ namespace tax
 {
 
 // ===========================================================================
-// Basis-generic operator surface for NON-Taylor bases.
+// Basis-generic operator surface.
 //
-// The Taylor (monomial) basis already has a full, specialised operator surface
-// (operators/arithmetic.hpp, math_unary.hpp, math_binary.hpp) reached through
-// the `TaylorExpansion` alias. To avoid overload ambiguity those legacy
-// operators stay authoritative for `TaylorBasis`; everything here is gated on
-// `!is_same_v< B, TaylorBasis >` and serves Chebyshev (and future families).
+// The linear-space operators and the bilinear product are basis-generic and
+// live in <tax/operators/arithmetic.hpp> (one set of templates over `Basis B`,
+// the product delegating to `Basis::product`). This header only adds the
+// integer power, which a Taylor expansion already gets a recurrence-based form
+// of via <tax/operators/math_binary.hpp>; here it is provided by repeated
+// squaring for the other (non-Taylor) product-bearing families.
 // ===========================================================================
 
 template < typename B >
 concept NonTaylorBasis = Basis< B > && !std::is_same_v< B, TaylorBasis >;
 
-// ---------------------------------------------------------------------------
-// Linear-space operators
-// ---------------------------------------------------------------------------
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator+(
-    const Expansion< T, B, Scheme >& a, const Expansion< T, B, Scheme >& b ) noexcept
-{
-    Expansion< T, B, Scheme > r;
-    for ( std::size_t k = 0; k < r.nCoefficients; ++k ) r[k] = a[k] + b[k];
-    return r;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator-(
-    const Expansion< T, B, Scheme >& a, const Expansion< T, B, Scheme >& b ) noexcept
-{
-    Expansion< T, B, Scheme > r;
-    for ( std::size_t k = 0; k < r.nCoefficients; ++k ) r[k] = a[k] - b[k];
-    return r;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator-(
-    const Expansion< T, B, Scheme >& a ) noexcept
-{
-    Expansion< T, B, Scheme > r;
-    for ( std::size_t k = 0; k < r.nCoefficients; ++k ) r[k] = -a[k];
-    return r;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator+( const Expansion< T, B, Scheme >& a,
-                                                             std::type_identity_t< T > s ) noexcept
-{
-    Expansion< T, B, Scheme > r = a;
-    r[0] += s;
-    return r;
-}
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator+(
-    std::type_identity_t< T > s, const Expansion< T, B, Scheme >& a ) noexcept
-{
-    return a + s;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator-( const Expansion< T, B, Scheme >& a,
-                                                             std::type_identity_t< T > s ) noexcept
-{
-    Expansion< T, B, Scheme > r = a;
-    r[0] -= s;
-    return r;
-}
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator-(
-    std::type_identity_t< T > s, const Expansion< T, B, Scheme >& a ) noexcept
-{
-    return ( -a ) + s;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator*( const Expansion< T, B, Scheme >& a,
-                                                             std::type_identity_t< T > s ) noexcept
-{
-    Expansion< T, B, Scheme > r;
-    for ( std::size_t k = 0; k < r.nCoefficients; ++k ) r[k] = a[k] * s;
-    return r;
-}
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator*(
-    std::type_identity_t< T > s, const Expansion< T, B, Scheme >& a ) noexcept
-{
-    return a * s;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator/( const Expansion< T, B, Scheme >& a,
-                                                             std::type_identity_t< T > s ) noexcept
-{
-    return a * ( T{ 1 } / s );
-}
-
-// ---------------------------------------------------------------------------
-// Expansion * Expansion — the basis-defined bilinear product
-// ---------------------------------------------------------------------------
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-[[nodiscard]] constexpr Expansion< T, B, Scheme > operator*(
-    const Expansion< T, B, Scheme >& a, const Expansion< T, B, Scheme >& b ) noexcept
-{
-    Expansion< T, B, Scheme > r;
-    B::template product< T, Scheme >( r.coefficients(), a.coefficients(), b.coefficients() );
-    return r;
-}
-
-template < typename T, NonTaylorBasis B, typename Scheme >
-constexpr Expansion< T, B, Scheme >& operator+=( Expansion< T, B, Scheme >& a,
-                                                 const Expansion< T, B, Scheme >& b ) noexcept
-{
-    for ( std::size_t k = 0; k < a.nCoefficients; ++k ) a[k] += b[k];
-    return a;
-}
-template < typename T, NonTaylorBasis B, typename Scheme >
-constexpr Expansion< T, B, Scheme >& operator-=( Expansion< T, B, Scheme >& a,
-                                                 const Expansion< T, B, Scheme >& b ) noexcept
-{
-    for ( std::size_t k = 0; k < a.nCoefficients; ++k ) a[k] -= b[k];
-    return a;
-}
-template < typename T, NonTaylorBasis B, typename Scheme >
-constexpr Expansion< T, B, Scheme >& operator*=( Expansion< T, B, Scheme >& a,
-                                                 const Expansion< T, B, Scheme >& b ) noexcept
-{
-    a = a * b;
-    return a;
-}
-template < typename T, NonTaylorBasis B, typename Scheme >
-constexpr Expansion< T, B, Scheme >& operator*=( Expansion< T, B, Scheme >& a,
-                                                 std::type_identity_t< T > s ) noexcept
-{
-    for ( std::size_t k = 0; k < a.nCoefficients; ++k ) a[k] *= s;
-    return a;
-}
-
-// ---------------------------------------------------------------------------
-// Integer power by repeated squaring (any product-bearing basis).
-// ---------------------------------------------------------------------------
-
+/// Integer power by repeated squaring (any non-Taylor product-bearing basis).
 template < typename T, NonTaylorBasis B, typename Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > pow( const Expansion< T, B, Scheme >& x,
                                                        int n ) noexcept
