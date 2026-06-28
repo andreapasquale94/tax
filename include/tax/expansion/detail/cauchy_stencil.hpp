@@ -7,9 +7,8 @@
 #include <tax/expansion/enumeration.hpp>
 #include <tax/expansion/multi_index.hpp>
 
-// Stencil table budget (bytes). Kept here as well as in <tax/expansion/detail/cauchy.hpp>
-// — both #ifndef-guarded with the identical value — so this header is usable
-// regardless of include order (the config macros come from stencil_config.hpp). A project
+// Stencil table budget (bytes). The TAX_STENCIL_MAX_BYTES knob is defined once,
+// in <tax/expansion/detail/stencil_config.hpp> (included above). A project
 // overriding it must define the same value project-wide (ODR).
 
 namespace tax::detail::kernels
