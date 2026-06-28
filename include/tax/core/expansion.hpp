@@ -26,7 +26,7 @@ namespace tax
 
 // Primary template (forward declaration for partial specialisations).
 template < typename T, typename Basis, typename Scheme, typename Storage = storage::Dense >
-    requires Scalar< T > && tax::Basis< Basis > && IndexScheme< Scheme >
+    requires Scalar< T > && BasisPolicy< Basis > && IndexScheme< Scheme >
 class Expansion;
 
 // ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ class Expansion;
 
 /// A truncated expansion over an index `Scheme` with dense storage.
 template < typename T, typename Basis, typename Scheme >
-    requires Scalar< T > && tax::Basis< Basis > && IndexScheme< Scheme >
+    requires Scalar< T > && BasisPolicy< Basis > && IndexScheme< Scheme >
 class Expansion< T, Basis, Scheme, storage::Dense >
 {
    public:
@@ -366,7 +366,7 @@ using TEn = Expansion< double, TaylorBasis, IsotropicScheme< N, M >, storage::De
 
 /// A truncated Taylor expansion in M variables of order N with sparse storage.
 template < typename T, typename Basis, typename Scheme >
-    requires Scalar< T > && tax::Basis< Basis > && IndexScheme< Scheme >
+    requires Scalar< T > && BasisPolicy< Basis > && IndexScheme< Scheme >
 class Expansion< T, Basis, Scheme, storage::Sparse >
 {
     static_assert( std::is_same_v< Basis, TaylorBasis >,

@@ -200,6 +200,6 @@ struct ChebyshevBasisOn
 /// Canonical Chebyshev basis on [−1, 1].
 using ChebyshevBasis = ChebyshevBasisOn< -1.0, 1.0 >;
 
-static_assert( Basis< ChebyshevBasis > );
+static_assert( BasisPolicy< ChebyshevBasis > );
 
 }  // namespace tax

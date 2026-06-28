@@ -86,6 +86,6 @@ struct LegendreBasis : OrthogonalBasis< LegendreBasis >
     }
 };
 
-static_assert( Basis< LegendreBasis > );
+static_assert( BasisPolicy< LegendreBasis > );
 
 }  // namespace tax

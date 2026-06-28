@@ -121,6 +121,6 @@ struct TaylorBasis
     }
 };
 
-static_assert( Basis< TaylorBasis > );
+static_assert( BasisPolicy< TaylorBasis > );
 
 }  // namespace tax

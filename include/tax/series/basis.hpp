@@ -10,7 +10,7 @@ namespace tax
 {
 
 // ===========================================================================
-// Basis policy concept
+// BasisPolicy concept
 // ===========================================================================
 //
 // A *basis policy* describes one family of univariate polynomials {P_0, P_1,
@@ -58,7 +58,7 @@ namespace tax
 /// (checked here against a representative scheme so a malformed policy fails at
 /// the concept boundary, not deep inside instantiation).
 template < typename B >
-concept Basis =
+concept BasisPolicy =
     requires {
         { B::is_tax_basis } -> std::convertible_to< bool >;
         { B::name() } -> std::convertible_to< std::string_view >;

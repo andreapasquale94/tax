@@ -27,7 +27,7 @@ namespace tax
 
 /// A univariate Chebyshev-family basis (canonical or domain-mapped).
 template < typename B >
-concept ChebyshevLike = Basis< B > && requires {
+concept ChebyshevLike = BasisPolicy< B > && requires {
     B::domainLo;
     B::domainHi;
 };

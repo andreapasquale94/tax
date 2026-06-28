@@ -269,7 +269,7 @@ template < typename Src, typename Tgt, bool allowDrop >
 
 // Forward declaration so `detail::Rebind` can name the named type.
 template < typename T, typename Basis, int N, typename... Axes >
-    requires Scalar< T > && tax::Basis< Basis >
+    requires Scalar< T > && BasisPolicy< Basis >
 class NamedExpansion;
 
 namespace detail
@@ -296,7 +296,7 @@ using MergedNamedExpansion =
 // ---------------------------------------------------------------------------
 
 template < typename T, typename Basis, int N, typename... Axes >
-    requires Scalar< T > && tax::Basis< Basis >
+    requires Scalar< T > && BasisPolicy< Basis >
 class NamedExpansion
 {
    public:

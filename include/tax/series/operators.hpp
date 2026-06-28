@@ -20,7 +20,7 @@ namespace tax
 // ===========================================================================
 
 template < typename B >
-concept NonTaylorBasis = Basis< B > && !std::is_same_v< B, TaylorBasis >;
+concept NonTaylorBasis = BasisPolicy< B > && !std::is_same_v< B, TaylorBasis >;
 
 /// Integer power by repeated squaring (any non-Taylor product-bearing basis).
 template < typename T, NonTaylorBasis B, typename Scheme >

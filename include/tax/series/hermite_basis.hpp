@@ -74,6 +74,6 @@ struct HermiteBasis : OrthogonalBasis< HermiteBasis >
     }
 };
 
-static_assert( Basis< HermiteBasis > );
+static_assert( BasisPolicy< HermiteBasis > );
 
 }  // namespace tax

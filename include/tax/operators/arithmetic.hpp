@@ -16,7 +16,7 @@ namespace tax
 //
 // Every linear-space operation, and the bilinear product (which delegates to
 // the basis' own Basis::product), is identical for every basis, so each is
-// written once here over `Basis B`. Division is the exception: the
+// written once here over `BasisPolicy B`. Division is the exception: the
 // expansion/expansion quotient and the scalar/expansion reciprocal use the
 // Taylor recurrence kernels and stay TaylorBasis-specific — other families
 // supply their own division where it is defined (e.g. series/chebyshev_math.hpp).
@@ -29,7 +29,7 @@ namespace tax
 // Addition
 // ---------------------------------------------------------------------------
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator+(
     const Expansion< T, B, Scheme >& a, const Expansion< T, B, Scheme >& b ) noexcept
 {
@@ -38,7 +38,7 @@ template < typename T, Basis B, IndexScheme Scheme >
     return r;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator+( const Expansion< T, B, Scheme >& a,
                                                              std::type_identity_t< T > s ) noexcept
 {
@@ -47,7 +47,7 @@ template < typename T, Basis B, IndexScheme Scheme >
     return r;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator+(
     std::type_identity_t< T > s, const Expansion< T, B, Scheme >& a ) noexcept
 {
@@ -58,7 +58,7 @@ template < typename T, Basis B, IndexScheme Scheme >
 // Subtraction
 // ---------------------------------------------------------------------------
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator-(
     const Expansion< T, B, Scheme >& a, const Expansion< T, B, Scheme >& b ) noexcept
 {
@@ -67,7 +67,7 @@ template < typename T, Basis B, IndexScheme Scheme >
     return r;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator-( const Expansion< T, B, Scheme >& a,
                                                              std::type_identity_t< T > s ) noexcept
 {
@@ -76,7 +76,7 @@ template < typename T, Basis B, IndexScheme Scheme >
     return r;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator-(
     std::type_identity_t< T > s, const Expansion< T, B, Scheme >& a ) noexcept
 {
@@ -90,7 +90,7 @@ template < typename T, Basis B, IndexScheme Scheme >
 // Unary negation
 // ---------------------------------------------------------------------------
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator-(
     const Expansion< T, B, Scheme >& a ) noexcept
 {
@@ -103,7 +103,7 @@ template < typename T, Basis B, IndexScheme Scheme >
 // Scalar multiplication / division
 // ---------------------------------------------------------------------------
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator*( const Expansion< T, B, Scheme >& a,
                                                              std::type_identity_t< T > s ) noexcept
 {
@@ -112,14 +112,14 @@ template < typename T, Basis B, IndexScheme Scheme >
     return r;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator*(
     std::type_identity_t< T > s, const Expansion< T, B, Scheme >& a ) noexcept
 {
     return a * s;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator/( const Expansion< T, B, Scheme >& a,
                                                              std::type_identity_t< T > s ) noexcept
 {
@@ -130,7 +130,7 @@ template < typename T, Basis B, IndexScheme Scheme >
 // Bilinear product (the basis-defined Cauchy/convolution product)
 // ---------------------------------------------------------------------------
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 [[nodiscard]] constexpr Expansion< T, B, Scheme > operator*(
     const Expansion< T, B, Scheme >& a, const Expansion< T, B, Scheme >& b ) noexcept
 {
@@ -143,7 +143,7 @@ template < typename T, Basis B, IndexScheme Scheme >
 // Compound assignment (dense)
 // ---------------------------------------------------------------------------
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator+=( Expansion< T, B, Scheme >& a,
                                                  const Expansion< T, B, Scheme >& b ) noexcept
 {
@@ -151,7 +151,7 @@ constexpr Expansion< T, B, Scheme >& operator+=( Expansion< T, B, Scheme >& a,
     return a;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator-=( Expansion< T, B, Scheme >& a,
                                                  const Expansion< T, B, Scheme >& b ) noexcept
 {
@@ -159,7 +159,7 @@ constexpr Expansion< T, B, Scheme >& operator-=( Expansion< T, B, Scheme >& a,
     return a;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator+=( Expansion< T, B, Scheme >& a,
                                                  std::type_identity_t< T > s ) noexcept
 {
@@ -167,7 +167,7 @@ constexpr Expansion< T, B, Scheme >& operator+=( Expansion< T, B, Scheme >& a,
     return a;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator-=( Expansion< T, B, Scheme >& a,
                                                  std::type_identity_t< T > s ) noexcept
 {
@@ -175,7 +175,7 @@ constexpr Expansion< T, B, Scheme >& operator-=( Expansion< T, B, Scheme >& a,
     return a;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator*=( Expansion< T, B, Scheme >& a,
                                                  std::type_identity_t< T > s ) noexcept
 {
@@ -183,7 +183,7 @@ constexpr Expansion< T, B, Scheme >& operator*=( Expansion< T, B, Scheme >& a,
     return a;
 }
 
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator/=( Expansion< T, B, Scheme >& a,
                                                  std::type_identity_t< T > s ) noexcept
 {
@@ -191,7 +191,7 @@ constexpr Expansion< T, B, Scheme >& operator/=( Expansion< T, B, Scheme >& a,
 }
 
 /// In-place bilinear product.
-template < typename T, Basis B, IndexScheme Scheme >
+template < typename T, BasisPolicy B, IndexScheme Scheme >
 constexpr Expansion< T, B, Scheme >& operator*=( Expansion< T, B, Scheme >& a,
                                                  const Expansion< T, B, Scheme >& b ) noexcept
 {
