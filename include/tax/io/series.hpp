@@ -199,6 +199,48 @@ void writeSeries( std::ostream& os, CoeffAt&& coeffAt, NameOf&& nameOf, const Se
     if ( !any ) os << "0";
 }
 
+/// Core writer for orthogonal-basis series: renders Σ coeff · Π_v B::term(deg_v, name_v).
+/// Mirrors writeSeries' coefficient iteration / sign / threshold handling, but each
+/// non-constant monomial is a product of per-variable basis labels, e.g. "T_2(x₀)*T_1(x₁)".
+/// The coefficient is always shown (no 1-elision); the constant term prints as just the
+/// coefficient.
+template < typename Scheme, typename T, typename B, typename CoeffAt, typename NameOf >
+void writeOrthoSeries( std::ostream& os, CoeffAt&& coeffAt, NameOf&& nameOf,
+                       const SeriesOptions& opts )
+{
+    constexpr int M = Scheme::vars;
+    const std::size_t n = Scheme::nCoeff;
+    const T thr = T( opts.threshold );
+    bool any = false;
+    for ( std::size_t k = 0; k < n; ++k )
+    {
+        const T c = coeffAt( k );
+        if ( c == T{ 0 } ) continue;
+        const bool neg = c < T{ 0 };
+        const T mag = neg ? -c : c;
+        if ( mag <= thr ) continue;
+        const auto alpha = Scheme::multiOf( k );
+        const bool is_const = totalDegree( alpha ) == 0;
+
+        if ( !any )
+        {
+            if ( neg ) os << "-";
+        } else
+            os << ( neg ? " - " : " + " );
+        any = true;
+
+        os << formatMagnitude( mag, opts.precision );
+        if ( !is_const )
+            for ( int v = 0; v < M; ++v )
+            {
+                const int e = alpha[std::size_t( v )];
+                if ( e == 0 ) continue;
+                os << "*" << B::term( e, nameOf( v ) );
+            }
+    }
+    if ( !any ) os << "0";
+}
+
 // --- Per-kind streaming (dispatches coefficient access + naming) ------------
 
 template < typename T, typename Scheme >
@@ -223,6 +265,29 @@ void streamScalar( std::ostream& os, const named::NamedTaylorExpansion< T, N, Ax
 {
     constexpr int M = named::NamedTaylorExpansion< T, N, Axes... >::vars_v;
     writeSeries< IsotropicScheme< N, M >, T >(
+        os, [&]( std::size_t k ) { return f.inner()[k]; },
+        [&]( int v ) { return namedVarName< Axes... >( v, opts ); }, opts );
+}
+
+// Unnamed orthogonal expansion (any non-Taylor basis), dense storage.
+template < typename T, typename B, typename Scheme >
+    requires( !std::is_same_v< B, TaylorBasis > )
+void streamScalar( std::ostream& os, const Expansion< T, B, Scheme, storage::Dense >& f,
+                   const SeriesOptions& opts )
+{
+    writeOrthoSeries< Scheme, T, B >(
+        os, [&]( std::size_t k ) { return f[k]; },
+        [&]( int v ) { return defaultVarName( v, opts ); }, opts );
+}
+
+// Named expansion over a non-Taylor basis (named-over-orthogonal).
+template < typename T, typename B, int N, typename... Axes >
+    requires( !std::is_same_v< B, TaylorBasis > )
+void streamScalar( std::ostream& os, const named::NamedExpansion< T, B, N, Axes... >& f,
+                   const SeriesOptions& opts )
+{
+    constexpr int M = named::NamedExpansion< T, B, N, Axes... >::vars_v;
+    writeOrthoSeries< IsotropicScheme< N, M >, T, B >(
         os, [&]( std::size_t k ) { return f.inner()[k]; },
         [&]( int v ) { return namedVarName< Axes... >( v, opts ); }, opts );
 }
@@ -283,37 +348,14 @@ std::ostream& operator<<( std::ostream& os, const TaylorExpansion< T, Scheme, S 
     return os;
 }
 
-// --- Orthogonal-basis series (univariate; folded from bases/io.hpp) ----------
-
-/// Human-readable univariate series in its own basis, e.g. "1 + 2*x + 3*x^2" or
-/// "1 + 2*T_1 + 3*T_2". Zero coefficients are omitted; the zero series prints
-/// as "0".
-template < typename T, typename B, typename Scheme >
-    requires( Scheme::isUnivariate && !std::is_same_v< B, TaylorBasis > )
-[[nodiscard]] std::string to_string( const Expansion< T, B, Scheme >& f )
-{
-    std::ostringstream os;
-    bool first = true;
-    for ( int k = 0; k <= Scheme::order; ++k )
-    {
-        const T ck = f[std::size_t( k )];
-        if ( ck == T{ 0 } ) continue;
-        if ( !first ) os << " + ";
-        first = false;
-        if ( k == 0 )
-            os << ck;
-        else
-            os << ck << "*" << B::term( k );
-    }
-    if ( first ) os << T{ 0 };
-    return os.str();
-}
+// --- Orthogonal-basis streaming (univariate + multivariate) -----------------
 
 template < typename T, typename B, typename Scheme >
-    requires( Scheme::isUnivariate && !std::is_same_v< B, TaylorBasis > )
-std::ostream& operator<<( std::ostream& os, const Expansion< T, B, Scheme >& f )
+    requires( !std::is_same_v< B, TaylorBasis > )
+std::ostream& operator<<( std::ostream& os, const Expansion< T, B, Scheme, storage::Dense >& f )
 {
-    return os << to_string( f );
+    detail::streamScalar( os, f, SeriesOptions{} );
+    return os;
 }
 
 // --- series() manipulator ---------------------------------------------------
@@ -349,6 +391,15 @@ namespace named
 /// ADL hook so `os << namedExpansion` resolves for named expansions.
 template < typename T, int N, typename... Axes >
 std::ostream& operator<<( std::ostream& os, const NamedTaylorExpansion< T, N, Axes... >& f )
+{
+    tax::detail::streamScalar( os, f, tax::SeriesOptions{} );
+    return os;
+}
+
+/// ADL hook so `os << namedExpansion` resolves for named-over-orthogonal expansions.
+template < typename T, typename B, int N, typename... Axes >
+    requires( !std::is_same_v< B, tax::TaylorBasis > )
+std::ostream& operator<<( std::ostream& os, const NamedExpansion< T, B, N, Axes... >& f )
 {
     tax::detail::streamScalar( os, f, tax::SeriesOptions{} );
     return os;

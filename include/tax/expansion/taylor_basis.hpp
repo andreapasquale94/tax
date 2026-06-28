@@ -4,10 +4,10 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <tax/expansion/basis.hpp>
+#include <tax/expansion/detail/cauchy.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/scheme/concept.hpp>
-#include <tax/expansion/detail/cauchy.hpp>
-#include <tax/expansion/basis.hpp>
 
 namespace tax
 {
@@ -30,11 +30,11 @@ struct TaylorBasis
 
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "taylor"; }
 
-    [[nodiscard]] static std::string term( int k )
+    [[nodiscard]] static std::string term( int k, std::string_view var )
     {
         if ( k == 0 ) return "1";
-        if ( k == 1 ) return "x";
-        return "x^" + std::to_string( k );
+        if ( k == 1 ) return std::string( var );
+        return std::string( var ) + "^" + std::to_string( k );
     }
 
     /// Truncated Cauchy (convolution) product, delegated to the scheme.

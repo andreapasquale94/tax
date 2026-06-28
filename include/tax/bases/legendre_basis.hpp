@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
-#include <tax/expansion/basis.hpp>
 #include <tax/bases/ortho.hpp>
+#include <tax/expansion/basis.hpp>
 
 namespace tax
 {
@@ -26,10 +26,10 @@ struct LegendreBasis : OrthogonalBasis< LegendreBasis >
 {
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "legendre"; }
 
-    [[nodiscard]] static std::string term( int k )
+    [[nodiscard]] static std::string term( int k, std::string_view var )
     {
         if ( k == 0 ) return "1";
-        return "P_" + std::to_string( k );
+        return "P_" + std::to_string( k ) + "(" + std::string( var ) + ")";
     }
 
     /// x P_n = α_n P_{n+1} + β_n P_n + γ_n P_{n-1}.

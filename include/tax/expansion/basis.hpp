@@ -25,7 +25,7 @@ namespace tax
 // type serves every order):
 //
 //   static constexpr std::string_view name();           // e.g. "taylor"
-//   static std::string                term( int k );    // pretty basis label, e.g. "x^2" / "T_2"
+//   static std::string  term( int k, std::string_view var );  // basis label, e.g. "x^2" / "T_2(x)"
 //
 //   template< typename T, int N >
 //   static constexpr void product( std::array< T, N + 1 >& out,
@@ -37,7 +37,8 @@ namespace tax
 //
 //   template< typename T, typename Scheme >
 //   static constexpr void derivative( std::array< T, Scheme::nCoeff >& out,
-//                                     const std::array< T, Scheme::nCoeff >& c, int axis ) noexcept;
+//                                     const std::array< T, Scheme::nCoeff >& c, int axis )
+//                                     noexcept;
 //
 //   template< typename T, typename Scheme >
 //   static constexpr void integral( std::array< T, Scheme::nCoeff >& out,

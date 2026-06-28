@@ -4,10 +4,10 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <tax/bases/ortho.hpp>
+#include <tax/expansion/basis.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/scheme/concept.hpp>
-#include <tax/expansion/basis.hpp>
-#include <tax/bases/ortho.hpp>
 
 namespace tax
 {
@@ -41,10 +41,10 @@ struct ChebyshevBasisOn
 
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "chebyshev"; }
 
-    [[nodiscard]] static std::string term( int k )
+    [[nodiscard]] static std::string term( int k, std::string_view var )
     {
         if ( k == 0 ) return "1";
-        return "T_" + std::to_string( k );
+        return "T_" + std::to_string( k ) + "(" + std::string( var ) + ")";
     }
 
     /// Map a physical coordinate to the canonical variable u ∈ [−1, 1].

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <string>
 #include <tax/tax.hpp>
 
 // After the destructive merge, `TaylorExpansion` IS `Expansion` over TaylorBasis
@@ -54,8 +55,31 @@ TEST( SeriesUnify, IoStreamsInBasis )
 {
     // The generic series IO labels terms in the basis (here Chebyshev).
     tax::ChebyshevSeries< 2 > g{ std::array< double, 3 >{ 1.0, 0.0, 3.0 } };
-    EXPECT_EQ( tax::to_string( g ), "1 + 3*T_2" );
+    EXPECT_EQ( tax::to_string( g ), "1 + 3*T_2(x₀)" );
 
     tax::ChebyshevSeries< 2 > zero{};
     EXPECT_EQ( tax::to_string( zero ), "0" );
+}
+
+// Multivariate orthogonal printing: each variable carries its own basis label,
+// joined by '*'. Build the coefficient array directly and pin one cross term.
+TEST( SeriesUnify, MultivariateOrthogonalPrints )
+{
+    using E = tax::ChebyshevSeries< 3, 2 >;  // order 3, 2 vars
+    std::array< double, E::nCoefficients > a{};
+    a[0] = 2.0;  // constant
+    tax::MultiIndex< 2 > m21{};
+    m21[0] = 2;  // x₀ degree 2
+    m21[1] = 1;  // x₁ degree 1
+    a[tax::flatIndex< 2 >( m21 )] = 5.0;
+    E g{ a };
+    EXPECT_EQ( tax::to_string( g ), "2 + 5*T_2(x₀)*T_1(x₁)" );
+}
+
+// Named-over-orthogonal printing: the variable symbol is the axis name.
+TEST( SeriesUnify, NamedOrthogonalUsesAxisName )
+{
+    auto u = tax::variable< "u", 4, tax::ChebyshevBasis >( 0.0 );
+    const auto s = tax::to_string( tax::exp( u ) );
+    EXPECT_NE( s.find( "(u)" ), std::string::npos );
 }

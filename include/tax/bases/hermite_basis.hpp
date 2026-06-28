@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
-#include <tax/expansion/basis.hpp>
 #include <tax/bases/ortho.hpp>
+#include <tax/expansion/basis.hpp>
 
 namespace tax
 {
@@ -26,10 +26,10 @@ struct HermiteBasis : OrthogonalBasis< HermiteBasis >
 {
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "hermite"; }
 
-    [[nodiscard]] static std::string term( int k )
+    [[nodiscard]] static std::string term( int k, std::string_view var )
     {
         if ( k == 0 ) return "1";
-        return "He_" + std::to_string( k );
+        return "He_" + std::to_string( k ) + "(" + std::string( var ) + ")";
     }
 
     /// x He_n = α_n He_{n+1} + β_n He_n + γ_n He_{n-1}.
