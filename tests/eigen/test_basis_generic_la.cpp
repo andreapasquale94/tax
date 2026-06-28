@@ -67,7 +67,7 @@ TEST( BasisGenericLa, JacobianHermite ) { checkJacobian< tax::HermiteExpansion< 
 TEST( BasisGenericLa, PointFormAgreesWithTaylorAtCenter )
 {
     std::array< double, 2 > x0{ 0.0, 0.0 };
-    using TE = tax::TEn< 4, 2 >;
+    using TE = tax::TE< 4, 2 >;
     auto x = TE::variable< 0 >( x0 );
     auto y = TE::variable< 1 >( x0 );
     auto f = x * y + 2.0 * x;

@@ -48,9 +48,6 @@ isotropic form; they apply equally to any scheme via template deduction.
 template <int N, int M = 1>
 using TE  = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Dense>;
 
-template <int N, int M>
-using TEn = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Dense>;
-
 template <int N, int M = 1>
 using STE = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Sparse>;
 

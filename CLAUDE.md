@@ -127,10 +127,9 @@ tax::TaylorExpansion<T, Scheme, Storage = tax::storage::Dense>
 Most code uses the aliases rather than naming a `Scheme` directly (all `double`-valued unless noted):
 ```cpp
 tax::TE<N, M = 1>        // dense Taylor expansion
-tax::TEn<N, M>            // dense, explicit multivariate spelling
-tax::STE<N, M = 1>        // sparse
-tax::NE<N, Axes...>       // named (single order)          — see Named Expansions
-tax::MTE<Axes...>         // mixed-order named             — see Named Expansions
+tax::STE<N, M = 1>       // sparse
+tax::NE<N, Axes...>      // named (single order)          — see Named Expansions
+tax::MTE<Axes...>        // mixed-order named             — see Named Expansions
 ```
 
 - **Dense:** `std::array<T, numMonomials(N, M)>` coefficients in graded-lex
@@ -308,7 +307,7 @@ like `NE`. Key files: `core/mixed_named.hpp`, `kernels/mixed_stencils.hpp`,
 | Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()`, `deriv()`, `popFront()` |
 | Local variables | `snake_case` | `n_coeff`, `dx`, `half_width` |
 | Namespaces | `lowercase` | `tax`, `tax::detail`, `tax::named`, `tax::la` |
-| Type aliases | Short uppercase | `TE<N, M>`, `TEn<N, M>`, `STE<N, M>` |
+| Type aliases | Short uppercase | `TE<N, M>`, `STE<N, M>` |
 
 ### C++ Patterns
 

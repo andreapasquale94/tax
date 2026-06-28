@@ -1,16 +1,16 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <array>
 #include <cstddef>
 #include <span>
 #include <stdexcept>
+#include <tax/expansion/basis.hpp>
 #include <tax/expansion/concepts.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/scheme.hpp>
 #include <tax/expansion/storage/dense.hpp>
 #include <tax/expansion/storage/sparse.hpp>
-#include <Eigen/Core>
-#include <tax/expansion/basis.hpp>
 #include <tax/expansion/taylor_basis.hpp>
 #include <type_traits>
 #include <utility>
@@ -355,10 +355,6 @@ using TaylorExpansion = Expansion< T, TaylorBasis, Scheme, Storage >;
 /// `TE<N, M>` — order-N, M-variate dense `double` Taylor expansion.
 template < int N, int M = 1 >
 using TE = Expansion< double, TaylorBasis, IsotropicScheme< N, M >, storage::Dense >;
-
-/// `TEn<N, M>` — explicit M-variate alias, same as `TE<N, M>`.
-template < int N, int M >
-using TEn = Expansion< double, TaylorBasis, IsotropicScheme< N, M >, storage::Dense >;
 
 // ---------------------------------------------------------------------------
 // Sparse specialisation (TaylorBasis only)

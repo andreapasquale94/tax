@@ -24,7 +24,7 @@ up to order \(N\) in a single evaluation pass.
   `Scheme` fixes the truncation order(s) and variable count at compile time, and
   `Storage` is `Dense` (stack `std::array`) or `Sparse` (sorted-index map). Both
   storages share the kernel layer and agree numerically.
-- **Convenience aliases** — `TE<N, M=1>` / `TEn<N, M>` (dense), `STE<N, M=1>`
+- **Convenience aliases** — `TE<N, M=1>` (dense), `STE<N, M=1>`
   (sparse), `NE<N, Axes...>` (named), `MTE<Axes...>` (mixed-order named).
 - **Comprehensive math** — arithmetic, trigonometric, hyperbolic,
   transcendental, square/cubic root, reciprocal, integer & real powers,
