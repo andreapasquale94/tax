@@ -31,7 +31,7 @@ ctest --test-dir build --output-on-failure
 | `TAX_BUILD_REGRESSIONS` | `OFF` | Build the DACE-based regression tests |
 
 The fast Cauchy kernel paths (`TAX_USE_UNROLL` for $M=1$, `TAX_USE_STENCIL`
-for $M \ge 2$) default to on in `<tax/kernels/cauchy.hpp>`; pre-define the
+for $M \ge 2$) default to on in `<tax/expansion/detail/stencil_config.hpp>`; pre-define the
 macro to `0` (identically in every translation unit) to fall back to the
 loop kernel.
 

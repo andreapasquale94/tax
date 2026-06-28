@@ -9,7 +9,7 @@
 //   truncate    — free tax::truncate<N2>(scalar | Eigen vector/matrix).
 //   derivatives — derivative, gradient, hessian, jacobian.
 //   named       — NumTraits + per-axis gradient/hessian/jacobian/value/eval for NamedExpansion.
-//   mixed_named — the same for MixedExpansion (so la.hpp alone is self-complete).
+//   mixed       — the same for MixedExpansion (so la.hpp alone is self-complete).
 //   invert      — formal polynomial-map inversion (Picard iteration).
 //   exports     — single assembly point surfacing the la + named helpers under `tax::` (last).
 //
