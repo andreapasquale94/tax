@@ -39,7 +39,7 @@ review blueprint is the input to this spec; this document records the **decided*
 | D6 | Namespaces | Make **`tax::la` and `tax::named` inline**; **`tax::mixed` non-inline** (factory disambiguation). Delete the repeated `using`-re-export blocks. |
 | D7 | Umbrella | One umbrella `<tax/tax.hpp>` + three self-complete sub-facades (`expansion.hpp`, `bases.hpp`, `eigen.hpp`). |
 | D8 | Batch | **Remove the `Batch` capability** — delete `Batch<T,K>` (SIMD-style lock-step coefficients), the `K` lane on `TE`, `Batchd`/`Batchf`, `NumTraits<Batch>`, and `test_batch`. Not needed. Resolves the three-batched-spellings incoherence by elimination. |
-| D9 | Eigen-free core | **Make `<tax/expansion.hpp>` fully Eigen-free.** Remove the carrier's `gradient()`/`hessian()` convenience members; the free `tax::gradient(f)`/`tax::hessian(f)` (already in `eigen/`) become the only form. With `Batch` gone these members were the core's last Eigen user, so the expansion core then needs no Eigen at all. |
+| D9 | Sever core→la edge | **The expansion core must not depend on the `tax::la` module.** Move the carrier's `gradient()`/`hessian()` members to the free `tax::la::gradient(f)`/`hessian(f)` (re-home their loop bodies). The carrier KEEPS the `eval(Eigen-vector)` convenience member, so it includes `<Eigen/Core>` *directly* instead of `<tax/la/types.hpp>`. Result: the core no longer reaches up into `tax::la` (the F2 layering goal) — though it is **not** fully Eigen-free (it still uses the external `Eigen` lib for `eval(Eigen)`). *(Revised from "fully Eigen-free core" after the carrier was found to also expose `eval(Eigen)`; the maintainer chose to keep that member.)* |
 
 ---
 
@@ -111,10 +111,11 @@ and **`core/batch.hpp`** (D8 — the `Batch` capability is removed entirely).
 - `<tax/bases.hpp>` — adds the orthogonal basis policies + spectral extras.
 - `<tax/eigen.hpp>` — the Eigen integration; self-complete (includes mixed; fixes today's `la.hpp` gap).
 
-Eigen-free core (D9): `<tax/expansion.hpp>` is **Eigen-free**. With `Batch` removed (D8) and the carrier's
-`gradient()`/`hessian()` members demoted to the existing free functions in `eigen/`, the expansion capability
-includes no Eigen header — it can be used standalone. `bases.hpp` is likewise Eigen-free; only `eigen.hpp`
-(and `io/series.hpp` for pretty-printing Eigen vectors of expansions) pulls Eigen.
+Core dependency (D9): `<tax/expansion.hpp>` no longer depends on the `tax::la` **module** — `gradient()`/
+`hessian()` move to free `tax::la::` functions, and the carrier includes `<Eigen/Core>` directly (for the
+retained `eval(Eigen)` member) rather than `<tax/la/types.hpp>`. So the core→la layering inversion is gone,
+even though the core still uses the external Eigen library. (A fully Eigen-free core would also require moving
+`eval(Eigen)` out; the maintainer chose to keep it — see D9.)
 
 ---
 
@@ -180,11 +181,14 @@ These are carried regardless of layout and several precede the move so the safet
   `requires std::is_same_v<Basis, TaylorBasis>`** (keep them — many test call sites). Also gate
   `invert`/`identityMap`/`composeOne` on the Taylor trait. (The `gradient()`/`hessian()` members had the same
   bug; F2 removes them outright, so this fix is the value-form remainder.)
-- **F2 — Eigen-free core; sever `core→eigen` (D9).** **Remove** the carrier's `gradient()`/`hessian()` members
-  and rewrite the ~15 member call sites to the existing free functions (`f.gradient()` → `tax::gradient(f)`).
-  Drop the `<eigen/types.hpp>` and `<Eigen/Core>` includes from `expansion.hpp`; verify no residual Eigen use
-  remains in the expansion core. The free `tax::la::gradient/hessian` (already Taylor-gated) become the sole
-  form — this also subsumes the gradient/hessian half of the F1 correctness bug.
+- **F2 — sever the `core→la` edge (D9).** Re-home the carrier's `gradient()`/`hessian()` member bodies into
+  the existing free `tax::la::gradient(f)`/`hessian(f)` (which currently just delegate to the members), then
+  **remove the members** and rewrite the ~11 member call sites (`f.gradient()` → `tax::la::gradient(f)`). Swap
+  `#include <tax/la/types.hpp>` for `#include <Eigen/Core>` in `expansion.hpp` — the carrier no longer needs
+  `VecNT`/`MatNT` (only `gradient`/`hessian` used them) but keeps `eval(Eigen)`, which needs `Eigen::MatrixBase`.
+  Net: the core depends on the external `Eigen` lib but no longer on the `tax::la` module. The free
+  `tax::la::gradient/hessian` (already Taylor-gated) become the sole member-free form — this also subsumes the
+  gradient/hessian half of the F1 correctness bug (those members applied `k!` scaling unconstrained).
 - **F3 — sever `core→bases`.** Move `BasisPolicy` and `TaylorBasis` into `expansion/`; the carrier needs the
   Taylor policy + Cauchy product, which is a legitimate downward `expansion → expansion/detail` edge.
 - **F4 — mixed operators out of the type header.** Move the inlined mixed operator surface into
@@ -277,9 +281,11 @@ correctness fixes land before the wide tree move.
   critics flagged for approach B); accepted deliberately for the cleaner capability-grouped tree.
 - **Inline-namespace subtlety (P5):** `tax::value` must be defined inside `tax::la`; ADL behavior of the now-
   `tax::`-level helpers must be re-verified against existing call sites.
-- **Eigen-free core (D9, decided yes):** the carrier `gradient()`/`hessian()` members are removed and ~15 call
-  sites move to `tax::gradient(f)`/`tax::hessian(f)`. Risk is purely the call-site sweep (mechanical, in P1) and
-  re-documenting the two removed members; the free forms already exist and are tested.
+- **Sever core→la (D9):** the carrier `gradient()`/`hessian()` members are removed and ~11 call sites move to
+  `tax::la::gradient(f)`/`hessian(f)`; the carrier keeps `eval(Eigen)` (so it includes `<Eigen/Core>` directly).
+  Risk is the call-site sweep (mechanical, P1) plus re-documenting the two removed members; the free forms
+  already exist (they re-home the member bodies). The core is NOT fully Eigen-free — that was relaxed when
+  `eval(Eigen)` was found; revisit only if a no-Eigen core becomes a goal.
 - **Companion `ode/ads` plugin** must adapt to moved include paths and the `*Series→*Expansion` renames;
   `tax::la::` and `derivative()` are preserved to limit its churn.
 
