@@ -22,8 +22,8 @@ TEST( EigenHessian, HessianOfSumOfSquaresMatchesAnalytic )
     auto v = tax::la::variables< tax::TE< 3, 2 > >( x0 );
     auto f = v( 0 ) * v( 0 ) + v( 1 ) * v( 1 );
     auto H = tax::la::hessian( f );
-    EXPECT_NEAR( H( 0, 0 ), 2.0, 1e-10 );
-    EXPECT_NEAR( H( 0, 1 ), 0.0, 1e-10 );
-    EXPECT_NEAR( H( 1, 0 ), 0.0, 1e-10 );
-    EXPECT_NEAR( H( 1, 1 ), 2.0, 1e-10 );
+    EXPECT_NEAR( H( 0, 0 ), 2.0, 1e-12 );
+    EXPECT_NEAR( H( 0, 1 ), 0.0, 1e-12 );
+    EXPECT_NEAR( H( 1, 0 ), 0.0, 1e-12 );
+    EXPECT_NEAR( H( 1, 1 ), 2.0, 1e-12 );
 }

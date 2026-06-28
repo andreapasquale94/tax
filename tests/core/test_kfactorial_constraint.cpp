@@ -14,6 +14,7 @@ concept HasValueDerivative = requires( const E e, tax::MultiIndex< E::scheme::va
 using TaylorE = tax::TE< 3, 2 >;
 using ChebE = tax::ChebyshevSeries< 3, 2 >;
 using LegE = tax::LegendreSeries< 3, 2 >;
+using HermE = tax::HermiteSeries< 3, 2 >;
 
 static_assert( HasValueDerivative< TaylorE >,
                "Taylor expansion must expose the k!-scaled derivative()" );
@@ -21,6 +22,8 @@ static_assert( !HasValueDerivative< ChebE >,
                "Chebyshev expansion must NOT expose the k!-scaled derivative()" );
 static_assert( !HasValueDerivative< LegE >,
                "Legendre expansion must NOT expose the k!-scaled derivative()" );
+static_assert( !HasValueDerivative< HermE >,
+               "Hermite expansion must NOT expose the k!-scaled derivative()" );
 
 // Also prove the compile-time template overload derivative<Alpha...>() is
 // equally constrained to TaylorBasis.
@@ -35,6 +38,8 @@ static_assert( !HasTemplateDerivative< ChebE >,
                "Chebyshev expansion must NOT expose derivative<Alpha...>()" );
 static_assert( !HasTemplateDerivative< LegE >,
                "Legendre expansion must NOT expose derivative<Alpha...>()" );
+static_assert( !HasTemplateDerivative< HermE >,
+               "Hermite expansion must NOT expose derivative<Alpha...>()" );
 
 TEST( KFactorialConstraint, TaylorOnly )
 {

@@ -21,8 +21,8 @@ TEST( EigenGradient, GradientOfProductMatchesAnalytic )
     auto v = tax::la::variables< tax::TE< 3, 2 > >( x0 );
     auto f = v( 0 ) * v( 1 );
     auto g = tax::la::gradient( f );
-    EXPECT_NEAR( g( 0 ), 2.0, 1e-10 );  // ∂(x*y)/∂x = y = 2.0
-    EXPECT_NEAR( g( 1 ), 1.0, 1e-10 );  // ∂(x*y)/∂y = x = 1.0
+    EXPECT_NEAR( g( 0 ), 2.0, 1e-12 );  // ∂(x*y)/∂x = y = 2.0
+    EXPECT_NEAR( g( 1 ), 1.0, 1e-12 );  // ∂(x*y)/∂y = x = 1.0
 }
 
 TEST( EigenGradient, Univariate )

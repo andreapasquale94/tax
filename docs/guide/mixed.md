@@ -43,8 +43,8 @@ ME x = ME::variable<0>(p);
 ME y = ME::variable<1>(p);
 
 auto f = sin(x * y) + exp(x);          // full math surface
-auto g = f.gradient();                 // Eigen::Vector2d of first-order derivatives
-auto H = f.hessian();                  // Eigen::Matrix2d Hessian
+auto g = tax::la::gradient( f );       // Eigen::Vector2d of first-order derivatives
+auto H = tax::la::hessian( f );        // Eigen::Matrix2d Hessian
 ```
 
 The box size is `numMonomials(4, 1) × numMonomials(3, 1) = 5 × 4 = 20`

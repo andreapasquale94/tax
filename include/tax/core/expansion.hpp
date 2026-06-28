@@ -476,6 +476,8 @@ class Expansion< T, Basis, Scheme, storage::Sparse >
     // Derivative accessors (apply k! scaling to raw coefficients)
     // ------------------------------------------------------------------
 
+    // Sparse storage is TaylorBasis-only (class-level static_assert above), so
+    // the value-form derivative needs no per-member requires clause.
     [[nodiscard]] T derivative( const MultiIndex< M >& alpha ) const noexcept
     {
         T fac = T{ 1 };

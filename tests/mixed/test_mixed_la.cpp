@@ -117,8 +117,8 @@ TEST( MixedLA, FreeFunctionGradientMatchesAnalytic )
     const double xy = kX0 * kY0;
     const double df_dx = kY0 * std::cos( xy ) + std::exp( kX0 );
     const double df_dy = kX0 * std::cos( xy );
-    EXPECT_NEAR( g( 0 ), df_dx, 1e-10 ) << "free-function gradient x analytic";
-    EXPECT_NEAR( g( 1 ), df_dy, 1e-10 ) << "free-function gradient y analytic";
+    EXPECT_NEAR( g( 0 ), df_dx, 1e-12 ) << "free-function gradient x analytic";
+    EXPECT_NEAR( g( 1 ), df_dy, 1e-12 ) << "free-function gradient y analytic";
 }
 
 // ---------------------------------------------------------------------------
@@ -184,10 +184,10 @@ TEST( MixedLA, FreeFunctionHessianMatchesAnalytic )
     const double h00 = -kY0 * kY0 * sxy + ex;
     const double h01 = cxy - kX0 * kY0 * sxy;
     const double h11 = -kX0 * kX0 * sxy;
-    EXPECT_NEAR( H( 0, 0 ), h00, 1e-10 ) << "free-function H(0,0) analytic";
-    EXPECT_NEAR( H( 0, 1 ), h01, 1e-10 ) << "free-function H(0,1) analytic";
-    EXPECT_NEAR( H( 1, 0 ), h01, 1e-10 ) << "free-function H(1,0) analytic";
-    EXPECT_NEAR( H( 1, 1 ), h11, 1e-10 ) << "free-function H(1,1) analytic";
+    EXPECT_NEAR( H( 0, 0 ), h00, 1e-12 ) << "free-function H(0,0) analytic";
+    EXPECT_NEAR( H( 0, 1 ), h01, 1e-12 ) << "free-function H(0,1) analytic";
+    EXPECT_NEAR( H( 1, 0 ), h01, 1e-12 ) << "free-function H(1,0) analytic";
+    EXPECT_NEAR( H( 1, 1 ), h11, 1e-12 ) << "free-function H(1,1) analytic";
 }
 
 // ---------------------------------------------------------------------------
