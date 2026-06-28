@@ -256,7 +256,7 @@ correctness fixes land before the wide tree move.
 - **P2 — `BasisPolicy` + `TaylorBasis` into the core capability; rename concept; regularize `Series` arity;
   demote `aliases.hpp` to a pure-alias file (mechanical, wide; one atomic commit).** *(F3, naming)*
 - **P3 — extract `meta.hpp` + `axis.hpp`; collapse `Merge` (3a mechanical, 3b delicate compile-time meta).** *(F8)*
-- **P4 — mixed operators → `ops/`; full binary parity (named + mixed); move mixed type into `tax::mixed`.** *(F4)*
+- **P4 — mixed operators → `operators/mixed_*.hpp` (sever core→operators); full binary parity (named + mixed).** *(F4, H-C/H-D)* **M-B deferred:** moving the mixed *type* `tax::named`→`tax::mixed` is delicate (the type body uses `tax::named::detail` helpers; `la/mixed_named.hpp`+NumTraits reference it) and medium-value — folded into the **P6** tree move where namespaces are revisited. The moved mixed operators stay in `tax::named` for now.
 - **P5 — eigen consolidation + inline namespaces.** Merge named+mixed la surface → `named_diff.hpp`; one shared
   `ExpansionNumTraits` factory (Batch excluded); unify `traits.hpp`; inline `tax::la`/`tax::named`, delete the
   `using`-blocks; self-complete `eigen.hpp`. *(F5)*
