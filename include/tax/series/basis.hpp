@@ -35,13 +35,13 @@ namespace tax
 //   template< typename T, int N >
 //   static constexpr T eval( const std::array< T, N + 1 >& c, T x ) noexcept;
 //
-//   template< typename T, int N >
-//   static constexpr void derivative( std::array< T, N + 1 >& out,
-//                                     const std::array< T, N + 1 >& c ) noexcept;
+//   template< typename T, typename Scheme >
+//   static constexpr void derivative( std::array< T, Scheme::nCoeff >& out,
+//                                     const std::array< T, Scheme::nCoeff >& c, int axis ) noexcept;
 //
-//   template< typename T, int N >
-//   static constexpr void integral( std::array< T, N + 1 >& out,
-//                                   const std::array< T, N + 1 >& c ) noexcept;
+//   template< typename T, typename Scheme >
+//   static constexpr void integral( std::array< T, Scheme::nCoeff >& out,
+//                                   const std::array< T, Scheme::nCoeff >& c, int axis ) noexcept;
 //
 // Both `P_0 == 1` and `P_1 == x` are *required* of every basis (true for the
 // monomial and every classical orthogonal family normalised the usual way).

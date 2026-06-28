@@ -72,7 +72,6 @@ tax/
 ├── cmake/                    # CMake package config template
 ├── .github/workflows/        # CI: tests.yml, sanitizers.yml, regressions.yml, docs.yml
 ├── .clang-format             # Code style configuration
-├── pyproject.toml            # scikit-build-core wheel config (Python bindings planned)
 ├── CMakeLists.txt            # Root CMake configuration
 └── README.md
 ```
@@ -402,5 +401,3 @@ with `-DTAX_BUILD_REGRESSIONS=ON`.
 - **M = 0 is invalid:** always assert or `static_assert` M >= 1
 - **Include the umbrella header:** `<tax/tax.hpp>` (core + named + mixed + la) —
   not individual sub-headers
-- **`pyproject.toml` is forward-looking:** there are no Python binding sources
-  in the tree yet
