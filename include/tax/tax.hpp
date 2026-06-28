@@ -1,6 +1,7 @@
 #pragma once
 // Umbrella header (core + linear algebra). Users should include only this.
 
+#include <tax/version.hpp>
 #include <tax/core/concepts.hpp>
 #include <tax/core/multi_index.hpp>
 #include <tax/core/enumeration.hpp>

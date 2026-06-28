@@ -16,6 +16,7 @@ function(tax_add_test name)
     add_test(NAME ${name} COMMAND ${name})
 endfunction()
 
+tax_add_test(test_version SOURCES core/test_version.cpp)
 tax_add_test(test_multi_index SOURCES core/test_multi_index.cpp)
 tax_add_test(test_enumeration SOURCES core/test_enumeration.cpp)
 tax_add_test(test_taylor_expansion_ctor SOURCES core/test_taylor_expansion_ctor.cpp)
