@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move the source tree to the feature-module layout — `core/`→`expansion/`, `kernels/`→`expansion/detail/`, `operators/`→`expansion/ops/`, `series/`→`bases/`, `la/`→`eigen/` (namespace **stays `tax::la`**) — add the `expansion.hpp`/`bases.hpp`/`eigen.hpp` facades and shrink the umbrella; then move the mixed *type* into `tax::mixed` (the deferred M-B).
+**Goal:** Move the source tree to the feature-module layout — `core/`→`expansion/`, `kernels/`→`expansion/detail/`, `operators/`→`expansion/ops/`, `series/`→`bases/`, `la/`→`la/` (namespace **stays `tax::la`**) — add the `expansion.hpp`/`bases.hpp`/`la.hpp` facades and shrink the umbrella; then move the mixed *type* into `tax::mixed` (the deferred M-B).
 
-**Architecture:** Phase 6 of the reorg (spec `docs/superpowers/specs/2026-06-28-tax-library-reorganization-design.md`, the tree move + facades + M-B). Builds on Phase 5 (branch `claude/tax-library-reorg`, at `5fe5fa2`). **Scope: directory moves only — filenames are KEPT** (e.g. `bases/chebyshev_basis.hpp`, `expansion/mixed_named.hpp`); file renames (`*_basis.hpp`→`*.hpp`, `mixed_named`→`mixed`) are deferred (note for a later optional polish). The `eigen/` directory holds namespace `tax::la` (intentional dir/namespace divergence, D5).
+**Architecture:** Phase 6 of the reorg (spec `docs/superpowers/specs/2026-06-28-tax-library-reorganization-design.md`, the tree move + facades + M-B). Builds on Phase 5 (branch `claude/tax-library-reorg`, at `5fe5fa2`). **Scope: directory moves only — filenames are KEPT** (e.g. `bases/chebyshev_basis.hpp`, `expansion/mixed_named.hpp`); file renames (`*_basis.hpp`→`*.hpp`, `mixed_named`→`mixed`) are deferred (note for a later optional polish). The `la/` directory holds namespace `tax::la` (intentional dir/namespace divergence, D5).
 
 **Tech Stack:** Header-only C++23; Eigen3; GoogleTest; mamba `tax` env.
 
@@ -27,7 +27,7 @@
 **Files:** `git mv` of the five directories; global include-path rewrite across `include/` + `tests/`.
 
 **Interfaces:**
-- Produces: the new directory layout `expansion/` (with `detail/` = former kernels, `ops/` = former operators), `bases/` (former series), `eigen/` (former la); every `#include` repointed. `io/` unchanged. The umbrella still lists the (repointed) specific headers — facades are Task 2.
+- Produces: the new directory layout `expansion/` (with `detail/` = former kernels, `ops/` = former operators), `bases/` (former series), `la/` (former la); every `#include` repointed. `io/` unchanged. The umbrella still lists the (repointed) specific headers — facades are Task 2.
 
 - [ ] **Step 1: Move the directories with git mv (order matters: nest kernels/operators under expansion)**
 
@@ -37,10 +37,10 @@ git mv include/tax/core include/tax/expansion
 git mv include/tax/kernels include/tax/expansion/detail
 git mv include/tax/operators include/tax/expansion/ops
 git mv include/tax/series include/tax/bases
-git mv include/tax/la include/tax/eigen
+git mv include/tax/la include/tax/la
 # io/ stays.
 ```
-Verify the new tree: `find include/tax -maxdepth 2 -type d | sort` should show `expansion`, `expansion/detail`, `expansion/ops`, `expansion/scheme`, `expansion/storage`, `bases`, `eigen`, `io`.
+Verify the new tree: `find include/tax -maxdepth 2 -type d | sort` should show `expansion`, `expansion/detail`, `expansion/ops`, `expansion/scheme`, `expansion/storage`, `bases`, `la`, `io`.
 
 - [ ] **Step 2: Repoint every include path (global, ordered so the longest prefixes win)**
 
@@ -55,20 +55,20 @@ for f in $FILES; do
     s{tax/core/}{tax/expansion/}g;
     s{tax/series/}{tax/bases/}g;
     s{tax/series\.hpp}{tax/bases.hpp}g;
-    s{tax/la/}{tax/eigen/}g;
-    s{tax/la\.hpp}{tax/eigen.hpp}g;
+    s{tax/la/}{tax/la/}g;
+    s{tax/la\.hpp}{tax/la.hpp}g;
   ' "$f"
 done
 ```
 (`tax/series/` is rewritten before `tax/series.hpp` is matched by the separate `series\.hpp` rule — both rules run per file, the `/` rule only matches `series/`, the `.hpp` rule only `series.hpp`; they don't overlap. Same for `la`.)
 
-- [ ] **Step 3: Rename the two existing top-level facades to match (la.hpp→eigen.hpp, series.hpp→bases.hpp)**
+- [ ] **Step 3: Rename the two existing top-level facades to match (la.hpp→la.hpp, series.hpp→bases.hpp)**
 
 ```bash
-git mv include/tax/la.hpp include/tax/eigen.hpp
+git mv include/tax/la.hpp include/tax/la.hpp
 git mv include/tax/series.hpp include/tax/bases.hpp
 ```
-These two facades' *internal* includes were already repointed in Step 2 (their `tax/la/…`→`tax/eigen/…`, `tax/series/…`→`tax/bases/…`). The umbrella's `#include <tax/la.hpp>`/`<tax/series.hpp>` were repointed to `<tax/eigen.hpp>`/`<tax/bases.hpp>` in Step 2 as well.
+These two facades' *internal* includes were already repointed in Step 2 (their `tax/la/…`→`tax/la/…`, `tax/series/…`→`tax/bases/…`). The umbrella's `#include <tax/la.hpp>`/`<tax/series.hpp>` were repointed to `<tax/la.hpp>`/`<tax/bases.hpp>` in Step 2 as well.
 
 - [ ] **Step 4: Verify no stale paths and the tree is coherent**
 
@@ -88,7 +88,7 @@ Expected: build EXIT 0; `100% tests passed … out of 58`. (Pure relocation — 
 
 ```bash
 git add -A
-git commit -m "$(printf 'refactor!: move the source tree to the feature-module layout\n\ncore/->expansion/, kernels/->expansion/detail/, operators/->expansion/ops/,\nseries/->bases/, la/->eigen/ (namespace stays tax::la). Repoint every include\npath; rename the la.hpp/series.hpp facades to eigen.hpp/bases.hpp. Pure\nrelocation (git mv + include sed); filenames kept; 58/58.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
+git commit -m "$(printf 'refactor!: move the source tree to the feature-module layout\n\ncore/->expansion/, kernels/->expansion/detail/, operators/->expansion/ops/,\nseries/->bases/, la/->la/ (namespace stays tax::la). Repoint every include\npath; rename the la.hpp/series.hpp facades to la.hpp/bases.hpp. Pure\nrelocation (git mv + include sed); filenames kept; 58/58.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
 ```
 
 ---
@@ -98,15 +98,15 @@ git commit -m "$(printf 'refactor!: move the source tree to the feature-module l
 **Files:**
 - Create: `include/tax/expansion.hpp` (facade aggregating the expansion capability)
 - Modify: `include/tax/tax.hpp` (shrink to the four facades)
-- (`bases.hpp` and `eigen.hpp` already exist from Task 1; confirm they aggregate their layers.)
+- (`bases.hpp` and `la.hpp` already exist from Task 1; confirm they aggregate their layers.)
 
 **Interfaces:**
 - Consumes: the relocated headers from Task 1.
-- Produces: `<tax/expansion.hpp>` (carrier + named/mixed + operators + Taylor basis), `<tax/bases.hpp>`, `<tax/eigen.hpp>` as the three sub-facades; `<tax/tax.hpp>` = `version.hpp` + those three + `io/series.hpp`.
+- Produces: `<tax/expansion.hpp>` (carrier + named/mixed + operators + Taylor basis), `<tax/bases.hpp>`, `<tax/la.hpp>` as the three sub-facades; `<tax/tax.hpp>` = `version.hpp` + those three + `io/series.hpp`.
 
 - [ ] **Step 1: Read the current umbrella to capture the exact dependency order**
 
-`tax.hpp` currently `#include`s the specific headers in a deliberate dependency order. Read it. The expansion-capability headers (everything that is NOT a `bases/`, `eigen/`, or `io/` header, and not `version.hpp`) move INTO `expansion.hpp` in the SAME relative order.
+`tax.hpp` currently `#include`s the specific headers in a deliberate dependency order. Read it. The expansion-capability headers (everything that is NOT a `bases/`, `la/`, or `io/` header, and not `version.hpp`) move INTO `expansion.hpp` in the SAME relative order.
 
 - [ ] **Step 2: Create include/tax/expansion.hpp**
 
@@ -140,10 +140,10 @@ Replace the body of `include/tax/tax.hpp` (keeping its opening comment + `#pragm
 #include <tax/version.hpp>
 #include <tax/expansion.hpp>
 #include <tax/bases.hpp>
-#include <tax/eigen.hpp>
+#include <tax/la.hpp>
 #include <tax/io/series.hpp>
 ```
-(Order: expansion → bases → eigen → io, the same downward order as before. `bases.hpp` needs the carrier + Taylor basis from `expansion.hpp`; `eigen.hpp` needs both; `io` needs all — so this order is correct.)
+(Order: expansion → bases → la → io, the same downward order as before. `bases.hpp` needs the carrier + Taylor basis from `expansion.hpp`; `la.hpp` needs both; `io` needs all — so this order is correct.)
 
 - [ ] **Step 4: Verify the facades are self-consistent**
 
@@ -161,7 +161,7 @@ Expected: build EXIT 0; `100% tests passed … out of 58`. If a symbol is now un
 
 ```bash
 git add -A
-git commit -m "$(printf 'refactor: add expansion.hpp facade; shrink umbrella to four facades\n\ntax.hpp is now version.hpp + expansion.hpp + bases.hpp + eigen.hpp +\nio/series.hpp. The new expansion.hpp aggregates the core capability (carrier +\nnamed/mixed + operators + Taylor basis; kernels are the internal\nexpansion/detail/). Same include order, behavior unchanged; 58/58.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
+git commit -m "$(printf 'refactor: add expansion.hpp facade; shrink umbrella to four facades\n\ntax.hpp is now version.hpp + expansion.hpp + bases.hpp + la.hpp +\nio/series.hpp. The new expansion.hpp aggregates the core capability (carrier +\nnamed/mixed + operators + Taylor basis; kernels are the internal\nexpansion/detail/). Same include order, behavior unchanged; 58/58.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
 ```
 
 ---
@@ -171,8 +171,8 @@ git commit -m "$(printf 'refactor: add expansion.hpp facade; shrink umbrella to 
 **Files:**
 - Modify: `include/tax/expansion/mixed_named.hpp` (move `MixedTaylorExpansion`/`OrderedAxis`/`MTE` from `tax::named` to `tax::mixed`; the shared `detail` helpers it uses are in `tax::named::detail` — qualify or alias)
 - Modify: `include/tax/expansion/ops/mixed_*.hpp` (the mixed operators currently in `tax::named` — move to `tax::mixed`)
-- Modify: `include/tax/eigen/mixed_named.hpp` (NumTraits + the mixed la helpers currently in `tax::named` — move to `tax::mixed`; update the `tax::` re-export in `eigen/exports.hpp`)
-- Modify: `include/tax/eigen/exports.hpp` (the named/mixed surfacing)
+- Modify: `include/tax/la/mixed_named.hpp` (NumTraits + the mixed la helpers currently in `tax::named` — move to `tax::mixed`; update the `tax::` re-export in `la/exports.hpp`)
+- Modify: `include/tax/la/exports.hpp` (the named/mixed surfacing)
 
 **Interfaces:**
 - Consumes: the relocated tree.
@@ -197,8 +197,8 @@ Replace the old `namespace tax { using named::MixedTaylorExpansion; using named:
 - [ ] **Step 4: Move the mixed operators + la helpers to `tax::mixed`**
 
 - `expansion/ops/mixed_arithmetic.hpp`, `mixed_math_unary.hpp`, `mixed_math_binary.hpp`: change `namespace tax::named` → `namespace tax::mixed` (the operators dispatch on `MixedTaylorExpansion`, now in `tax::mixed`, so ADL finds them there). The `detail::MergedMixedTaylorExpansion` references resolve to `tax::mixed::detail` now (it moved with the type).
-- `eigen/mixed_named.hpp`: the NumTraits specialization is in namespace `Eigen` (references `tax::named::MixedTaylorExpansion` → update to `tax::mixed::MixedTaylorExpansion`). The per-axis `gradient`/`hessian`/`jacobian` for mixed + `is_mixed` are in `tax::named` → move to `tax::mixed`.
-- `eigen/exports.hpp`: the `using named::gradient;` etc. captured the mixed overloads (which were in `tax::named`); now add `using mixed::gradient; using mixed::hessian; using mixed::jacobian;` so the mixed la helpers are still surfaced under `tax::`.
+- `la/mixed_named.hpp`: the NumTraits specialization is in namespace `Eigen` (references `tax::named::MixedTaylorExpansion` → update to `tax::mixed::MixedTaylorExpansion`). The per-axis `gradient`/`hessian`/`jacobian` for mixed + `is_mixed` are in `tax::named` → move to `tax::mixed`.
+- `la/exports.hpp`: the `using named::gradient;` etc. captured the mixed overloads (which were in `tax::named`); now add `using mixed::gradient; using mixed::hessian; using mixed::jacobian;` so the mixed la helpers are still surfaced under `tax::`.
 
 - [ ] **Step 5: Verify + build + full suite**
 
@@ -219,8 +219,8 @@ git commit -m "$(printf 'refactor!: move the mixed type into tax::mixed (M-B)\n\
 
 ## Phase exit criteria
 
-- Tree is `expansion/` (+ `detail/`, `ops/`, `scheme/`, `storage/`), `bases/`, `eigen/`, `io/`; old dir names gone; no stale include paths.
-- Umbrella = `version.hpp` + `expansion.hpp` + `bases.hpp` + `eigen.hpp` + `io/series.hpp`; the three facades aggregate their layers.
+- Tree is `expansion/` (+ `detail/`, `ops/`, `scheme/`, `storage/`), `bases/`, `la/`, `io/`; old dir names gone; no stale include paths.
+- Umbrella = `version.hpp` + `expansion.hpp` + `bases.hpp` + `la.hpp` + `io/series.hpp`; the three facades aggregate their layers.
 - The mixed type lives in `tax::mixed` (M-B), surfaced under `tax::`.
 - `ctest` → `100% tests passed … out of 58`. Three commits landed.
 

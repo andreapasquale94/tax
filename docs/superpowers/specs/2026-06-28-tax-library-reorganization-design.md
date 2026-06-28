@@ -31,13 +31,13 @@ review blueprint is the input to this spec; this document records the **decided*
 
 | # | Decision | Choice |
 |---|----------|--------|
-| D1 | Reorganization approach | **B — feature-module**: group by capability (`expansion/ bases/ eigen/ io/`); kernels become a private `expansion/detail/`. |
+| D1 | Reorganization approach | **B — feature-module**: group by capability (`expansion/ bases/ la/ io/`); kernels become a private `expansion/detail/`. |
 | D2 | Carrier noun | **`Expansion` everywhere**: rename the `*Series` aliases to `*Expansion`; reserve "series" for the printing facility (`tax::series()`, `io/`). |
 | D3 | `derivative()` accessor | **Keep** `derivative()`/`derivative<>()` (the `k!`-scaled value form). No `partial()` rename. |
 | D4 | Alias families | **Keep both**: terse Taylor shorthands `TE/STE/NE/MTE` + basis-generic `*Expansion`. Delete redundant `TEn`; rename the `MixedTE` trap → `BoxTE`. |
-| D5 | Eigen layer | Directory becomes **`eigen/`**; namespace **stays `tax::la`** (intentional dir/namespace divergence, zero API churn). |
+| D5 | Eigen layer | Directory becomes **`la/`**; namespace **stays `tax::la`** (intentional dir/namespace divergence, zero API churn). |
 | D6 | Namespaces | **(Revised in P5 execution.)** Surface the `tax::la` + `tax::named` helpers into `tax::` via a single **`la/exports.hpp`** assembly point (one consolidated `using`-block, included last after all overloads are defined), replacing the three scattered re-export blocks. `tax::la`/`tax::named`/`tax::mixed` stay **normal** namespaces. *Rationale:* the original "inline `tax::la`/`tax::named`" idea was found in execution to promote the ENTIRE named+mixed surface (types + operators + factories) into `tax::`, risking clashes (e.g. `tax::variable` vs `tax::named::variable`); the exports.hpp approach achieves the same documented `tax::gradient(te)`/`tax::gradient<"x">(ne)` resolution with far less risk and no surface-wide promotion. |
-| D7 | Umbrella | One umbrella `<tax/tax.hpp>` + three self-complete sub-facades (`expansion.hpp`, `bases.hpp`, `eigen.hpp`). |
+| D7 | Umbrella | One umbrella `<tax/tax.hpp>` + three self-complete sub-facades (`expansion.hpp`, `bases.hpp`, `la.hpp`). |
 | D8 | Batch | **Remove the `Batch` capability** — delete `Batch<T,K>` (SIMD-style lock-step coefficients), the `K` lane on `TE`, `Batchd`/`Batchf`, `NumTraits<Batch>`, and `test_batch`. Not needed. Resolves the three-batched-spellings incoherence by elimination. |
 | D9 | Sever core→la edge | **The expansion core must not depend on the `tax::la` module.** Move the carrier's `gradient()`/`hessian()` members to the free `tax::la::gradient(f)`/`hessian(f)` (re-home their loop bodies). The carrier KEEPS the `eval(Eigen-vector)` convenience member, so it includes `<Eigen/Core>` *directly* instead of `<tax/la/types.hpp>`. Result: the core no longer reaches up into `tax::la` (the F2 layering goal) — though it is **not** fully Eigen-free (it still uses the external `Eigen` lib for `eval(Eigen)`). *(Revised from "fully Eigen-free core" after the carrier was found to also expose `eval(Eigen)`; the maintainer chose to keep that member.)* |
 
@@ -46,15 +46,15 @@ review blueprint is the input to this spec; this document records the **decided*
 ## 3. Target layout (feature-module)
 
 Top-level directories map to capabilities; dependencies point strictly downward
-(`io → eigen → bases → expansion → expansion/detail`).
+(`io → la → bases → expansion → expansion/detail`).
 
 ```
 include/tax/
-  tax.hpp              # umbrella = expansion.hpp + bases.hpp + eigen.hpp + io/series.hpp
+  tax.hpp              # umbrella = expansion.hpp + bases.hpp + la.hpp + io/series.hpp
   version.hpp          # NEW: TAX_VERSION_MAJOR/MINOR/PATCH + TAX_VERSION string
   expansion.hpp        # FACADE: core capability (carrier + named/mixed + ops + default Taylor basis)
   bases.hpp            # FACADE: orthogonal basis policies + spectral extras  (was series.hpp)
-  eigen.hpp            # FACADE: Eigen integration, self-contained  (was la.hpp)
+  la.hpp            # FACADE: Eigen integration, self-contained  (was la.hpp)
 
   expansion/                       # THE core capability
     concepts.hpp                   # Scalar, TaylorPolynomial, DensePolynomial (+ carrier concept)
@@ -64,7 +64,7 @@ include/tax/
     taylor_basis.hpp               # MOVED from series/: TaylorBasis default monomial policy
     scheme.hpp  scheme/{concept,isotropic,mixed}.hpp
     storage/{dense,sparse}.hpp
-    expansion.hpp                  # carrier Expansion<T,Basis,Scheme,Storage>; NO eigen/ or bases/ includes
+    expansion.hpp                  # carrier Expansion<T,Basis,Scheme,Storage>; NO la/ or bases/ includes
     axis.hpp                       # NEW: Axis, OrderedAxis, axis meta (Offset/Dim/IsCanonical/IsSubsetOf/
                                    #      buildAxisMap), ONE policy-parameterised Merge, embed/slice remap helpers
     named.hpp                      # NamedExpansion (tax::named)
@@ -88,7 +88,7 @@ include/tax/
     aliases.hpp                    # orthogonal aliases: ChebyshevExpansion/LegendreExpansion/HermiteExpansion
                                    #   + generic Series<Basis,N,M=1,T>.  (TaylorExpansion lives in expansion/)
 
-  eigen/   (was la/, namespace stays tax::la)
+  la/   (was la/, namespace stays tax::la)
     types.hpp                      # Vec/Mat/VecNT/MatNT/MatNMT  (no longer included by the carrier)
     traits.hpp                     # NEW: unified te_traits + is_te/is_named/is_mixed + rebind
     num_traits.hpp                 # the 3 Expansion NumTraits via one shared factory base (Batch excluded)
@@ -101,7 +101,7 @@ include/tax/
     series.hpp                     # ONE basis-generic streamer (folds in the old series/io.hpp)
 ```
 
-Deleted: `kernels/` (→ `expansion/detail/`), `operators/` (→ `expansion/ops/`), `la/` (→ `eigen/`),
+Deleted: `kernels/` (→ `expansion/detail/`), `operators/` (→ `expansion/ops/`), `la/` (→ `la/`),
 `core/` (→ `expansion/`), `series/io.hpp` (→ `io/series.hpp`), `core/taylor_expansion.hpp` shim, `Doxyfile`,
 and **`core/batch.hpp`** (D8 — the `Batch` capability is removed entirely).
 
@@ -109,7 +109,7 @@ and **`core/batch.hpp`** (D8 — the `Batch` capability is removed entirely).
 - `<tax/tax.hpp>` — everything (unchanged contract: the recommended include).
 - `<tax/expansion.hpp>` — carrier + named/mixed + operators + Taylor basis, no orthogonal bases, no Eigen helpers.
 - `<tax/bases.hpp>` — adds the orthogonal basis policies + spectral extras.
-- `<tax/eigen.hpp>` — the Eigen integration; self-complete (includes mixed; fixes today's `la.hpp` gap).
+- `<tax/la.hpp>` — the Eigen integration; self-complete (includes mixed; fixes today's `la.hpp` gap).
 
 Core dependency (D9): `<tax/expansion.hpp>` no longer depends on the `tax::la` **module** — `gradient()`/
 `hessian()` move to free `tax::la::` functions, and the carrier includes `<Eigen/Core>` directly (for the
@@ -124,7 +124,7 @@ even though the core still uses the external Eigen library. (A fully Eigen-free 
 - **`tax`** — all public types and the carrier.
 - **`tax::la`** *(inline)* — the Eigen helpers (`gradient`/`hessian`/`jacobian`/`value`/`eval`/`invert`/
   `variables`/`truncate`). Being inline, every helper is also a first-class `tax::` name with ADL intact, so
-  `tax::gradient(te)` and `tax::la::gradient(te)` are the **same** entity. The directory is `eigen/` but the
+  `tax::gradient(te)` and `tax::la::gradient(te)` are the **same** entity. The directory is `la/` but the
   namespace remains `tax::la` (D5) — a deliberate, documented divergence to keep downstream `tax::la::` code
   compiling unchanged.
 - **`tax::named`** *(inline)* — `NamedExpansion`, named factories, named differential ops. Inline ⇒ first-class
@@ -158,7 +158,7 @@ so `tax::value` and `tax::la::value` are one entity (not a redefinition).
 | `kernels/` dir | `expansion/detail/` | kernels become private (D1) |
 | `operators/` dir | `expansion/ops/` | operators belong to the expansion capability |
 | `series/` dir, `series.hpp` | `bases/`, `bases.hpp` | "series" freed for the printing facility |
-| `la/` dir, `la.hpp` | `eigen/`, `eigen.hpp` | capability-named dir (namespace stays `tax::la`, D5) |
+| `la/` dir, `la.hpp` | `la/`, `la.hpp` | capability-named dir (namespace stays `tax::la`, D5) |
 | `*_basis.hpp` (chebyshev/legendre/hermite) | `chebyshev.hpp` / `legendre.hpp` / `hermite.hpp` | dir already says "basis" |
 | `mixed_named.hpp` / `MixedTaylorExpansion` | `mixed.hpp` / `MixedExpansion` | shorter, matches `tax::mixed`; `MTE` retained as terse alias |
 
@@ -267,7 +267,7 @@ correctness fixes land before the wide tree move.
   `tax::la::detail` vs is_named/is_mixed in `tax::named::detail`), and giving MIXED the point-form value/eval
   overloads named has (LA-3 remainder; the coeff-form already shares `la/axis_diff.hpp`).
 - **P6 — THE tree move (mechanical, wide; one atomic compile-verified commit).** `core/→expansion/`,
-  `kernels/→expansion/detail/`, `operators/→expansion/ops/`, `series/→bases/`, `la/→eigen/`; add the three
+  `kernels/→expansion/detail/`, `operators/→expansion/ops/`, `series/→bases/`, `la/→la/`; add the three
   facades + shrink `tax.hpp`. The ODR-sensitive `stencil_config.hpp` keeps the macro order intact.
 - **P7 — unified printing (delicate; test-string churn).** *(F6)*
 - **P8 — kernel/meta tidies (low-risk).** `stencil_config.hpp`, dead-shim deletions, `ops/sparse.hpp`,
