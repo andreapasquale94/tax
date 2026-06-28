@@ -17,6 +17,7 @@
 #include <tax/la/derivatives.hpp>
 #include <tax/la/expansion_vectors.hpp>
 #include <tax/la/invert.hpp>
+#include <tax/la/mixed_named.hpp>
 #include <tax/la/named.hpp>
 #include <tax/la/num_traits.hpp>
 #include <tax/la/truncate.hpp>
