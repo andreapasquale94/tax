@@ -28,7 +28,7 @@ monomial set. Two schemes ship today:
 - **`IsotropicScheme<N, M>`** — classic total-degree-$\le N$ graded-lex layout
   over $M$ variables. This is the `TE<N,M>` / `STE<N,M>` form.
 - **`MixedScheme<Group<Dim,Order>...>`** — anisotropic per-axis order caps
-  (a product of per-group simplices). This is the `MixedTE<Group<Dim,Order>...>`
+  (a product of per-group simplices). This is the `BoxTE<Group<Dim,Order>...>`
   form. See [Mixed-order expansions](../guide/mixed.md).
 
 Per-operator signatures listed below use the `<T, N, M>` shorthand for the
@@ -52,7 +52,7 @@ template <int N, int M = 1>
 using STE = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Sparse>;
 
 template <typename... Groups>   // each Group = Group<Dim, Order>
-using MixedTE = TaylorExpansion<double, MixedScheme<Groups...>, storage::Dense>;
+using BoxTE = TaylorExpansion<double, MixedScheme<Groups...>, storage::Dense>;
 ```
 
 ### Compile-time members

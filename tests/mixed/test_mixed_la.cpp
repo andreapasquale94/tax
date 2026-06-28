@@ -1,8 +1,8 @@
-// tax::la on MixedTE — verify gradient / hessian / jacobian / value / variables
-// work on an anisotropic MixedTE and produce results matching the isotropic
+// tax::la on BoxTE — verify gradient / hessian / jacobian / value / variables
+// work on an anisotropic BoxTE and produce results matching the isotropic
 // TE<7,2> superset or analytic reference values.
 //
-// ME  = MixedTE<Group<1,4>, Group<1,3>> : vars=2, Σorder=7, nCoeff=20
+// ME  = BoxTE<Group<1,4>, Group<1,3>> : vars=2, Σorder=7, nCoeff=20
 // ISO = TE<7,2>                          : vars=2, order=7,  nCoeff=36
 //
 // All first- and second-order monomials are inside the ME box (group-0 order=4,
@@ -17,7 +17,7 @@
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-using ME = tax::MixedTE< tax::Group< 1, 4 >, tax::Group< 1, 3 > >;
+using ME = tax::BoxTE< tax::Group< 1, 4 >, tax::Group< 1, 3 > >;
 using ISO = tax::TE< 7, 2 >;
 
 static_assert( ME::nCoefficients == 20 );

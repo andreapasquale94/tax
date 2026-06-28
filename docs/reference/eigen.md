@@ -5,7 +5,7 @@ included by `tax/tax.hpp`). These helpers are templated over the `IndexScheme`
 parameter; where signatures below write `TaylorExpansion<T, N, M, S>` or use
 `<T, N, M, S>` shorthands, they denote the isotropic `TE<N,M>` form
 (`TaylorExpansion<T, IsotropicScheme<N,M>, S>`). The same helpers work unchanged
-for `MixedTE` — the scheme is deduced from the type.
+for `BoxTE` — the scheme is deduced from the type.
 
 ---
 

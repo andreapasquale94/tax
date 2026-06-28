@@ -577,9 +577,9 @@ class Expansion< T, Basis, Scheme, storage::Sparse >
 template < int N, int M = 1 >
 using STE = Expansion< double, TaylorBasis, IsotropicScheme< N, M >, storage::Sparse >;
 
-/// `MixedTE<Groups...>` — an anisotropic (per-group order) dense `double` expansion.
+/// `BoxTE<Groups...>` — an anisotropic (per-group order) dense `double` expansion.
 template < typename... Groups >
-using MixedTE = Expansion< double, TaylorBasis, MixedScheme< Groups... >, storage::Dense >;
+using BoxTE = Expansion< double, TaylorBasis, MixedScheme< Groups... >, storage::Dense >;
 
 // ---------------------------------------------------------------------------
 // Free-function variable factories (unnamed, integer-indexed)

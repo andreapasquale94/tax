@@ -37,7 +37,7 @@ TEST( MixedNamedLa, NumTraitsUsableAsEigenScalar )
     // Build an Eigen vector whose scalar is a MEpx expansion.
     // Both x[i]*p and x[i] individually have the full {p,x} union type,
     // so they can be stored directly in MEpx slots.
-    auto f0 = x[0] * p;                  // type: MixedTE<double, PAx, XAx>
+    auto f0 = x[0] * p;                  // type: BoxTE<double, PAx, XAx>
     auto f1 = x[1] * p + p * 0.0 + 1.0;  // embed x[1] into {p,x} via p*0
 
     Eigen::Matrix< MEpx, 2, 1 > v;

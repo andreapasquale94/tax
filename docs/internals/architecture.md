@@ -39,7 +39,7 @@ core            │ TaylorExpansion<T,Scheme,Storage>       │  data type
 storage tag. The scheme encodes the monomial index set: `IsotropicScheme<N,M>`
 gives the classic total-degree-$\le N$ graded-lex layout (exposed as `TE<N,M>`),
 while `MixedScheme<Groups...>` supports anisotropic per-axis order caps
-(exposed as `MixedTE<Group<Dim,Order>...>`). The kernels are scheme-generic.
+(exposed as `BoxTE<Group<Dim,Order>...>`). The kernels are scheme-generic.
 
 - `storage::Dense` keeps a `std::array<T, C(N+M, M)>` — stack-resident, no heap,
   `constexpr`-friendly accessors.

@@ -24,10 +24,10 @@ mixed form uses `MixedScheme<Group<Dim,Order>…>` (per-group box).
 The convenience alias for the anonymous box type is:
 
 ```cpp
-tax::MixedTE<tax::Group<Dim, Order>…>
+tax::BoxTE<tax::Group<Dim, Order>…>
 ```
 
-`MixedTE` is **not a separate type** — it is a `TaylorExpansion` with a
+`BoxTE` is **not a separate type** — it is a `TaylorExpansion` with a
 `MixedScheme` index scheme. It carries the full dense math surface (`+`, `-`,
 `*`, `/`, `sin`, `exp`, `sqrt`, `pow`, …) and integrates with `tax::la`
 exactly as `TE` does.
@@ -36,7 +36,7 @@ exactly as `TE` does.
 #include <tax/tax.hpp>
 
 // Two variable groups: var 0 @ order 4, var 1 @ order 3.
-using ME = tax::MixedTE<tax::Group<1, 4>, tax::Group<1, 3>>;
+using ME = tax::BoxTE<tax::Group<1, 4>, tax::Group<1, 3>>;
 
 typename ME::Input p{0.3, -0.2};
 ME x = ME::variable<0>(p);
@@ -55,7 +55,7 @@ coefficients, compared to `numMonomials(7, 2) = 36` for a joint-simplex
 
 ## Named axes (the ergonomic layer)
 
-For multi-axis problems the anonymous `MixedTE` spelling is inconvenient.
+For multi-axis problems the anonymous `BoxTE` spelling is inconvenient.
 The named layer attaches compile-time string labels to each group:
 
 ```cpp
@@ -183,7 +183,7 @@ For the classical joint-simplex named layer (same order on all axes) see
 | Name | Meaning |
 |------|---------|
 | `tax::Group<Dim, Order>` | One variable group: `Dim` variables capped at `Order` |
-| `tax::MixedTE<Groups…>` | Anonymous box expansion: `TaylorExpansion<double, MixedScheme<Groups…>>` |
+| `tax::BoxTE<Groups…>` | Anonymous box expansion: `TaylorExpansion<double, MixedScheme<Groups…>>` |
 | `tax::OrderedAxis<Name, Dim, Order>` | Named axis with its own per-axis order |
 | `tax::MixedTaylorExpansion<T, Axes…>` | Named per-axis-order expansion (double alias: `T = double` is most common) |
 | `tax::mixed::variable<"name", Order>(x0)` | Factory: 1-D named axis variable |
@@ -193,7 +193,7 @@ For the classical joint-simplex named layer (same order on all axes) see
 
 ## Notes & limits
 
-- **Dense storage only.** `MixedTE` / `MixedTaylorExpansion` use dense
+- **Dense storage only.** `BoxTE` / `MixedTaylorExpansion` use dense
   coefficient storage. Sparse storage is defined only for the isotropic scheme
   (`STE<N, M>`).
 - **Multi-dimensional axes truncate by total degree within the axis.** A
@@ -201,12 +201,12 @@ For the classical joint-simplex named layer (same order on all axes) see
   degree (within those three variables) is ≤ 4. The per-axis cap operates
   *across* groups, not *within* a single multi-dimensional group.
 - **Batch coefficients.** `Batch<T, K>` (SIMD lanes) and `MixedScheme` are
-  structurally compatible, but `MixedTE<…>` with a `Batch` scalar is not a
+  structurally compatible, but `BoxTE<…>` with a `Batch` scalar is not a
   shipped convenience alias. If you need ensemble propagation on a mixed-order
   box, construct the `TaylorExpansion<Batch<double,K>, MixedScheme<…>>` type
   directly.
-- **Full math surface.** Because `MixedTE` is a `TaylorExpansion`, every
-  operator and math function that works for `TE` also works for `MixedTE`: the
+- **Full math surface.** Because `BoxTE` is a `TaylorExpansion`, every
+  operator and math function that works for `TE` also works for `BoxTE`: the
   kernel dispatch is driven by the scheme's `cauchyProduct` /
   `forEachRecurrenceRow`, not by any special-casing in the operator layer.
 

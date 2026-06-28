@@ -2,18 +2,18 @@
 
 #include <cmath>
 #include <set>
-#include <tax/expansion/scheme.hpp>
 #include <tax/expansion/multi_index.hpp>
+#include <tax/expansion/scheme.hpp>
 #include <tax/tax.hpp>
 #include <type_traits>
 
 using tax::Group;
 using tax::MixedScheme;
 
-// MixedTE<Groups...> is a first-class dense TaylorExpansion over a MixedScheme.
-TEST( MixedTE, InstantiatesAsTaylorExpansion )
+// BoxTE<Groups...> is a first-class dense TaylorExpansion over a MixedScheme.
+TEST( BoxTE, InstantiatesAsTaylorExpansion )
 {
-    using ME = tax::MixedTE< Group< 1, 4 >, Group< 1, 3 > >;
+    using ME = tax::BoxTE< Group< 1, 4 >, Group< 1, 3 > >;
     static_assert( ME::nCoefficients == 20 );  // 5 * 4
     static_assert( ME::vars_v == 2 );
     static_assert( ME::order_v == 7 );

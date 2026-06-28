@@ -1,10 +1,10 @@
-// Oracle tests: MixedTE math surface matches the isotropic superset.
+// Oracle tests: BoxTE math surface matches the isotropic superset.
 //
-// For every in-box coefficient k of a MixedTE result, the value must equal the
+// For every in-box coefficient k of a BoxTE result, the value must equal the
 // same coefficient of a tax::TE<Σorder, vars> computing the SAME expression,
 // accessed via tax::flatIndex<vars>(ME::scheme::multiOf(k)).
 //
-// Shape: ME = MixedTE<Group<1,4>, Group<1,3>> (vars=2, Σ=7, box=20 coefficients).
+// Shape: ME = BoxTE<Group<1,4>, Group<1,3>> (vars=2, Σ=7, box=20 coefficients).
 //        ISO = TE<7, 2> (order-7 isotropic superset, 36 coefficients).
 
 #include <gtest/gtest.h>
@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-using ME = tax::MixedTE< tax::Group< 1, 4 >, tax::Group< 1, 3 > >;
+using ME = tax::BoxTE< tax::Group< 1, 4 >, tax::Group< 1, 3 > >;
 using ISO = tax::TE< 7, 2 >;
 
 static_assert( ME::nCoefficients == 20 );
@@ -69,13 +69,13 @@ static ISO makeIsoY()
 // Arithmetic
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Multiply ) { checkOracle( makeMeX() * makeMeY(), makeIsoX() * makeIsoY(), "x*y" ); }
+TEST( BoxTE, Multiply ) { checkOracle( makeMeX() * makeMeY(), makeIsoX() * makeIsoY(), "x*y" ); }
 
-TEST( MixedTE, Add ) { checkOracle( makeMeX() + makeMeY(), makeIsoX() + makeIsoY(), "x+y" ); }
+TEST( BoxTE, Add ) { checkOracle( makeMeX() + makeMeY(), makeIsoX() + makeIsoY(), "x+y" ); }
 
-TEST( MixedTE, Subtract ) { checkOracle( makeMeX() - makeMeY(), makeIsoX() - makeIsoY(), "x-y" ); }
+TEST( BoxTE, Subtract ) { checkOracle( makeMeX() - makeMeY(), makeIsoX() - makeIsoY(), "x-y" ); }
 
-TEST( MixedTE, Divide )
+TEST( BoxTE, Divide )
 {
     // x / (y + 2.0): denominator constant = kY0 + 2.0 > 0
     auto me_result = makeMeX() / ( makeMeY() + 2.0 );
@@ -87,25 +87,25 @@ TEST( MixedTE, Divide )
 // Math functions — transcendental
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Exp )
+TEST( BoxTE, Exp )
 {
     // exp(x): x0 = 0.7, well in domain
     checkOracle( tax::exp( makeMeX() ), tax::exp( makeIsoX() ), "exp(x)" );
 }
 
-TEST( MixedTE, Log )
+TEST( BoxTE, Log )
 {
     // log(x): x0 = 0.7 > 0
     checkOracle( tax::log( makeMeX() ), tax::log( makeIsoX() ), "log(x)" );
 }
 
-TEST( MixedTE, Sqrt )
+TEST( BoxTE, Sqrt )
 {
     // sqrt(x): x0 = 0.7 > 0
     checkOracle( tax::sqrt( makeMeX() ), tax::sqrt( makeIsoX() ), "sqrt(x)" );
 }
 
-TEST( MixedTE, Cbrt )
+TEST( BoxTE, Cbrt )
 {
     // cbrt(x): x0 = 0.7 (all reals ok, but keep > 0 for numerical comfort)
     checkOracle( tax::cbrt( makeMeX() ), tax::cbrt( makeIsoX() ), "cbrt(x)" );
@@ -115,11 +115,11 @@ TEST( MixedTE, Cbrt )
 // Trigonometric
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Sin ) { checkOracle( tax::sin( makeMeX() ), tax::sin( makeIsoX() ), "sin(x)" ); }
+TEST( BoxTE, Sin ) { checkOracle( tax::sin( makeMeX() ), tax::sin( makeIsoX() ), "sin(x)" ); }
 
-TEST( MixedTE, Cos ) { checkOracle( tax::cos( makeMeX() ), tax::cos( makeIsoX() ), "cos(x)" ); }
+TEST( BoxTE, Cos ) { checkOracle( tax::cos( makeMeX() ), tax::cos( makeIsoX() ), "cos(x)" ); }
 
-TEST( MixedTE, Tan )
+TEST( BoxTE, Tan )
 {
     // x0 = 0.7, away from π/2
     checkOracle( tax::tan( makeMeX() ), tax::tan( makeIsoX() ), "tan(x)" );
@@ -129,7 +129,7 @@ TEST( MixedTE, Tan )
 // Inverse trigonometric — domain restrictions; seed into (-1,1) for asin/acos
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Asin )
+TEST( BoxTE, Asin )
 {
     // Use 0.3 + dx0, so constant term = 0.3+kX0 is NOT good — we need base in (-1,1).
     // Build constant = 0.3 for both and add a small-dx variable around 0.
@@ -142,7 +142,7 @@ TEST( MixedTE, Asin )
     checkOracle( tax::asin( mx ), tax::asin( ix ), "asin(x) around 0" );
 }
 
-TEST( MixedTE, Acos )
+TEST( BoxTE, Acos )
 {
     // acos needs argument in (-1,1); seed around 0.
     typename ME::Input pm{ 0.0, kY0 };
@@ -152,24 +152,24 @@ TEST( MixedTE, Acos )
     checkOracle( tax::acos( mx ), tax::acos( ix ), "acos(x) around 0" );
 }
 
-TEST( MixedTE, Atan ) { checkOracle( tax::atan( makeMeX() ), tax::atan( makeIsoX() ), "atan(x)" ); }
+TEST( BoxTE, Atan ) { checkOracle( tax::atan( makeMeX() ), tax::atan( makeIsoX() ), "atan(x)" ); }
 
 // ---------------------------------------------------------------------------
 // Hyperbolic
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Sinh ) { checkOracle( tax::sinh( makeMeX() ), tax::sinh( makeIsoX() ), "sinh(x)" ); }
+TEST( BoxTE, Sinh ) { checkOracle( tax::sinh( makeMeX() ), tax::sinh( makeIsoX() ), "sinh(x)" ); }
 
-TEST( MixedTE, Cosh ) { checkOracle( tax::cosh( makeMeX() ), tax::cosh( makeIsoX() ), "cosh(x)" ); }
+TEST( BoxTE, Cosh ) { checkOracle( tax::cosh( makeMeX() ), tax::cosh( makeIsoX() ), "cosh(x)" ); }
 
-TEST( MixedTE, Tanh ) { checkOracle( tax::tanh( makeMeX() ), tax::tanh( makeIsoX() ), "tanh(x)" ); }
+TEST( BoxTE, Tanh ) { checkOracle( tax::tanh( makeMeX() ), tax::tanh( makeIsoX() ), "tanh(x)" ); }
 
-TEST( MixedTE, Asinh )
+TEST( BoxTE, Asinh )
 {
     checkOracle( tax::asinh( makeMeX() ), tax::asinh( makeIsoX() ), "asinh(x)" );
 }
 
-TEST( MixedTE, Acosh )
+TEST( BoxTE, Acosh )
 {
     // acosh requires argument >= 1; seed at 1.5
     typename ME::Input pm{ 1.5, kY0 };
@@ -179,7 +179,7 @@ TEST( MixedTE, Acosh )
     checkOracle( tax::acosh( mx ), tax::acosh( ix ), "acosh(x) around 1.5" );
 }
 
-TEST( MixedTE, Atanh )
+TEST( BoxTE, Atanh )
 {
     // atanh requires argument in (-1,1); seed at 0 for safety
     typename ME::Input pm{ 0.0, kY0 };
@@ -193,13 +193,13 @@ TEST( MixedTE, Atanh )
 // Erf
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Erf ) { checkOracle( tax::erf( makeMeX() ), tax::erf( makeIsoX() ), "erf(x)" ); }
+TEST( BoxTE, Erf ) { checkOracle( tax::erf( makeMeX() ), tax::erf( makeIsoX() ), "erf(x)" ); }
 
 // ---------------------------------------------------------------------------
 // Pow
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, PowIntExponent )
+TEST( BoxTE, PowIntExponent )
 {
     // pow(x + 1.5, 3): integer exponent; base constant = kX0 + 1.5 > 0
     auto me_base = makeMeX() + 1.5;
@@ -207,7 +207,7 @@ TEST( MixedTE, PowIntExponent )
     checkOracle( tax::pow( me_base, 3 ), tax::pow( iso_base, 3 ), "pow(x+1.5, 3)" );
 }
 
-TEST( MixedTE, PowRealExponent )
+TEST( BoxTE, PowRealExponent )
 {
     // pow(x + 1.5, 2.5): real exponent; base > 0
     auto me_base = makeMeX() + 1.5;
@@ -219,7 +219,7 @@ TEST( MixedTE, PowRealExponent )
 // Atan2
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, Atan2 )
+TEST( BoxTE, Atan2 )
 {
     // atan2(x + 1.0, y + 2.0): both constant terms > 0, well-defined
     auto me_a = makeMeX() + 1.0;
@@ -234,7 +234,7 @@ TEST( MixedTE, Atan2 )
 // match the static-member factories used by makeMeX()/makeMeY().
 // ---------------------------------------------------------------------------
 
-TEST( MixedTE, FreeFunctionVariable )
+TEST( BoxTE, FreeFunctionVariable )
 {
     typename ME::Input p{ kX0, kY0 };
     auto x = tax::mixed::variable< 0, tax::Group< 1, 4 >, tax::Group< 1, 3 > >( p );
@@ -249,7 +249,7 @@ TEST( MixedTE, FreeFunctionVariable )
     }
 }
 
-TEST( MixedTE, FreeFunctionVariables )
+TEST( BoxTE, FreeFunctionVariables )
 {
     typename ME::Input p{ kX0, kY0 };
     auto v = tax::mixed::variables< tax::Group< 1, 4 >, tax::Group< 1, 3 > >( p );
@@ -263,7 +263,7 @@ TEST( MixedTE, FreeFunctionVariables )
     }
 }
 
-TEST( MixedTE, FreeFunctionVariablesConstexpr )
+TEST( BoxTE, FreeFunctionVariablesConstexpr )
 {
     constexpr typename ME::Input p{ kX0, kY0 };
     constexpr auto v = tax::mixed::variables< tax::Group< 1, 4 >, tax::Group< 1, 3 > >( p );
@@ -275,9 +275,9 @@ TEST( MixedTE, FreeFunctionVariablesConstexpr )
 
 // Multi-dimensional group (Group<2,2>): variable<I> flattens a dim>1 block.
 // Pin absolute coefficients, independent of the static-member factory.
-TEST( MixedTE, FreeFunctionVariableMultiDim )
+TEST( BoxTE, FreeFunctionVariableMultiDim )
 {
-    using M22 = tax::MixedTE< tax::Group< 2, 2 > >;
+    using M22 = tax::BoxTE< tax::Group< 2, 2 > >;
     std::array< double, 2 > p{ 0.5, 1.0 };
     auto v0 = tax::mixed::variable< 0, tax::Group< 2, 2 > >( p );
     auto v1 = tax::mixed::variable< 1, tax::Group< 2, 2 > >( p );
@@ -291,9 +291,9 @@ TEST( MixedTE, FreeFunctionVariableMultiDim )
 }
 
 // Three groups: exercises the N-ary group iteration; pin coord 0 and coord 2.
-TEST( MixedTE, FreeFunctionVariable3Groups )
+TEST( BoxTE, FreeFunctionVariable3Groups )
 {
-    using ME3 = tax::MixedTE< tax::Group< 1, 2 >, tax::Group< 1, 3 >, tax::Group< 1, 1 > >;
+    using ME3 = tax::BoxTE< tax::Group< 1, 2 >, tax::Group< 1, 3 >, tax::Group< 1, 1 > >;
     typename ME3::Input p{ 0.1, 0.2, 0.3 };
     auto x =
         tax::mixed::variable< 0, tax::Group< 1, 2 >, tax::Group< 1, 3 >, tax::Group< 1, 1 > >( p );
@@ -309,9 +309,9 @@ TEST( MixedTE, FreeFunctionVariable3Groups )
 }
 
 // Single-group mixed scheme: the plural factory returns a 1-element array.
-TEST( MixedTE, FreeFunctionVariablesSingleGroup )
+TEST( BoxTE, FreeFunctionVariablesSingleGroup )
 {
-    using ME1 = tax::MixedTE< tax::Group< 1, 4 > >;
+    using ME1 = tax::BoxTE< tax::Group< 1, 4 > >;
     typename ME1::Input p{ 0.7 };
     auto v = tax::mixed::variables< tax::Group< 1, 4 > >( p );
     static_assert( std::is_same_v< decltype( v ), std::array< ME1, 1 > > );
@@ -320,7 +320,7 @@ TEST( MixedTE, FreeFunctionVariablesSingleGroup )
 }
 
 // Non-default scalar deduces through the mixed factory.
-TEST( MixedTE, FreeFunctionVariableFloat )
+TEST( BoxTE, FreeFunctionVariableFloat )
 {
     std::array< float, 2 > p{ 0.7F, 1.3F };
     auto x = tax::mixed::variable< 0, tax::Group< 1, 4 >, tax::Group< 1, 3 > >( p );
