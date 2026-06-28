@@ -107,3 +107,53 @@ TEST( ChebyshevMath, ComposeRoundTripExpLog )
     auto rt = log( exp( f ) );
     for ( double x = -1.0; x <= 1.0; x += 0.05 ) EXPECT_NEAR( rt.eval( x ), f.eval( x ), 1e-10 );
 }
+
+// ---------------------------------------------------------------------------
+// Multivariate (M > 1) transcendentals + division via tensor-grid Gauss-Lobatto
+// interpolation (Route B): a genuine spectral approximation over [-1,1]^M,
+// projected to total degree <= N. The univariate tests above are the M == 1
+// case of the same code path (which must stay bit-identical).
+// ---------------------------------------------------------------------------
+
+TEST( ChebyshevMath, MultivariateTranscendentalsAndDivision )
+{
+    constexpr int N = 10;
+    using Cheb = ChebyshevExpansion< N, 2 >;
+    const auto x = Cheb::variable< 0 >();
+    const auto y = Cheb::variable< 1 >();
+    const auto f = 0.3 * x + 0.2 * y;        // range [-0.5, 0.5] on [-1,1]^2
+    const auto d = 1.5 + 0.3 * x + 0.2 * y;  // range [1.0, 2.0], no zero
+
+    const auto ef = exp( f );
+    const auto sf = sin( f );
+    const auto lg = log( d );
+    const auto q = f / d;
+    const auto ri = 2.0 / d;
+    const auto rc = reciprocal( d );
+
+    for ( auto pt : { std::array< double, 2 >{ 0.4, -0.6 }, std::array< double, 2 >{ -0.8, 0.5 },
+                      std::array< double, 2 >{ 0.1, 0.9 }, std::array< double, 2 >{ -0.3, -0.7 } } )
+    {
+        const double fv = f.eval( pt );
+        const double dv = d.eval( pt );
+        EXPECT_NEAR( ef.eval( pt ), std::exp( fv ), 1e-6 );
+        EXPECT_NEAR( sf.eval( pt ), std::sin( fv ), 1e-6 );
+        EXPECT_NEAR( lg.eval( pt ), std::log( dv ), 1e-6 );
+        EXPECT_NEAR( q.eval( pt ), fv / dv, 1e-6 );
+        EXPECT_NEAR( ri.eval( pt ), 2.0 / dv, 1e-6 );
+        EXPECT_NEAR( rc.eval( pt ), 1.0 / dv, 1e-6 );
+    }
+}
+
+TEST( ChebyshevMath, TrivariateExp )
+{
+    // M = 3 exercises the axis>=2 fibre sweep (stride (N+1)^2) of the separable DCT.
+    constexpr int N = 8;
+    using Cheb = ChebyshevExpansion< N, 3 >;
+    const auto f =
+        0.2 * Cheb::variable< 0 >() + 0.15 * Cheb::variable< 1 >() - 0.1 * Cheb::variable< 2 >();
+    const auto ef = exp( f );
+    for ( auto pt : { std::array< double, 3 >{ 0.5, -0.4, 0.8 },
+                      std::array< double, 3 >{ -0.9, 0.6, -0.2 } } )
+        EXPECT_NEAR( ef.eval( pt ), std::exp( f.eval( pt ) ), 1e-6 );
+}
