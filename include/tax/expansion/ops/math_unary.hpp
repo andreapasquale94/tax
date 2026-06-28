@@ -1,10 +1,9 @@
 #pragma once
 
-#include <tax/expansion/expansion.hpp>
 #include <tax/expansion/detail/algebra.hpp>
-#include <tax/expansion/detail/sparse_subs.hpp>
 #include <tax/expansion/detail/transcendental.hpp>
 #include <tax/expansion/detail/trigonometric.hpp>
+#include <tax/expansion/expansion.hpp>
 
 namespace tax
 {
@@ -75,29 +74,5 @@ TAX_UNARY_OP( atan, seriesAtan )
 
 #undef TAX_UNARY_OP
 #undef TAX_UNARY_OP_CE
-
-// ===========================================================================
-// Sparse overloads: sqrt, reciprocal
-// ===========================================================================
-
-/// Sparse `sqrt(f)` via support-set forward substitution.
-template < typename T, int N, int M >
-[[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > sqrt(
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
-{
-    TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > r;
-    detail::kernels::seriesSqrtSparse< T, N, M >( r.container(), x.container() );
-    return r;
-}
-
-/// Sparse `1/f` via support-set forward substitution.
-template < typename T, int N, int M >
-[[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > reciprocal(
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
-{
-    TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > r;
-    detail::kernels::seriesReciprocalSparse< T, N, M >( r.container(), x.container() );
-    return r;
-}
 
 }  // namespace tax

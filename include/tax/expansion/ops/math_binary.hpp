@@ -2,10 +2,9 @@
 
 #include <cmath>
 #include <concepts>
-#include <tax/expansion/expansion.hpp>
 #include <tax/expansion/detail/algebra.hpp>
-#include <tax/expansion/detail/sparse_subs.hpp>
 #include <tax/expansion/detail/trigonometric.hpp>
+#include <tax/expansion/expansion.hpp>
 #include <tax/expansion/ops/math_unary.hpp>
 #include <type_traits>
 
@@ -74,16 +73,6 @@ template < typename T, IndexScheme Scheme >
                                                   const TaylorExpansion< T, Scheme >& x ) noexcept
 {
     return atan2( TaylorExpansion< T, Scheme >{ y }, x );
-}
-
-/// Sparse `f^n` via binary exponentiation of the Cauchy product.
-template < typename T, int N, int M >
-[[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > pow(
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x, int n )
-{
-    TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > r;
-    detail::kernels::seriesPowIntSparse< T, N, M >( r.container(), x.container(), n );
-    return r;
 }
 
 }  // namespace tax
