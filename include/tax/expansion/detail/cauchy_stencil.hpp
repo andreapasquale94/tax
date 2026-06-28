@@ -3,16 +3,14 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <tax/expansion/detail/stencil_config.hpp>
 #include <tax/expansion/enumeration.hpp>
 #include <tax/expansion/multi_index.hpp>
 
 // Stencil table budget (bytes). Kept here as well as in <tax/expansion/detail/cauchy.hpp>
 // — both #ifndef-guarded with the identical value — so this header is usable
-// regardless of include order (the two headers include each other). A project
+// regardless of include order (the config macros come from stencil_config.hpp). A project
 // overriding it must define the same value project-wide (ODR).
-#ifndef TAX_STENCIL_MAX_BYTES
-#    define TAX_STENCIL_MAX_BYTES ( static_cast< std::size_t >( 64 ) << 20 )
-#endif
 
 namespace tax::detail::kernels
 {

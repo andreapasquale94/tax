@@ -4,9 +4,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <tax/expansion/detail/cauchy.hpp>
+#include <tax/expansion/detail/stencil_config.hpp>
 #include <tax/expansion/enumeration.hpp>
 #include <tax/expansion/multi_index.hpp>
-#include <tax/expansion/detail/cauchy.hpp>  // TAX_USE_STENCIL configuration
 
 namespace tax::detail::kernels
 {

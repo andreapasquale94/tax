@@ -21,10 +21,11 @@
 #include <array>
 #include <cstddef>
 #include <span>
+#include <tax/expansion/detail/mixed_stencils.hpp>
+#include <tax/expansion/detail/stencil_config.hpp>
 #include <tax/expansion/enumeration.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/scheme/concept.hpp>
-#include <tax/expansion/detail/mixed_stencils.hpp>
 
 namespace tax
 {

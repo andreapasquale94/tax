@@ -3,9 +3,9 @@
 #include <array>
 #include <cmath>
 #include <span>
-#include <tax/expansion/scheme/isotropic.hpp>
 #include <tax/expansion/detail/cauchy.hpp>
 #include <tax/expansion/detail/recurrence_stencil.hpp>
+#include <tax/expansion/scheme/isotropic.hpp>
 
 namespace tax::detail::kernels
 {
