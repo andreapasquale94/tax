@@ -200,6 +200,12 @@ These are carried regardless of layout and several precede the move so the safet
 - **F6 — unified printing.** Fold `series/io.hpp` into `io/series.hpp`; extend the basis render hook to carry a
   variable symbol (`term(int k, std::string_view var)`) so multivariate orthogonal and `NamedExpansion`-over-
   orthogonal (which print nowhere today) get `operator<<`; constrain the unconstrained `to_string(const F&)`.
+  **Orthogonal output format (maintainer decision, P7):** function-style with the variable always shown —
+  `1 + 3*T_2(x₀)`, multivariate `2 + 5*T_2(x₀)*T_1(x₁)`, named-over-orthogonal `1 + 3*T_2(u)`. The basis label
+  (`T_k`/`P_k`/`He_k`) stays ASCII; the variable reuses the Taylor printer's naming (Unicode `x₀` for unnamed,
+  bare axis name for named). Coefficient is always shown with a `*` separator (no `1`-elision), matching the
+  pre-fold orthogonal style. Accepted churn: univariate `"1 + 3*T_2"` → `"1 + 3*T_2(x₀)"`. Mixed-expansion
+  printing remains out of scope (no `streamScalar` for it; `to_string(mixed)` becomes a clean constraint error).
 - **F7 — packaging.** Add `version.hpp`; add a CI job that `cmake --install`s then `find_package(tax CONFIG)`
   + compiles a 5-line consumer; set package compatibility to `SameMinorVersion`; delete dead artifacts
   (`Doxyfile`, the `core/taylor_expansion.hpp` shim, phantom `pyproject`/Python-binding references); fix the
