@@ -22,10 +22,8 @@ namespace tax
 //   ∫f :  ∫He_n = He_{n+1}/(n+1)  ⇒  B_m = a_{m-1}/m   (constant 0)
 // ===========================================================================
 
-struct HermiteBasis
+struct HermiteBasis : OrthogonalBasis< HermiteBasis >
 {
-    static constexpr bool is_tax_basis = true;
-
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "hermite"; }
 
     [[nodiscard]] static std::string term( int k )
@@ -41,22 +39,6 @@ struct HermiteBasis
         alpha = T{ 1 };
         beta = T{ 0 };
         gamma = T( n );
-    }
-
-    template < typename T, typename Scheme >
-    static constexpr void product( std::array< T, Scheme::nCoeff >& out,
-                                   const std::array< T, Scheme::nCoeff >& a,
-                                   const std::array< T, Scheme::nCoeff >& b ) noexcept
-    {
-        detail::orthoProduct< HermiteBasis, T, Scheme >( out, a, b );
-    }
-
-    template < typename T, typename Scheme >
-    [[nodiscard]] static constexpr T eval(
-        const std::array< T, Scheme::nCoeff >& c,
-        const std::array< T, std::size_t( Scheme::vars ) >& x ) noexcept
-    {
-        return detail::orthoEval< HermiteBasis, T, Scheme >( c, x );
     }
 
     template < typename T, typename Scheme >

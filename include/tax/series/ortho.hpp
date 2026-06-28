@@ -177,3 +177,43 @@ template < typename Rec, typename T, typename Scheme >
 }
 
 }  // namespace tax::detail
+
+namespace tax
+{
+
+// ===========================================================================
+// OrthogonalBasis< Derived > — CRTP scaffolding for the classical families.
+//
+// Every classical orthogonal family is fixed by its three-term recurrence
+// (supplied as Derived::xmul) plus its closed-form derivative / integral. The
+// truncated product, evaluation, and the is_tax_basis opt-in are then identical
+// across families and come from the generic engine above, so they live here once
+// and a concrete family supplies only `name`, `term`, `xmul`, `derivative`, and
+// `integral`.
+// ===========================================================================
+
+template < typename Derived >
+struct OrthogonalBasis
+{
+    static constexpr bool is_tax_basis = true;
+
+    /// Truncated product in the family basis (Jacobi-operator ladder).
+    template < typename T, typename Scheme >
+    static constexpr void product( std::array< T, Scheme::nCoeff >& out,
+                                   const std::array< T, Scheme::nCoeff >& a,
+                                   const std::array< T, Scheme::nCoeff >& b ) noexcept
+    {
+        detail::orthoProduct< Derived, T, Scheme >( out, a, b );
+    }
+
+    /// Evaluate Σ_k c_k P_k(x) via the per-axis three-term recurrence.
+    template < typename T, typename Scheme >
+    [[nodiscard]] static constexpr T eval(
+        const std::array< T, Scheme::nCoeff >& c,
+        const std::array< T, std::size_t( Scheme::vars ) >& x ) noexcept
+    {
+        return detail::orthoEval< Derived, T, Scheme >( c, x );
+    }
+};
+
+}  // namespace tax

@@ -22,10 +22,8 @@ namespace tax
 //   ∫f :  B_m = a_{m-1}/(2m-1) − a_{m+1}/(2m+3)   (constant of integration 0)
 // ===========================================================================
 
-struct LegendreBasis
+struct LegendreBasis : OrthogonalBasis< LegendreBasis >
 {
-    static constexpr bool is_tax_basis = true;
-
     [[nodiscard]] static constexpr std::string_view name() noexcept { return "legendre"; }
 
     [[nodiscard]] static std::string term( int k )
@@ -41,22 +39,6 @@ struct LegendreBasis
         alpha = T( n + 1 ) / T( 2 * n + 1 );
         beta = T{ 0 };
         gamma = T( n ) / T( 2 * n + 1 );
-    }
-
-    template < typename T, typename Scheme >
-    static constexpr void product( std::array< T, Scheme::nCoeff >& out,
-                                   const std::array< T, Scheme::nCoeff >& a,
-                                   const std::array< T, Scheme::nCoeff >& b ) noexcept
-    {
-        detail::orthoProduct< LegendreBasis, T, Scheme >( out, a, b );
-    }
-
-    template < typename T, typename Scheme >
-    [[nodiscard]] static constexpr T eval(
-        const std::array< T, Scheme::nCoeff >& c,
-        const std::array< T, std::size_t( Scheme::vars ) >& x ) noexcept
-    {
-        return detail::orthoEval< LegendreBasis, T, Scheme >( c, x );
     }
 
     template < typename T, typename Scheme >
