@@ -13,14 +13,16 @@ TEST( EigenGradient, OfQuadratic )
     EXPECT_NEAR( g( 1 ), 2.0 * 1.0, 1e-12 );
 }
 
-TEST( EigenGradient, MethodMatchesFreeFunction )
+TEST( EigenGradient, GradientOfProductMatchesAnalytic )
 {
+    // f = x*y  at  (x0, y0) = (1.0, 2.0)
+    // ∂f/∂x = y = 2.0,  ∂f/∂y = x = 1.0
     Eigen::Vector2d x0{ 1.0, 2.0 };
     auto v = tax::la::variables< tax::TE< 3, 2 > >( x0 );
-    auto f  = v( 0 ) * v( 1 );
-    auto g1 = tax::la::gradient( f );
-    auto g2 = tax::la::gradient( f );
-    EXPECT_NEAR( ( g1 - g2 ).norm(), 0.0, 1e-15 );
+    auto f = v( 0 ) * v( 1 );
+    auto g = tax::la::gradient( f );
+    EXPECT_NEAR( g( 0 ), 2.0, 1e-10 );  // ∂(x*y)/∂x = y = 2.0
+    EXPECT_NEAR( g( 1 ), 1.0, 1e-10 );  // ∂(x*y)/∂y = x = 1.0
 }
 
 TEST( EigenGradient, Univariate )

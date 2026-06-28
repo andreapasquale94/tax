@@ -99,19 +99,26 @@ TEST( MixedLA, MemberGradientMatchesIso )
 }
 
 // ---------------------------------------------------------------------------
-// Test 2: free-function tax::la::gradient agrees with member gradient
+// Test 2: free-function tax::la::gradient matches analytic values
+//
+// f = sin(x*y) + exp(x)
+// df/dx = y*cos(x*y) + exp(x)   at (kX0, kY0)
+// df/dy = x*cos(x*y)            at (kX0, kY0)
 // ---------------------------------------------------------------------------
 
-TEST( MixedLA, FreeFunctionGradientAgreesWithMember )
+TEST( MixedLA, FreeFunctionGradientMatchesAnalytic )
 {
     auto x = makeMeX();
     auto y = makeMeY();
     auto f = tax::sin( x * y ) + tax::exp( x );
 
-    const auto g_method = tax::la::gradient( f );
-    const auto g_free = tax::la::gradient( f );
+    const auto g = tax::la::gradient( f );
 
-    EXPECT_NEAR( ( g_method - g_free ).norm(), 0.0, 1e-15 ) << "method vs free-function gradient";
+    const double xy = kX0 * kY0;
+    const double df_dx = kY0 * std::cos( xy ) + std::exp( kX0 );
+    const double df_dy = kX0 * std::cos( xy );
+    EXPECT_NEAR( g( 0 ), df_dx, 1e-10 ) << "free-function gradient x analytic";
+    EXPECT_NEAR( g( 1 ), df_dy, 1e-10 ) << "free-function gradient y analytic";
 }
 
 // ---------------------------------------------------------------------------
@@ -155,19 +162,32 @@ TEST( MixedLA, HessianMatchesIso )
 }
 
 // ---------------------------------------------------------------------------
-// Test 4: tax::la::hessian free-function agrees with member hessian
+// Test 4: free-function tax::la::hessian matches analytic values
+//
+// H(0,0) = d²f/dx² = -y²*sin(x*y) + exp(x)
+// H(0,1) = H(1,0) = d²f/dxdy = cos(x*y) - x*y*sin(x*y)
+// H(1,1) = d²f/dy² = -x²*sin(x*y)
 // ---------------------------------------------------------------------------
 
-TEST( MixedLA, FreeFunctionHessianAgreesWithMember )
+TEST( MixedLA, FreeFunctionHessianMatchesAnalytic )
 {
     auto x = makeMeX();
     auto y = makeMeY();
     auto f = tax::sin( x * y ) + tax::exp( x );
 
-    const auto H_method = tax::la::hessian( f );
-    const auto H_free = tax::la::hessian( f );
+    const auto H = tax::la::hessian( f );
 
-    EXPECT_NEAR( ( H_method - H_free ).norm(), 0.0, 1e-15 ) << "method vs free-function hessian";
+    const double xy = kX0 * kY0;
+    const double sxy = std::sin( xy );
+    const double cxy = std::cos( xy );
+    const double ex = std::exp( kX0 );
+    const double h00 = -kY0 * kY0 * sxy + ex;
+    const double h01 = cxy - kX0 * kY0 * sxy;
+    const double h11 = -kX0 * kX0 * sxy;
+    EXPECT_NEAR( H( 0, 0 ), h00, 1e-10 ) << "free-function H(0,0) analytic";
+    EXPECT_NEAR( H( 0, 1 ), h01, 1e-10 ) << "free-function H(0,1) analytic";
+    EXPECT_NEAR( H( 1, 0 ), h01, 1e-10 ) << "free-function H(1,0) analytic";
+    EXPECT_NEAR( H( 1, 1 ), h11, 1e-10 ) << "free-function H(1,1) analytic";
 }
 
 // ---------------------------------------------------------------------------
