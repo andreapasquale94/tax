@@ -5,7 +5,7 @@
 #include <tax/tax.hpp>
 
 using tax::HermiteSeries;
-using tax::LegendreSeries;
+using tax::LegendreExpansion;
 
 // ---------------------------------------------------------------------------
 // Reference evaluations via the three-term recurrences.
@@ -47,7 +47,7 @@ TEST( Legendre, BasisElementsEvalMatchReference )
     {
         std::array< double, N + 1 > c{};
         c[std::size_t( k )] = 1.0;
-        LegendreSeries< N > f{ c };
+        LegendreExpansion< N > f{ c };
         for ( double x : { -0.95, -0.5, -0.1, 0.2, 0.6, 0.99 } )
             EXPECT_NEAR( f.eval( x ), legendreP( k, x ), 1e-11 ) << "k=" << k << " x=" << x;
     }
@@ -55,7 +55,7 @@ TEST( Legendre, BasisElementsEvalMatchReference )
 
 TEST( Legendre, VariableIsIdentity )
 {
-    auto x = LegendreSeries< 6 >::variable();
+    auto x = LegendreExpansion< 6 >::variable();
     EXPECT_DOUBLE_EQ( x[1], 1.0 );
     for ( double p : { -0.8, 0.0, 0.3, 0.9 } ) EXPECT_NEAR( x.eval( p ), p, 1e-13 );
 }
@@ -63,7 +63,7 @@ TEST( Legendre, VariableIsIdentity )
 TEST( Legendre, ProductClosedForm )
 {
     // x*x = (1/3) P_0 + (2/3) P_2.
-    auto x = LegendreSeries< 6 >::variable();
+    auto x = LegendreExpansion< 6 >::variable();
     auto sq = x * x;
     EXPECT_NEAR( sq[0], 1.0 / 3.0, 1e-13 );
     EXPECT_NEAR( sq[1], 0.0, 1e-13 );
@@ -82,7 +82,7 @@ TEST( Legendre, ProductMatchesPointwiseWhenInBox )
     cb[0] = -0.4;
     cb[1] = 0.7;
     cb[2] = -0.6;  // degree 2 -> product degree 5 <= 8
-    LegendreSeries< N > a{ ca }, b{ cb };
+    LegendreExpansion< N > a{ ca }, b{ cb };
     auto p = a * b;
     for ( double x : { -0.9, -0.3, 0.1, 0.5, 0.85 } )
         EXPECT_NEAR( p.eval( x ), a.eval( x ) * b.eval( x ), 1e-11 ) << "x=" << x;
@@ -93,7 +93,7 @@ TEST( Legendre, DerivativeClosedFormAndNumeric )
     // d/dx P_2 = 3 P_1.
     {
         std::array< double, 5 > c{ 0, 0, 1, 0, 0 };
-        LegendreSeries< 4 > f{ c };
+        LegendreExpansion< 4 > f{ c };
         auto d = f.deriv();
         EXPECT_NEAR( d[1], 3.0, 1e-12 );
         EXPECT_NEAR( d[0], 0.0, 1e-12 );
@@ -101,7 +101,7 @@ TEST( Legendre, DerivativeClosedFormAndNumeric )
     }
     // General: compare against a central difference.
     std::array< double, 7 > c{ 0.2, -0.5, 0.9, 0.1, -0.3, 0.4, 0.05 };
-    LegendreSeries< 6 > f{ c };
+    LegendreExpansion< 6 > f{ c };
     auto d = f.deriv();
     const double h = 1e-6;
     for ( double x : { -0.7, -0.2, 0.3, 0.6 } )
@@ -115,14 +115,14 @@ TEST( Legendre, IntegralInvertsDerivative )
 {
     std::array< double, 7 > c{ 0.0, 0.5,  -1.0, 2.0,
                                0.3, -0.2, 0.0 };  // top mode 0: integ stays in box
-    LegendreSeries< 6 > f{ c };
+    LegendreExpansion< 6 > f{ c };
     auto rt = f.integ().deriv();
     for ( int k = 0; k <= 6; ++k ) EXPECT_NEAR( rt[std::size_t( k )], c[std::size_t( k )], 1e-11 );
 }
 
 TEST( Legendre, LinearOpsAndPow )
 {
-    auto x = LegendreSeries< 8 >::variable();
+    auto x = LegendreExpansion< 8 >::variable();
     auto f = 2.0 + 3.0 * x;
     EXPECT_NEAR( f.eval( 0.4 ), 2.0 + 3.0 * 0.4, 1e-13 );
     auto g = pow( x, 3 );  // x^3
@@ -132,8 +132,8 @@ TEST( Legendre, LinearOpsAndPow )
 TEST( Legendre, Multivariate )
 {
     constexpr int N = 6;
-    auto x = LegendreSeries< N, 2 >::variable< 0 >();
-    auto y = LegendreSeries< N, 2 >::variable< 1 >();
+    auto x = LegendreExpansion< N, 2 >::variable< 0 >();
+    auto y = LegendreExpansion< N, 2 >::variable< 1 >();
     auto f = 1.0 + 2.0 * x + y - 0.5 * ( x * y );  // degree 2
     auto g = 0.5 - x + 0.3 * y;                    // degree 1 -> product degree 3 <= N
     auto h = f * g;

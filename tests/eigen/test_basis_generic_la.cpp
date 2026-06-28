@@ -52,7 +52,7 @@ TEST( BasisGenericLa, GradientHessianChebyshev )
 }
 TEST( BasisGenericLa, GradientHessianLegendre )
 {
-    checkGradientHessian< tax::LegendreSeries< 5, 2 > >();
+    checkGradientHessian< tax::LegendreExpansion< 5, 2 > >();
 }
 TEST( BasisGenericLa, GradientHessianHermite )
 {
@@ -60,7 +60,7 @@ TEST( BasisGenericLa, GradientHessianHermite )
 }
 
 TEST( BasisGenericLa, JacobianChebyshev ) { checkJacobian< tax::ChebyshevExpansion< 5, 2 > >(); }
-TEST( BasisGenericLa, JacobianLegendre ) { checkJacobian< tax::LegendreSeries< 5, 2 > >(); }
+TEST( BasisGenericLa, JacobianLegendre ) { checkJacobian< tax::LegendreExpansion< 5, 2 > >(); }
 TEST( BasisGenericLa, JacobianHermite ) { checkJacobian< tax::HermiteSeries< 5, 2 > >(); }
 
 // Matches the legacy Taylor gradient (point = displacement 0 from x0).
@@ -107,7 +107,7 @@ TEST( BasisGenericLa, NumTraitsMatmulChebyshev )
 }
 TEST( BasisGenericLa, NumTraitsMatmulLegendre )
 {
-    checkNumTraitsMatmul< tax::LegendreSeries< 4, 2 > >();
+    checkNumTraitsMatmul< tax::LegendreExpansion< 4, 2 > >();
 }
 TEST( BasisGenericLa, NumTraitsMatmulHermite )
 {
@@ -118,7 +118,7 @@ TEST( BasisGenericLa, NumTraitsMatmulHermite )
 // (tax::value) and the Eigen matrix form (tax::la::value).
 TEST( BasisGenericLa, ValueAccessor )
 {
-    tax::LegendreSeries< 3 > f{ std::array< double, 4 >{ 1.5, 2.0, -1.0, 0.0 } };
+    tax::LegendreExpansion< 3 > f{ std::array< double, 4 >{ 1.5, 2.0, -1.0, 0.0 } };
     EXPECT_DOUBLE_EQ( tax::value( f ), 1.5 );
 
     Eigen::Matrix< tax::HermiteSeries< 3, 2 >, 2, 1 > F;

@@ -29,7 +29,7 @@ using ChebyshevExpansion = Expansion< T, ChebyshevBasis, IsotropicScheme< N, M >
 
 /// Order-N, M-variate Legendre expansion.
 template < int N, int M = 1, typename T = double >
-using LegendreSeries = Expansion< T, LegendreBasis, IsotropicScheme< N, M > >;
+using LegendreExpansion = Expansion< T, LegendreBasis, IsotropicScheme< N, M > >;
 
 /// Order-N, M-variate probabilists' Hermite expansion.
 template < int N, int M = 1, typename T = double >
