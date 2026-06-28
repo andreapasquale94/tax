@@ -56,12 +56,12 @@ TEST( BasisGenericLa, GradientHessianLegendre )
 }
 TEST( BasisGenericLa, GradientHessianHermite )
 {
-    checkGradientHessian< tax::HermiteSeries< 5, 2 > >();
+    checkGradientHessian< tax::HermiteExpansion< 5, 2 > >();
 }
 
 TEST( BasisGenericLa, JacobianChebyshev ) { checkJacobian< tax::ChebyshevExpansion< 5, 2 > >(); }
 TEST( BasisGenericLa, JacobianLegendre ) { checkJacobian< tax::LegendreExpansion< 5, 2 > >(); }
-TEST( BasisGenericLa, JacobianHermite ) { checkJacobian< tax::HermiteSeries< 5, 2 > >(); }
+TEST( BasisGenericLa, JacobianHermite ) { checkJacobian< tax::HermiteExpansion< 5, 2 > >(); }
 
 // Matches the legacy Taylor gradient (point = displacement 0 from x0).
 TEST( BasisGenericLa, PointFormAgreesWithTaylorAtCenter )
@@ -111,7 +111,7 @@ TEST( BasisGenericLa, NumTraitsMatmulLegendre )
 }
 TEST( BasisGenericLa, NumTraitsMatmulHermite )
 {
-    checkNumTraitsMatmul< tax::HermiteSeries< 4, 2 > >();
+    checkNumTraitsMatmul< tax::HermiteExpansion< 4, 2 > >();
 }
 
 // value() extracts the constant (P_0) coefficient for any basis: scalar form
@@ -121,9 +121,9 @@ TEST( BasisGenericLa, ValueAccessor )
     tax::LegendreExpansion< 3 > f{ std::array< double, 4 >{ 1.5, 2.0, -1.0, 0.0 } };
     EXPECT_DOUBLE_EQ( tax::value( f ), 1.5 );
 
-    Eigen::Matrix< tax::HermiteSeries< 3, 2 >, 2, 1 > F;
-    F( 0 ) = 3.0 + tax::HermiteSeries< 3, 2 >::variable< 0 >();
-    F( 1 ) = -1.0 + tax::HermiteSeries< 3, 2 >::variable< 1 >();
+    Eigen::Matrix< tax::HermiteExpansion< 3, 2 >, 2, 1 > F;
+    F( 0 ) = 3.0 + tax::HermiteExpansion< 3, 2 >::variable< 0 >();
+    F( 1 ) = -1.0 + tax::HermiteExpansion< 3, 2 >::variable< 1 >();
     auto v = tax::la::value( F );  // constant terms, element-wise
     EXPECT_DOUBLE_EQ( v( 0 ), 3.0 );
     EXPECT_DOUBLE_EQ( v( 1 ), -1.0 );

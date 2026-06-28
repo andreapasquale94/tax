@@ -4,7 +4,7 @@
 #include <cmath>
 #include <tax/tax.hpp>
 
-using tax::HermiteSeries;
+using tax::HermiteExpansion;
 using tax::LegendreExpansion;
 
 // ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ TEST( Hermite, BasisElementsEvalMatchReference )
     {
         std::array< double, N + 1 > c{};
         c[std::size_t( k )] = 1.0;
-        HermiteSeries< N > f{ c };
+        HermiteExpansion< N > f{ c };
         for ( double x : { -2.0, -0.7, 0.0, 0.5, 1.3, 2.4 } )
             EXPECT_NEAR( f.eval( x ), hermiteHe( k, x ), 1e-9 ) << "k=" << k << " x=" << x;
     }
@@ -171,7 +171,7 @@ TEST( Hermite, BasisElementsEvalMatchReference )
 TEST( Hermite, ProductClosedForm )
 {
     // He_1 * He_1 = x*x = He_2 + He_0   (He_2 = x^2 - 1).
-    auto x = HermiteSeries< 6 >::variable();
+    auto x = HermiteExpansion< 6 >::variable();
     auto sq = x * x;
     EXPECT_NEAR( sq[0], 1.0, 1e-13 );
     EXPECT_NEAR( sq[1], 0.0, 1e-13 );
@@ -189,7 +189,7 @@ TEST( Hermite, ProductMatchesPointwiseWhenInBox )
     cb[0] = -0.6;
     cb[1] = 0.4;
     cb[2] = 0.7;
-    HermiteSeries< N > a{ ca }, b{ cb };
+    HermiteExpansion< N > a{ ca }, b{ cb };
     auto p = a * b;
     for ( double x : { -1.5, -0.4, 0.3, 1.1 } )
         EXPECT_NEAR( p.eval( x ), a.eval( x ) * b.eval( x ), 1e-9 ) << "x=" << x;
@@ -200,13 +200,13 @@ TEST( Hermite, DerivativeClosedFormAndNumeric )
     // He_n' = n He_{n-1}: d/dx He_3 = 3 He_2.
     {
         std::array< double, 5 > c{ 0, 0, 0, 1, 0 };
-        HermiteSeries< 4 > f{ c };
+        HermiteExpansion< 4 > f{ c };
         auto d = f.deriv();
         EXPECT_NEAR( d[2], 3.0, 1e-12 );
         EXPECT_NEAR( d[0], 0.0, 1e-12 );
     }
     std::array< double, 7 > c{ 0.2, -0.5, 0.9, 0.1, -0.3, 0.4, 0.05 };
-    HermiteSeries< 6 > f{ c };
+    HermiteExpansion< 6 > f{ c };
     auto d = f.deriv();
     const double h = 1e-6;
     for ( double x : { -1.2, -0.2, 0.6, 1.4 } )
@@ -220,7 +220,7 @@ TEST( Hermite, IntegralInvertsDerivative )
 {
     std::array< double, 7 > c{ 0.0, 0.5,  -1.0, 2.0,
                                0.3, -0.2, 0.0 };  // top mode 0: integ stays in box
-    HermiteSeries< 6 > f{ c };
+    HermiteExpansion< 6 > f{ c };
     auto rt = f.integ().deriv();
     for ( int k = 0; k <= 6; ++k ) EXPECT_NEAR( rt[std::size_t( k )], c[std::size_t( k )], 1e-11 );
 }
@@ -228,8 +228,8 @@ TEST( Hermite, IntegralInvertsDerivative )
 TEST( Hermite, Multivariate )
 {
     constexpr int N = 6;
-    auto x = HermiteSeries< N, 2 >::variable< 0 >();
-    auto y = HermiteSeries< N, 2 >::variable< 1 >();
+    auto x = HermiteExpansion< N, 2 >::variable< 0 >();
+    auto y = HermiteExpansion< N, 2 >::variable< 1 >();
     auto f = 1.0 + x + 2.0 * y + 0.5 * ( x * y );  // degree 2
     auto g = -0.3 + 0.8 * x - y;                   // degree 1
     auto h = f * g;
@@ -241,7 +241,7 @@ TEST( Hermite, Multivariate )
 TEST( Hermite, OrthogonalProductIsConstexpr )
 {
     constexpr double v = [] {
-        auto x = HermiteSeries< 4 >::variable();
+        auto x = HermiteExpansion< 4 >::variable();
         auto sq = x * x;        // He_2 + He_0
         return sq.eval( 2.0 );  // 2^2 = 4
     }();

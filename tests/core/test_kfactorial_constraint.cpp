@@ -13,7 +13,7 @@ concept HasValueDerivative =
 using TaylorE = tax::TE< 3, 2 >;
 using ChebE = tax::ChebyshevExpansion< 3, 2 >;
 using LegE = tax::LegendreExpansion< 3, 2 >;
-using HermE = tax::HermiteSeries< 3, 2 >;
+using HermE = tax::HermiteExpansion< 3, 2 >;
 
 static_assert( HasValueDerivative< TaylorE >,
                "Taylor expansion must expose the k!-scaled derivative()" );

@@ -33,6 +33,6 @@ using LegendreExpansion = Expansion< T, LegendreBasis, IsotropicScheme< N, M > >
 
 /// Order-N, M-variate probabilists' Hermite expansion.
 template < int N, int M = 1, typename T = double >
-using HermiteSeries = Expansion< T, HermiteBasis, IsotropicScheme< N, M > >;
+using HermiteExpansion = Expansion< T, HermiteBasis, IsotropicScheme< N, M > >;
 
 }  // namespace tax
