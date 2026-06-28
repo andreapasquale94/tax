@@ -10,13 +10,6 @@
 namespace tax::detail::kernels
 {
 
-/// Self-product `out = f * f` (M == 1 exploits pair symmetry; M >= 2 forwards to cauchyProduct).
-template < typename T, int N, int M >
-constexpr void cauchySelfProduct( Coeffs< T, N, M >& out, const Coeffs< T, N, M >& f ) noexcept
-{
-    tax::cauchySelfProduct< T, tax::IsotropicScheme< N, M > >( out, f );
-}
-
 /// Square series `out = a^2` via the symmetric self-product (scheme-generic).
 template < typename T, tax::IndexScheme Scheme >
 constexpr void seriesSquare( std::array< T, Scheme::nCoeff >& out,
@@ -62,13 +55,6 @@ constexpr void seriesReciprocal( std::array< T, Scheme::nCoeff >& out,
                 out[ai] = rhs * inv_a0;
             } );
     }
-}
-
-/// Reciprocal series `a * out = 1` by forward substitution. Requires `a[0] != 0`.
-template < typename T, int N, int M >
-constexpr void seriesReciprocal( Coeffs< T, N, M >& out, const Coeffs< T, N, M >& a ) noexcept
-{
-    seriesReciprocal< T, tax::IsotropicScheme< N, M > >( out, a );
 }
 
 /// Quotient series `out = a / b` by forward substitution (scheme-generic). Requires `b[0] != 0`;

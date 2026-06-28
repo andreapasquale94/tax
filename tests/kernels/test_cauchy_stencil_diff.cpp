@@ -66,7 +66,7 @@ constexpr tax::Coeffs< double, N, M > selfProductConstexpr()
 {
     tax::Coeffs< double, N, M > f{}, out{};
     for ( std::size_t k = 0; k < f.size(); ++k ) f[k] = 0.1 * double( k + 1 ) - 0.37;
-    tax::detail::kernels::cauchySelfProduct< double, N, M >( out, f );
+    tax::cauchySelfProduct< double, tax::IsotropicScheme< N, M > >( out, f );
     return out;
 }
 
@@ -77,7 +77,7 @@ void runSelfProductConstevalMatchesRuntime()
 
     tax::Coeffs< double, N, M > f{}, rt{};
     for ( std::size_t k = 0; k < f.size(); ++k ) f[k] = 0.1 * double( k + 1 ) - 0.37;
-    tax::detail::kernels::cauchySelfProduct< double, N, M >( rt, f );  // runtime path
+    tax::cauchySelfProduct< double, tax::IsotropicScheme< N, M > >( rt, f );  // runtime path
 
     for ( std::size_t k = 0; k < f.size(); ++k )
         EXPECT_NEAR( rt[k], ct[k], 1e-12 ) << "N=" << N << " M=" << M << " k=" << k;
@@ -105,7 +105,7 @@ constexpr tax::Coeffs< double, 2, 2 > kConstexprReciprocal = [] {
     tax::Coeffs< double, 2, 2 > a{}, out{};
     a[0] = 2.0;  // 2 + x
     a[1] = 1.0;
-    tax::detail::kernels::seriesReciprocal< double, 2, 2 >( out, a );
+    tax::detail::kernels::seriesReciprocal< double, tax::IsotropicScheme< 2, 2 > >( out, a );
     return out;
 }();
 // 1/(2 + x) = 1/2 - x/4 + x^2/8 + O(x^3)
