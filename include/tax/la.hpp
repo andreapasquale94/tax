@@ -4,13 +4,17 @@
 //
 //   types       — Vec, Mat, VecNT<N,T>, MatNT<N,T>, MatNMT<N,M,T>.
 //   expansion_vectors — TEVec<D,N,M>, NEVec<D,N,Axes...>, MTEVec<D,Axes...>.
-//   num_traits  — Eigen::NumTraits<TaylorExpansion> + internal traits.
+//   num_traits  — Eigen::NumTraits<Expansion> + internal traits.
 //   values      — variables, value, eval.
 //   truncate    — free tax::truncate<N2>(scalar | Eigen vector/matrix).
 //   derivatives — derivative, gradient, hessian, jacobian.
+//   named       — NumTraits + per-axis gradient/hessian/jacobian/value/eval for NamedExpansion.
+//   mixed_named — the same for MixedTaylorExpansion (so la.hpp alone is self-complete).
 //   invert      — formal polynomial-map inversion (Picard iteration).
+//   exports     — single assembly point surfacing the la + named helpers under `tax::` (last).
 //
-// Everything public lives in namespace `tax::la` (except tax::truncate).
+// Helpers are defined in `tax::la` / `tax::named` and surfaced under `tax::` via
+// exports.hpp, so `tax::gradient(...)` / `tax::la::gradient(...)` both resolve.
 
 #pragma once
 
