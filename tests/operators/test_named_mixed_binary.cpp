@@ -30,14 +30,16 @@ TEST( NamedMixedBinary, MixedPowAtan2 )
     auto x = tax::mixed::variable< "x", 4 >( 1.3 );  // MTE
     auto y = tax::mixed::variable< "y", 4 >( 0.7 );
 
-    auto p_int = pow( x, 2 );
-    auto p_mm  = pow( x, y );
-    auto p_sm  = pow( 2.0, x );
-    auto a_mm  = atan2( x, y );
-    auto a_mc  = atan2( x, 2.0 );
-    auto a_cm  = atan2( 2.0, x );
+    auto p_int  = pow( x, 2 );
+    auto p_real = pow( x, 0.5 );  // real-exponent overload (distinct from int)
+    auto p_mm   = pow( x, y );
+    auto p_sm   = pow( 2.0, x );
+    auto a_mm   = atan2( x, y );
+    auto a_mc   = atan2( x, 2.0 );
+    auto a_cm   = atan2( 2.0, x );
 
     EXPECT_NEAR( p_int.value(), 1.3 * 1.3, 1e-10 );
+    EXPECT_NEAR( p_real.value(), std::pow( 1.3, 0.5 ), 1e-10 );
     EXPECT_NEAR( p_mm.value(), std::pow( 1.3, 0.7 ), 1e-10 );
     EXPECT_NEAR( p_sm.value(), std::pow( 2.0, 1.3 ), 1e-10 );
     EXPECT_NEAR( a_mm.value(), std::atan2( 1.3, 0.7 ), 1e-10 );
