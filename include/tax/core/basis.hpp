@@ -16,7 +16,7 @@ namespace tax
 // A *basis policy* describes one family of univariate polynomials {P_0, P_1,
 // ...} in which a truncated expansion  f = sum_{k=0}^{N} c_k P_k(x)  is stored.
 // Everything that distinguishes one polynomial family from another lives in
-// the policy; the carrier type `Series< Basis, N, T >` only knows how to store
+// the policy; the carrier type `Series< Basis, N, M, T >` only knows how to store
 // the coefficient array and how to do basis-independent linear-space work
 // (addition, scalar multiply, the `variable`/`constant` factories).
 //
