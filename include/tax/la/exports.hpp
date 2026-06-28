@@ -1,8 +1,8 @@
-// include/tax/eigen/exports.hpp
+// include/tax/la/exports.hpp
 //
 // Single assembly point: surface the linear-algebra helpers under `tax::` so
 // the documented `tax::FN(...)` spelling resolves for dense, named, and mixed
-// expansions uniformly. Included LAST by <tax/eigen.hpp>, after every overload is
+// expansions uniformly. Included LAST by <tax/la.hpp>, after every overload is
 // defined, so one set of using-declarations captures the complete overload set
 // (no need to re-issue per header). `tax::value` template overloads for scalar
 // TE and arithmetic types live in la/values.hpp and stay there; the `value`
@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <tax/eigen/derivatives.hpp>
-#include <tax/eigen/invert.hpp>
-#include <tax/eigen/mixed_named.hpp>
-#include <tax/eigen/named.hpp>
-#include <tax/eigen/values.hpp>
+#include <tax/la/derivatives.hpp>
+#include <tax/la/invert.hpp>
+#include <tax/la/mixed_named.hpp>
+#include <tax/la/named.hpp>
+#include <tax/la/values.hpp>
 
 namespace tax
 {

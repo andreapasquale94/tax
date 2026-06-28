@@ -1,4 +1,4 @@
-// include/tax/eigen.hpp
+// include/tax/la.hpp
 //
 // Linear-algebra umbrella header. Pulls in:
 //
@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include <tax/eigen/derivatives.hpp>
-#include <tax/eigen/expansion_vectors.hpp>
-#include <tax/eigen/invert.hpp>
-#include <tax/eigen/mixed_named.hpp>
-#include <tax/eigen/named.hpp>
-#include <tax/eigen/num_traits.hpp>
-#include <tax/eigen/truncate.hpp>
-#include <tax/eigen/types.hpp>
-#include <tax/eigen/values.hpp>
-#include <tax/eigen/exports.hpp>
+#include <tax/la/derivatives.hpp>
+#include <tax/la/expansion_vectors.hpp>
+#include <tax/la/invert.hpp>
+#include <tax/la/mixed_named.hpp>
+#include <tax/la/named.hpp>
+#include <tax/la/num_traits.hpp>
+#include <tax/la/truncate.hpp>
+#include <tax/la/types.hpp>
+#include <tax/la/values.hpp>
+#include <tax/la/exports.hpp>

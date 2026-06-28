@@ -5,7 +5,7 @@
 
 #include <Eigen/Core>
 #include <tax/expansion/multi_index.hpp>
-#include <tax/eigen/num_traits.hpp>
+#include <tax/la/num_traits.hpp>
 
 namespace tax::la
 {

@@ -1,4 +1,4 @@
-// include/tax/eigen/mixed_named.hpp
+// include/tax/la/mixed_named.hpp
 //
 // Eigen integration for the mixed named-axis layer (tax::named::MixedTaylorExpansion):
 //
@@ -14,7 +14,7 @@
 //
 // These mirror tax::la::{gradient,hessian,jacobian} but slice the result down to
 // the variables of a single named ordered axis.  The implementation mirrors
-// include/tax/eigen/named.hpp (which does the same for NamedTaylorExpansion).
+// include/tax/la/named.hpp (which does the same for NamedTaylorExpansion).
 
 #pragma once
 
@@ -22,7 +22,7 @@
 #include <tax/expansion/mixed_named.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/named.hpp>
-#include <tax/eigen/axis_diff.hpp>
+#include <tax/la/axis_diff.hpp>
 
 // -----------------------------------------------------------------------------
 // NumTraits specialization — namespace Eigen

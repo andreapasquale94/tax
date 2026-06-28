@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <tax/eigen.hpp>
+#include <tax/la.hpp>
 
 #include "../testUtils.hpp"
 

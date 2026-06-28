@@ -20,6 +20,6 @@
 #include <tax/expansion/ops/math_unary.hpp>
 #include <tax/expansion/ops/math_binary.hpp>
 #include <tax/expansion/promote.hpp>
-#include <tax/eigen.hpp>
+#include <tax/la.hpp>
 #include <tax/io/series.hpp>
 #include <tax/bases.hpp>

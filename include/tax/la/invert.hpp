@@ -1,4 +1,4 @@
-// include/tax/eigen/invert.hpp
+// include/tax/la/invert.hpp
 //
 // Formal inversion of a polynomial map represented as an Eigen
 // vector of `TaylorExpansion` components, plus the helper
@@ -12,8 +12,8 @@
 #include <stdexcept>
 #include <tax/expansion/enumeration.hpp>
 #include <tax/expansion/multi_index.hpp>
-#include <tax/eigen/derivatives.hpp>
-#include <tax/eigen/num_traits.hpp>
+#include <tax/la/derivatives.hpp>
+#include <tax/la/num_traits.hpp>
 #include <utility>
 
 namespace tax::la::detail

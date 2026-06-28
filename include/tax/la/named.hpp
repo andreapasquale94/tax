@@ -1,4 +1,4 @@
-// include/tax/eigen/named.hpp
+// include/tax/la/named.hpp
 //
 // Eigen integration for the named-axis layer (tax::named):
 //
@@ -20,7 +20,7 @@
 #include <Eigen/Core>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/named.hpp>
-#include <tax/eigen/axis_diff.hpp>
+#include <tax/la/axis_diff.hpp>
 
 // -----------------------------------------------------------------------------
 // NumTraits specialization — namespace Eigen
@@ -51,7 +51,7 @@ struct NumTraits< tax::named::NamedExpansion< T, Basis, N, Axes... > > : NumTrai
     };
 
     // Base NumTraits<T> returns these as scalar T, but Real is Self; re-expose
-    // them as constant named expansions (see tax/eigen/num_traits.hpp).
+    // them as constant named expansions (see tax/la/num_traits.hpp).
     static inline Self epsilon() { return Self( NumTraits< T >::epsilon() ); }
     static inline Self dummy_precision() { return Self( NumTraits< T >::dummy_precision() ); }
     static inline Self highest() { return Self( NumTraits< T >::highest() ); }

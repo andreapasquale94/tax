@@ -8,7 +8,7 @@
 #include <tax/expansion/mixed_named.hpp>
 #include <tax/expansion/named.hpp>
 #include <tax/expansion/expansion.hpp>
-#include <tax/eigen/types.hpp>
+#include <tax/la/types.hpp>
 
 namespace tax::la
 {

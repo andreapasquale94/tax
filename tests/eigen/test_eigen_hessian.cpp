@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "../testUtils.hpp"
-#include <tax/eigen.hpp>
+#include <tax/la.hpp>
 
 TEST( EigenHessian, OfQuadratic )
 {
