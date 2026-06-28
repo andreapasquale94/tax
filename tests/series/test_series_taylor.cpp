@@ -3,11 +3,11 @@
 #include <cmath>
 #include <tax/tax.hpp>
 
-using tax::TaylorSeries;
+using tax::TE;
 
 TEST( SeriesTaylor, VariableAndEval )
 {
-    auto x = TaylorSeries< 5 >::variable();
+    auto x = TE< 5 >::variable();
     EXPECT_DOUBLE_EQ( x[0], 0.0 );
     EXPECT_DOUBLE_EQ( x[1], 1.0 );
     EXPECT_DOUBLE_EQ( x.eval( 0.7 ), 0.7 );
@@ -15,7 +15,7 @@ TEST( SeriesTaylor, VariableAndEval )
 
 TEST( SeriesTaylor, ConstantAndArithmetic )
 {
-    auto x = TaylorSeries< 4 >::variable();
+    auto x = TE< 4 >::variable();
     auto f = 2.0 + 3.0 * x;  // 2 + 3x
     EXPECT_DOUBLE_EQ( f[0], 2.0 );
     EXPECT_DOUBLE_EQ( f[1], 3.0 );
@@ -27,7 +27,7 @@ TEST( SeriesTaylor, ConstantAndArithmetic )
 
 TEST( SeriesTaylor, ProductIsCauchy )
 {
-    auto x = TaylorSeries< 4 >::variable();
+    auto x = TE< 4 >::variable();
     auto f = ( 1.0 + x ) * ( 1.0 + x );  // 1 + 2x + x^2
     EXPECT_DOUBLE_EQ( f[0], 1.0 );
     EXPECT_DOUBLE_EQ( f[1], 2.0 );
@@ -37,14 +37,14 @@ TEST( SeriesTaylor, ProductIsCauchy )
 
 TEST( SeriesTaylor, Division )
 {
-    auto x = TaylorSeries< 5 >::variable();
+    auto x = TE< 5 >::variable();
     auto f = 1.0 / ( 1.0 - x );  // geometric series 1 + x + x^2 + ...
     for ( std::size_t k = 0; k <= 5; ++k ) EXPECT_NEAR( f[k], 1.0, 1e-12 );
 }
 
 TEST( SeriesTaylor, DerivIntegRoundTrip )
 {
-    auto x = TaylorSeries< 5 >::variable();
+    auto x = TE< 5 >::variable();
     auto f = 1.0 + 2.0 * x + 3.0 * ( x * x );  // 1 + 2x + 3x^2
     auto df = f.deriv();                       // 2 + 6x
     EXPECT_DOUBLE_EQ( df[0], 2.0 );
@@ -59,7 +59,7 @@ TEST( SeriesTaylor, DerivIntegRoundTrip )
 
 TEST( SeriesTaylor, TranscendentalsMatchClosedForm )
 {
-    auto x = TaylorSeries< 6 >::variable();
+    auto x = TE< 6 >::variable();
     auto e = exp( x );
     // exp(x) = sum x^k / k!
     double fact = 1.0;
@@ -78,7 +78,7 @@ TEST( SeriesTaylor, TranscendentalsMatchClosedForm )
 TEST( SeriesTaylor, ReusesExistingKernelEval )
 {
     // sin(x)*exp(x) evaluated against the host math at a small displacement.
-    auto x = TaylorSeries< 10 >::variable();
+    auto x = TE< 10 >::variable();
     auto f = sin( x ) * exp( x );
     const double dx = 0.2;
     EXPECT_NEAR( f.eval( dx ), std::sin( dx ) * std::exp( dx ), 1e-9 );

@@ -19,10 +19,6 @@ namespace tax
 template < typename Basis, int N, int M = 1, typename T = double >
 using Series = Expansion< T, Basis, IsotropicScheme< N, M > >;
 
-/// Order-N, M-variate Taylor (monomial-basis) expansion.
-template < int N, int M = 1, typename T = double >
-using TaylorSeries = Expansion< T, TaylorBasis, IsotropicScheme< N, M > >;
-
 /// Order-N, M-variate Chebyshev (first-kind) expansion.
 template < int N, int M = 1, typename T = double >
 using ChebyshevExpansion = Expansion< T, ChebyshevBasis, IsotropicScheme< N, M > >;

@@ -18,7 +18,7 @@ namespace tax
 /// Monomial coefficients -> Chebyshev coefficients (canonical [-1,1]).
 template < int N, typename T = double >
 [[nodiscard]] constexpr ChebyshevExpansion< N, 1, T > toChebyshev(
-    const TaylorSeries< N, 1, T >& f ) noexcept
+    const TaylorExpansion< T, IsotropicScheme< N, 1 > >& f ) noexcept
 {
     using Iso = IsotropicScheme< N, 1 >;
     using Arr = std::array< T, std::size_t( N ) + 1 >;
@@ -45,7 +45,7 @@ template < int N, typename T = double >
 
 /// Chebyshev coefficients -> monomial coefficients (canonical [-1,1]).
 template < int N, typename T = double >
-[[nodiscard]] constexpr TaylorSeries< N, 1, T > toTaylor(
+[[nodiscard]] constexpr TaylorExpansion< T, IsotropicScheme< N, 1 > > toTaylor(
     const ChebyshevExpansion< N, 1, T >& f ) noexcept
 {
     using Arr = std::array< T, std::size_t( N ) + 1 >;
@@ -71,7 +71,7 @@ template < int N, typename T = double >
             cur = next;
         }
     }
-    return TaylorSeries< N, 1, T >{ out };
+    return TaylorExpansion< T, IsotropicScheme< N, 1 > >{ out };
 }
 
 }  // namespace tax

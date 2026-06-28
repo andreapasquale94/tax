@@ -5,7 +5,7 @@
 #include <tax/tax.hpp>
 
 using tax::ChebyshevExpansion;
-using tax::TaylorSeries;
+using tax::TE;
 
 // ---------------------------------------------------------------------------
 // Multivariate Taylor
@@ -14,8 +14,8 @@ using tax::TaylorSeries;
 TEST( SeriesMultivar, TaylorEvalAndProduct )
 {
     constexpr int N = 4;
-    auto x = TaylorSeries< N, 2 >::variable< 0 >();
-    auto y = TaylorSeries< N, 2 >::variable< 1 >();
+    auto x = TE< N, 2 >::variable< 0 >();
+    auto y = TE< N, 2 >::variable< 1 >();
     auto f = 1.0 + x + 2.0 * y;  // degree 1
     auto g = 1.0 - x + y;        // degree 1
     auto h = f * g;              // degree 2 <= N, exact
@@ -30,8 +30,8 @@ TEST( SeriesMultivar, TaylorEvalAndProduct )
 TEST( SeriesMultivar, TaylorPartialDerivatives )
 {
     constexpr int N = 4;
-    auto x = TaylorSeries< N, 2 >::variable< 0 >();
-    auto y = TaylorSeries< N, 2 >::variable< 1 >();
+    auto x = TE< N, 2 >::variable< 0 >();
+    auto y = TE< N, 2 >::variable< 1 >();
     auto f = x * x * y + 3.0 * y;  // ∂/∂x = 2xy, ∂/∂y = x^2 + 3
     auto fx = f.deriv< 0 >();
     auto fy = f.deriv< 1 >();
@@ -44,8 +44,8 @@ TEST( SeriesMultivar, TaylorTranscendentalMultivariate )
 {
     // exp of a 2-var Taylor series uses the existing scheme-generic kernel.
     constexpr int N = 6;
-    auto x = TaylorSeries< N, 2 >::variable< 0 >();
-    auto y = TaylorSeries< N, 2 >::variable< 1 >();
+    auto x = TE< N, 2 >::variable< 0 >();
+    auto y = TE< N, 2 >::variable< 1 >();
     auto f = exp( x + y );
     std::array< double, 2 > pt{ 0.2, 0.1 };
     EXPECT_NEAR( f.eval( pt ), std::exp( pt[0] + pt[1] ), 1e-6 );
