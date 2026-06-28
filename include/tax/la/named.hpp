@@ -291,17 +291,3 @@ template < typename Derived, typename DxDerived >
 }
 
 }  // namespace tax::named
-
-// The per-axis differential helpers (and the Eigen variables overload) are
-// reachable directly under `tax` too. The second `using named::variables`
-// folds the Eigen overload into the tax-level overload set introduced by
-// <tax/core/named.hpp> (using-declarations do not pick up later additions).
-namespace tax
-{
-using named::eval;
-using named::gradient;
-using named::hessian;
-using named::jacobian;
-using named::value;
-using named::variables;
-}  // namespace tax

@@ -120,8 +120,6 @@ template < typename Derived >
 namespace tax
 {
 
-using tax::la::value;
-
 /// Constant term (value at the expansion point) of a scalar `TaylorExpansion`.
 template < typename TE >
     requires( la::detail::is_te_v< TE > )

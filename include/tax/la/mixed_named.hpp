@@ -135,15 +135,3 @@ template < FixedString Name, typename Derived >
 }
 
 }  // namespace tax::named
-
-// Re-export the per-axis differential helpers under `tax`. Re-issuing the
-// using-declarations here augments the `tax` overload set with the
-// MixedTaylorExpansion overloads (a using-declaration only captures the
-// overloads visible at its point, so the block in la/named.hpp does not pick
-// them up).
-namespace tax
-{
-using named::gradient;
-using named::hessian;
-using named::jacobian;
-}  // namespace tax
