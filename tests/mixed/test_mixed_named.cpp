@@ -227,8 +227,8 @@ TEST( MixedNamed, TruncateByAxisName )
 // distinct 1-D axis, are multiplied.  The result type must be
 //   { "p"@3, "q"@max(2,3)=3, "r"@2 }  (sorted by name)
 // and every box coefficient must match the isotropic TE<8,4> oracle evaluated
-// at the same expansion point.  This exercises embedMixed / MergeOrdered for
-// dim>1 shared axes (only dim==1 shared axes had prior coverage).
+// at the same expansion point.  This exercises embedMixed / Merge<..., SameNameMaxOrder>
+// for dim>1 shared axes (only dim==1 shared axes had prior coverage).
 TEST( MixedNamed, Dim2SharedAxisPromoteEmbed )
 {
     // A: "p"(dim=1,ord=3)  x  "q"(dim=2,ord=2)
