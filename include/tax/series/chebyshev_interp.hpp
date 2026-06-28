@@ -6,7 +6,7 @@
 #include <numbers>
 #include <tax/core/scheme/isotropic.hpp>
 #include <tax/series/chebyshev_basis.hpp>
-#include <tax/series/series.hpp>
+#include <tax/series/aliases.hpp>
 
 namespace tax
 {

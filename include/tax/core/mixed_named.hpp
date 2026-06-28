@@ -11,7 +11,7 @@
 #include <tax/core/multi_index.hpp>
 #include <tax/core/named.hpp>
 #include <tax/core/scheme/mixed.hpp>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <tax/operators/arithmetic.hpp>
 #include <tax/operators/math_binary.hpp>
 #include <tax/operators/math_unary.hpp>

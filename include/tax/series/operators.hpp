@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tax/operators/arithmetic.hpp>
-#include <tax/series/series.hpp>
+#include <tax/series/aliases.hpp>
 #include <tax/series/taylor_basis.hpp>
 #include <type_traits>
 

@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <tax/core/scheme/isotropic.hpp>
-#include <tax/series/series.hpp>
+#include <tax/series/aliases.hpp>
 
 namespace tax
 {

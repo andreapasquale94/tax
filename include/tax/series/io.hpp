@@ -3,7 +3,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <tax/series/series.hpp>
+#include <tax/series/aliases.hpp>
 #include <tax/series/taylor_basis.hpp>
 #include <type_traits>
 

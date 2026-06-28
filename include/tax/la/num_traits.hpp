@@ -4,7 +4,7 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <type_traits>
 
 // -----------------------------------------------------------------------------

@@ -22,7 +22,7 @@
 #include <array>
 #include <cmath>
 #include <tax/core/concepts.hpp>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <type_traits>
 
 namespace tax

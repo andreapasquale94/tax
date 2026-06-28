@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tax/core/scheme/isotropic.hpp>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <tax/kernels/algebra.hpp>
 #include <tax/kernels/cauchy.hpp>
 #include <tax/kernels/sparse_cauchy.hpp>

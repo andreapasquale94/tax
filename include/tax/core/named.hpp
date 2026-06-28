@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <tax/core/concepts.hpp>
 #include <tax/core/multi_index.hpp>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <utility>
 
 namespace tax::named

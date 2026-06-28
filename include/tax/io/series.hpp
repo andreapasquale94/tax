@@ -18,7 +18,7 @@
 #include <string>
 #include <tax/core/multi_index.hpp>
 #include <tax/core/named.hpp>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <type_traits>
 #include <vector>
 

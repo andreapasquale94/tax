@@ -12,5 +12,5 @@
 #include <tax/series/legendre_basis.hpp>
 #include <tax/series/ortho.hpp>
 #include <tax/series/operators.hpp>
-#include <tax/series/series.hpp>
+#include <tax/series/aliases.hpp>
 #include <tax/series/taylor_basis.hpp>

@@ -5,7 +5,7 @@
 #include <tax/series/chebyshev_basis.hpp>
 #include <tax/series/chebyshev_interp.hpp>
 #include <tax/series/operators.hpp>
-#include <tax/series/series.hpp>
+#include <tax/series/aliases.hpp>
 #include <type_traits>
 
 namespace tax

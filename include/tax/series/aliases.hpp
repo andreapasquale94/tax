@@ -1,11 +1,11 @@
 #pragma once
 
 // The basis-generic carrier `tax::Expansion< T, Basis, Scheme, Storage >` now
-// lives in <tax/core/taylor_expansion.hpp> (with `TaylorExpansion` as its
+// lives in <tax/core/expansion.hpp> (with `TaylorExpansion` as its
 // TaylorBasis alias). This header just adds the basis-named series aliases.
 
 #include <tax/core/scheme/isotropic.hpp>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <tax/series/basis.hpp>
 #include <tax/series/chebyshev_basis.hpp>
 #include <tax/series/hermite_basis.hpp>

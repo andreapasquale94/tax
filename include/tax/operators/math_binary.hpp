@@ -2,7 +2,7 @@
 
 #include <cmath>
 #include <concepts>
-#include <tax/core/taylor_expansion.hpp>
+#include <tax/core/expansion.hpp>
 #include <tax/kernels/algebra.hpp>
 #include <tax/kernels/sparse_subs.hpp>
 #include <tax/kernels/trigonometric.hpp>
