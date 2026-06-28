@@ -20,8 +20,7 @@ tax/
 ├── include/tax/              # Header-only library (the entire library lives here)
 │   ├── tax.hpp               # Umbrella header — users include only this (5 facades)
 │   ├── version.hpp           # Version macros
-│   ├── expansion.hpp         # Facade for the expansion subtree
-│   ├── bases.hpp             # Facade for orthogonal bases + IO-in-basis
+│   ├── expansion.hpp         # Facade for the expansion subtree (carrier, schemes, bases, series)
 │   ├── la.hpp                # Facade: linear-algebra / Eigen helpers (tax::la)
 │   ├── expansion/            # The carrier type and its foundations
 │   │   ├── concepts.hpp      #   Scalar, TaylorPolynomial, DensePolynomial concepts
@@ -30,7 +29,6 @@ tax/
 │   │   ├── meta.hpp          #   template metaprogramming helpers
 │   │   ├── axis.hpp          #   Axis<Name,Dim> / OrderedAxis<Name,Dim,Order>
 │   │   ├── basis.hpp         #   polynomial-basis concept / tags
-│   │   ├── taylor_basis.hpp  #   the Taylor (monomial) basis
 │   │   ├── scheme.hpp        #   index-scheme facade; scheme/{concept,isotropic,mixed}.hpp
 │   │   │                     #   IsotropicScheme<N,M> (single order) + MixedScheme (per-axis)
 │   │   ├── expansion.hpp     #   Expansion<T, Basis, Scheme, Storage>: the carrier (Dense + Sparse)
@@ -59,13 +57,15 @@ tax/
 │   │       ├── unary_functions.def  #   the 20 unary math functions, listed once
 │   │       ├── named_{arithmetic,math_unary,math_binary}.hpp  # same surface for named
 │   │       └── mixed_{arithmetic,math_unary,math_binary}.hpp  # same surface for mixed
-│   ├── bases/                # Orthogonal polynomial families
-│   │   ├── aliases.hpp       #   ChebyshevExpansion / LegendreExpansion / HermiteExpansion / Series
-│   │   ├── chebyshev_basis.hpp / chebyshev_math.hpp / chebyshev_interp.hpp
-│   │   ├── legendre_basis.hpp / hermite_basis.hpp
-│   │   ├── ortho.hpp         #   shared orthogonal-basis machinery
-│   │   ├── convert.hpp       #   basis ↔ basis conversion
-│   │   └── operators.hpp     #   operator surface in a given basis
+│   │   ├── bases.hpp         #   Facade for the basis policies (expansion/bases/*)
+│   │   ├── bases/            #   Basis policies (live under expansion/)
+│   │   │   ├── taylor_basis.hpp  # the Taylor (monomial) basis — the engine's native basis
+│   │   │   ├── aliases.hpp       # ChebyshevExpansion / Series
+│   │   │   ├── chebyshev_basis.hpp / chebyshev_math.hpp / chebyshev_interp.hpp
+│   │   │   ├── ortho.hpp         # shared orthogonal-basis machinery (forEachFiber)
+│   │   │   ├── convert.hpp       # Taylor ↔ Chebyshev conversion
+│   │   │   └── operators.hpp     # operator surface in a given basis
+│   │   └── series.hpp        #   human-readable streaming: operator<<, series(), to_string()
 │   ├── la/                   # Eigen integration (namespace tax::la; some re-exported as tax::)
 │   │   ├── types.hpp         #   Vec, Mat, VecNT<N,T>, MatNT, MatNMT
 │   │   ├── expansion_vectors.hpp #   TEVec<D,N,M>, NEVec<D,N,Axes...>, MTEVec<D,Axes...>
@@ -78,7 +78,6 @@ tax/
 │   │   ├── axis_diff.hpp     #   axis-addressed differential helpers
 │   │   ├── invert.hpp        #   formal polynomial-map inversion (Picard)
 │   │   └── exports.hpp       #   tax:: re-exports of tax::la helpers
-│   └── io/series.hpp         # human-readable streaming: operator<<, series(), to_string()
 ├── tests/                    # Google Test suite
 │   ├── core/                 #   ctor/accessors, multi-index, enumeration, deriv/integ, named
 │   ├── kernels/              #   dense/unroll/stencil/sparse Cauchy verification
@@ -313,7 +312,7 @@ like `NE`. Key files: `expansion/mixed.hpp`, `expansion/detail/mixed_stencils.hp
 - `tax::la::TEVec<D,N,M>` / `NEVec<D,N,Axes...>` / `MTEVec<D,Axes...>`
   (`la/expansion_vectors.hpp`) — `VecNT<D, …>` shorthands for Eigen vectors of
   expansions.
-- Printing (`io/series.hpp`): `std::cout << f` (polynomial series),
+- Printing (`expansion/series.hpp`): `std::cout << f` (polynomial series),
   `tax::series(f, opts)` (tabular / per-element for Eigen vectors),
   `tax::to_string(f)`.
 

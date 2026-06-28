@@ -2,10 +2,10 @@
 
 #include <array>
 #include <cmath>
-#include <tax/bases/aliases.hpp>
-#include <tax/bases/chebyshev_basis.hpp>
-#include <tax/bases/chebyshev_interp.hpp>
-#include <tax/bases/operators.hpp>
+#include <tax/expansion/bases/aliases.hpp>
+#include <tax/expansion/bases/chebyshev_basis.hpp>
+#include <tax/expansion/bases/chebyshev_interp.hpp>
+#include <tax/expansion/bases/operators.hpp>
 #include <tax/expansion/scheme/isotropic.hpp>
 #include <type_traits>
 

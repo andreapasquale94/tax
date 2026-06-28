@@ -16,10 +16,10 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <tax/expansion/bases/taylor_basis.hpp>
 #include <tax/expansion/expansion.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/named.hpp>
-#include <tax/expansion/taylor_basis.hpp>
 #include <type_traits>
 #include <vector>
 

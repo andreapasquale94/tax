@@ -7,9 +7,9 @@
 // surface serves Taylor, Chebyshev, … alike (each op is available
 // wherever the inner expansion defines it).
 
+#include <tax/expansion/bases/operators.hpp>
 #include <tax/expansion/named.hpp>
 #include <tax/expansion/ops/arithmetic.hpp>
-#include <tax/bases/operators.hpp>
 #include <type_traits>
 
 namespace tax::named

@@ -4,11 +4,11 @@
 // lives in <tax/expansion/expansion.hpp> (with `TaylorExpansion` as its
 // TaylorBasis alias). This header just adds the basis-named series aliases.
 
-#include <tax/bases/chebyshev_basis.hpp>
+#include <tax/expansion/bases/chebyshev_basis.hpp>
+#include <tax/expansion/bases/taylor_basis.hpp>
 #include <tax/expansion/basis.hpp>
 #include <tax/expansion/expansion.hpp>
 #include <tax/expansion/scheme/isotropic.hpp>
-#include <tax/expansion/taylor_basis.hpp>
 
 namespace tax
 {

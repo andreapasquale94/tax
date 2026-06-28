@@ -4,8 +4,8 @@
 #include <cmath>
 #include <cstddef>
 #include <numbers>
-#include <tax/bases/aliases.hpp>
-#include <tax/bases/chebyshev_basis.hpp>
+#include <tax/expansion/bases/aliases.hpp>
+#include <tax/expansion/bases/chebyshev_basis.hpp>
 #include <tax/expansion/scheme/isotropic.hpp>
 
 namespace tax

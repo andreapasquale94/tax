@@ -11,7 +11,7 @@
 #include <tax/expansion/scheme.hpp>
 #include <tax/expansion/storage/dense.hpp>
 #include <tax/expansion/storage/sparse.hpp>
-#include <tax/expansion/taylor_basis.hpp>
+#include <tax/expansion/bases/taylor_basis.hpp>
 #include <type_traits>
 #include <utility>
 

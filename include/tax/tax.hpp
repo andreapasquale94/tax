@@ -4,5 +4,5 @@
 #include <tax/version.hpp>
 #include <tax/expansion.hpp>
 #include <tax/la.hpp>
-#include <tax/io/series.hpp>
-#include <tax/bases.hpp>
+#include <tax/expansion/series.hpp>
+#include <tax/expansion/bases.hpp>

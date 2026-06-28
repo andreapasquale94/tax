@@ -2,7 +2,7 @@
 
 #include <array>
 #include <cstddef>
-#include <tax/bases/aliases.hpp>
+#include <tax/expansion/bases/aliases.hpp>
 #include <tax/expansion/scheme/isotropic.hpp>
 
 namespace tax

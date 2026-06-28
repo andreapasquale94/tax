@@ -1,8 +1,8 @@
 #pragma once
 
+#include <tax/expansion/bases/aliases.hpp>
+#include <tax/expansion/bases/taylor_basis.hpp>
 #include <tax/expansion/ops/arithmetic.hpp>
-#include <tax/bases/aliases.hpp>
-#include <tax/expansion/taylor_basis.hpp>
 #include <type_traits>
 
 namespace tax
