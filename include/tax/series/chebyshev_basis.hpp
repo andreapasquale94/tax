@@ -7,6 +7,7 @@
 #include <tax/core/multi_index.hpp>
 #include <tax/core/scheme/concept.hpp>
 #include <tax/series/basis.hpp>
+#include <tax/series/ortho.hpp>
 
 namespace tax
 {
@@ -146,7 +147,7 @@ struct ChebyshevBasisOn
     {
         out = {};
         const T slope = canonicalSlope< T >();
-        forEachFiber< T, Scheme >(
+        detail::forEachFiber< T, Scheme >(
             c, axis,
             [&]( const std::array< T, std::size_t( Scheme::order ) + 1 >& a, int L,
                  std::array< T, std::size_t( Scheme::order ) + 1 >& b ) {
@@ -173,7 +174,7 @@ struct ChebyshevBasisOn
     {
         out = {};
         const T inv_slope = T{ 1 } / canonicalSlope< T >();  // dx/du = (Hi-Lo)/2
-        forEachFiber< T, Scheme >(
+        detail::forEachFiber< T, Scheme >(
             c, axis,
             [&]( const std::array< T, std::size_t( Scheme::order ) + 1 >& a, int L,
                  std::array< T, std::size_t( Scheme::order ) + 1 >& b ) {
@@ -193,39 +194,6 @@ struct ChebyshevBasisOn
                 for ( int m = 0; m < L; ++m ) b[std::size_t( m )] *= inv_slope;
             },
             out );
-    }
-
-   private:
-    // Walk every fiber along `axis` (lines of constant other-axis indices),
-    // hand the 1-D coefficient run to `op`, and scatter the transformed run.
-    template < typename T, typename Scheme, typename Op >
-    static constexpr void forEachFiber( const std::array< T, Scheme::nCoeff >& c, int axis, Op&& op,
-                                        std::array< T, Scheme::nCoeff >& out ) noexcept
-    {
-        constexpr int M = Scheme::vars;
-        constexpr std::size_t MAXL = std::size_t( Scheme::order ) + 1;
-        for ( std::size_t k = 0; k < Scheme::nCoeff; ++k )
-        {
-            MultiIndex< M > base = Scheme::multiOf( k );
-            if ( base[std::size_t( axis )] != 0 ) continue;  // only fiber origins
-            // Gather the contiguous run along the axis.
-            std::array< T, MAXL > a{};
-            std::array< std::size_t, MAXL > slot{};
-            int L = 0;
-            for ( int m = 0; m < int( MAXL ); ++m )
-            {
-                MultiIndex< M > idx = base;
-                idx[std::size_t( axis )] = m;
-                const std::size_t kk = Scheme::flatOf( idx );
-                if ( kk == Scheme::kNotInBox ) break;
-                a[std::size_t( m )] = c[kk];
-                slot[std::size_t( m )] = kk;
-                ++L;
-            }
-            std::array< T, MAXL > b{};
-            op( a, L, b );
-            for ( int m = 0; m < L; ++m ) out[slot[std::size_t( m )]] = b[std::size_t( m )];
-        }
     }
 };
 

@@ -17,14 +17,6 @@
 namespace tax::detail::kernels
 {
 
-/// A single entry in the Cauchy stencil table (also used by the mixed-scheme stencil).
-struct StencilEntry
-{
-    std::uint32_t out_idx;
-    std::uint32_t a_idx;
-    std::uint32_t b_idx;
-};
-
 /// One (a, b) operand-index pair contributing to a single output monomial.
 struct StencilPair
 {

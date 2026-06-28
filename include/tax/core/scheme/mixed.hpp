@@ -242,17 +242,20 @@ struct MixedScheme
     static constexpr void forEachRecurrenceRow( RowFn&& fn ) noexcept
     {
 #if TAX_USE_STENCIL
-        if !consteval
-        {
-            const auto& st = detail::kernels::mixedBoxRecurrenceStencil< Groups... >();
-            for ( std::size_t ai = 1; ai < nCoeff; ++ai )
+        // Oversized box stencils (many variables at high order) fall back to the
+        // constexpr enumeration below instead of a hard compile error.
+        if constexpr ( detail::kernels::mixedRecurrenceStencilFits< Groups... > )
+            if !consteval
             {
-                fn( ai, int( st.degree[ai] ),
-                    std::span< const detail::kernels::RecurrenceEntry >(
-                        st.entries.data() + st.row[ai], st.entries.data() + st.row[ai + 1] ) );
+                const auto& st = detail::kernels::mixedBoxRecurrenceStencil< Groups... >();
+                for ( std::size_t ai = 1; ai < nCoeff; ++ai )
+                {
+                    fn( ai, int( st.degree[ai] ),
+                        std::span< const detail::kernels::RecurrenceEntry >(
+                            st.entries.data() + st.row[ai], st.entries.data() + st.row[ai + 1] ) );
+                }
+                return;
             }
-            return;
-        }
 #endif
         // Constexpr fallback: build each row on the fly (same entries, no precomputed table).
         std::array< detail::kernels::RecurrenceEntry, nCoeff > buf{};

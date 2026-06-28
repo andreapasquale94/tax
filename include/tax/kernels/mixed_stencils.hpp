@@ -45,6 +45,11 @@ template < typename... Groups >
 inline constexpr bool mixedCauchyStencilFits =
     mixedCauchyEntries< Groups... > * sizeof( StencilPair ) <= ( TAX_STENCIL_MAX_BYTES );
 
+/// True iff the box recurrence stencil for MixedScheme<Groups...> fits the configured budget.
+template < typename... Groups >
+inline constexpr bool mixedRecurrenceStencilFits =
+    mixedRecurrenceEntries< Groups... > * sizeof( RecurrenceEntry ) <= ( TAX_STENCIL_MAX_BYTES );
+
 /// Compressed (CSR-like) table for the box Cauchy product of MixedScheme<Groups...>,
 /// in graded output order (ai = 0 … nCoeff-1). Each output's (a, b) operand pairs
 /// occupy the contiguous run `pairs[offsets[ai] .. offsets[ai + 1])`, so the kernel
@@ -105,8 +110,9 @@ struct MixedBoxRecurrenceStencil
 {
     static constexpr std::size_t kNCoeff = tax::MixedScheme< Groups... >::nCoeff;
     static constexpr std::size_t kEntries = mixedRecurrenceEntries< Groups... >;
-    static_assert( kEntries * sizeof( RecurrenceEntry ) <= ( std::size_t{ 128 } << 20 ),
-                   "MixedBoxRecurrenceStencil exceeds 128 MB — reduce group orders." );
+    // Instantiated only when mixedRecurrenceStencilFits<Groups...> holds (the
+    // forEachRecurrenceRow dispatch gates on it), so no size static_assert here:
+    // oversized boxes take the constexpr loop fallback instead of a hard error.
 
     std::array< RecurrenceEntry, kEntries > entries{};
     /// Row bounds: recurrence entries for output ai live in [row[ai], row[ai+1]).
