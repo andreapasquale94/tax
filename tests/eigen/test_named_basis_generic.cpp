@@ -43,8 +43,6 @@ static void checkNamedAlgebra()
 }
 
 TEST( NamedBasisGeneric, AlgebraChebyshev ) { checkNamedAlgebra< tax::ChebyshevBasis >(); }
-TEST( NamedBasisGeneric, AlgebraLegendre ) { checkNamedAlgebra< tax::LegendreBasis >(); }
-TEST( NamedBasisGeneric, AlgebraHermite ) { checkNamedAlgebra< tax::HermiteBasis >(); }
 
 // Jacobian w.r.t. a named axis for a vector of named expansions, any basis.
 template < typename Basis >
@@ -65,8 +63,6 @@ static void checkNamedJacobian()
 }
 
 TEST( NamedBasisGeneric, JacobianChebyshev ) { checkNamedJacobian< tax::ChebyshevBasis >(); }
-TEST( NamedBasisGeneric, JacobianLegendre ) { checkNamedJacobian< tax::LegendreBasis >(); }
-TEST( NamedBasisGeneric, JacobianHermite ) { checkNamedJacobian< tax::HermiteBasis >(); }
 
 // Eigen NumTraits for named non-Taylor expansions.
 template < typename Basis >
@@ -92,8 +88,6 @@ static void checkNamedNumTraits()
 }
 
 TEST( NamedBasisGeneric, NumTraitsChebyshev ) { checkNamedNumTraits< tax::ChebyshevBasis >(); }
-TEST( NamedBasisGeneric, NumTraitsLegendre ) { checkNamedNumTraits< tax::LegendreBasis >(); }
-TEST( NamedBasisGeneric, NumTraitsHermite ) { checkNamedNumTraits< tax::HermiteBasis >(); }
 
 // Transcendental functions on a named NON-Taylor expansion: the named unary math
 // surface must be basis-generic, forwarding to the inner basis' own math (here
@@ -122,6 +116,6 @@ TEST( NamedBasisGeneric, TaylorAliasIntact )
     static_assert(
         std::is_same_v< tax::NE< 4, tax::Axis< "x", 2 > >,
                         tax::NamedExpansion< double, tax::TaylorBasis, 4, tax::Axis< "x", 2 > > > );
-    auto x = tax::named::variable< "x", 4, tax::LegendreBasis >( 0.0 );
+    auto x = tax::named::variable< "x", 4, tax::ChebyshevBasis >( 0.0 );
     EXPECT_DOUBLE_EQ( tax::named::value( x ), 0.0 );
 }

@@ -4,7 +4,7 @@
 
 // The k!-scaled value accessors apply Taylor semantics and are wrong for
 // orthogonal bases, so they must be callable on a Taylor expansion and
-// NON-callable (SFINAE-disabled) on Chebyshev/Legendre/Hermite.
+// NON-callable (SFINAE-disabled) on orthogonal bases (e.g. Chebyshev).
 
 template < typename E >
 concept HasValueDerivative =
@@ -12,17 +12,11 @@ concept HasValueDerivative =
 
 using TaylorE = tax::TE< 3, 2 >;
 using ChebE = tax::ChebyshevExpansion< 3, 2 >;
-using LegE = tax::LegendreExpansion< 3, 2 >;
-using HermE = tax::HermiteExpansion< 3, 2 >;
 
 static_assert( HasValueDerivative< TaylorE >,
                "Taylor expansion must expose the k!-scaled derivative()" );
 static_assert( !HasValueDerivative< ChebE >,
                "Chebyshev expansion must NOT expose the k!-scaled derivative()" );
-static_assert( !HasValueDerivative< LegE >,
-               "Legendre expansion must NOT expose the k!-scaled derivative()" );
-static_assert( !HasValueDerivative< HermE >,
-               "Hermite expansion must NOT expose the k!-scaled derivative()" );
 
 // Also prove the compile-time template overload derivative<Alpha...>() is
 // equally constrained to TaylorBasis.
@@ -35,10 +29,6 @@ static_assert( HasTemplateDerivative< TaylorE >,
                "Taylor expansion must expose derivative<Alpha...>()" );
 static_assert( !HasTemplateDerivative< ChebE >,
                "Chebyshev expansion must NOT expose derivative<Alpha...>()" );
-static_assert( !HasTemplateDerivative< LegE >,
-               "Legendre expansion must NOT expose derivative<Alpha...>()" );
-static_assert( !HasTemplateDerivative< HermE >,
-               "Hermite expansion must NOT expose derivative<Alpha...>()" );
 
 TEST( KFactorialConstraint, TaylorOnly )
 {

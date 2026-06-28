@@ -4,7 +4,7 @@
 // different axis sets are embedded into the union before the dense kernels run,
 // so the result type tracks the union of axes. Mirrors expansion/ops/arithmetic.hpp
 // for the unnamed dense type. The inner operators are basis-dispatched, so this
-// surface serves Taylor, Chebyshev, Legendre, … alike (each op is available
+// surface serves Taylor, Chebyshev, … alike (each op is available
 // wherever the inner expansion defines it).
 
 #include <tax/expansion/named.hpp>

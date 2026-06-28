@@ -61,7 +61,6 @@ tax_add_test(test_chebyshev_interp   SOURCES series/test_chebyshev_interp.cpp)
 tax_add_test(test_series_unify       SOURCES series/test_series_unify.cpp)
 tax_add_test(test_chebyshev_domain   SOURCES series/test_chebyshev_domain.cpp)
 tax_add_test(test_series_multivar    SOURCES series/test_series_multivar.cpp)
-tax_add_test(test_legendre_hermite   SOURCES series/test_legendre_hermite.cpp)
 
 # Eigen integration — slice 11
 tax_add_test(test_eigen_numtraits   SOURCES eigen/test_eigen_numtraits.cpp)

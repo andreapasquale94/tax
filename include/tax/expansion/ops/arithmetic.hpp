@@ -20,7 +20,7 @@ namespace tax
 // supply their own division where it is defined (e.g. bases/chebyshev_math.hpp).
 //
 // `TaylorExpansion< T, Scheme >` is the B = TaylorBasis instance of Expansion,
-// so these templates cover the Taylor hot path as well as Chebyshev/Legendre/…
+// so these templates cover the Taylor hot path as well as Chebyshev/…
 // ===========================================================================
 
 // ---------------------------------------------------------------------------

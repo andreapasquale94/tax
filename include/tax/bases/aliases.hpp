@@ -5,8 +5,6 @@
 // TaylorBasis alias). This header just adds the basis-named series aliases.
 
 #include <tax/bases/chebyshev_basis.hpp>
-#include <tax/bases/hermite_basis.hpp>
-#include <tax/bases/legendre_basis.hpp>
 #include <tax/expansion/basis.hpp>
 #include <tax/expansion/expansion.hpp>
 #include <tax/expansion/scheme/isotropic.hpp>
@@ -22,13 +20,5 @@ using Series = Expansion< T, Basis, IsotropicScheme< N, M > >;
 /// Order-N, M-variate Chebyshev (first-kind) expansion.
 template < int N, int M = 1, typename T = double >
 using ChebyshevExpansion = Expansion< T, ChebyshevBasis, IsotropicScheme< N, M > >;
-
-/// Order-N, M-variate Legendre expansion.
-template < int N, int M = 1, typename T = double >
-using LegendreExpansion = Expansion< T, LegendreBasis, IsotropicScheme< N, M > >;
-
-/// Order-N, M-variate probabilists' Hermite expansion.
-template < int N, int M = 1, typename T = double >
-using HermiteExpansion = Expansion< T, HermiteBasis, IsotropicScheme< N, M > >;
 
 }  // namespace tax

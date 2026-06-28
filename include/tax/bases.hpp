@@ -7,8 +7,6 @@
 #include <tax/bases/chebyshev_interp.hpp>
 #include <tax/bases/chebyshev_math.hpp>
 #include <tax/bases/convert.hpp>
-#include <tax/bases/hermite_basis.hpp>
-#include <tax/bases/legendre_basis.hpp>
 #include <tax/bases/operators.hpp>
 #include <tax/bases/ortho.hpp>
 #include <tax/expansion/basis.hpp>
