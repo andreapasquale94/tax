@@ -40,8 +40,6 @@ up to order \(N\) in a single evaluation pass.
   `MixedTaylorExpansion<T, Axes...>` gives each axis its own truncation order.
   The whole API is re-exported under `tax` (`tax::NE`, `tax::MTE`,
   `tax::variable(s)`).
-- **Batch coefficients** — `TE<N, M, K>` makes each coefficient a `Batch<double,
-  K>`, evaluating `K` independent expansions in lock-step.
 - **Human-readable output** — `std::cout << f` prints the polynomial series;
   `tax::series(...)` adds tabular / per-element (Eigen) rendering.
 

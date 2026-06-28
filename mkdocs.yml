@@ -114,7 +114,6 @@ nav:
       - Dense vs Sparse Storage: guide/storage.md
       - Named Expansions: guide/named.md
       - Eigen Integration: guide/eigen.md
-      - Batch (SIMD) Coefficients: guide/batch.md
       - Mixed-Order Expansions: guide/mixed.md
   - Reference:
       - reference/index.md

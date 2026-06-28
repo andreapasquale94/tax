@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N. It provides dense and sparse storage, *named* expansions (type-level variable axes) including *mixed-order* axes, optional *batch* (SIMD-style) coefficients, and Eigen integration (`tax::la`).
+**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N. It provides dense and sparse storage, *named* expansions (type-level variable axes) including *mixed-order* axes, and Eigen integration (`tax::la`).
 
 > **Note:** adaptive ODE integration (`tax::ode`) and Automatic Domain Splitting (`tax::ads`) are no longer part of this repository — they were split out, unchanged, into a separate companion plugin built on top of `tax` (see the README). Do not look for `include/tax/ode` or `include/tax/ads` here.
 
@@ -27,7 +27,6 @@ tax/
 │   │   ├── scheme.hpp        #   index-scheme facade; scheme/{concept,isotropic,mixed}.hpp
 │   │   │                     #   IsotropicScheme<N,M> (single order) + MixedScheme (per-axis)
 │   │   ├── taylor_expansion.hpp  # TaylorExpansion<T, Scheme, Storage>: Dense + Sparse
-│   │   ├── batch.hpp         #   Batch<T,K>: K expansions evaluated in lock-step (TE<N,M,K>)
 │   │   ├── named.hpp         #   NamedTaylorExpansion<T,N,Axes...>: single-order named axes
 │   │   ├── mixed_named.hpp   #   MixedTaylorExpansion<T,Axes...>: per-axis-order named axes
 │   │   ├── promote.hpp       #   promote_t<Ts...>: common (union-of-axes) expansion type
@@ -120,7 +119,7 @@ pre-define either macro to `0`, but the value must be identical project-wide.
 
 ```cpp
 tax::TaylorExpansion<T, Scheme, Storage = tax::storage::Dense>
-// T       = coefficient type (double, float, or Batch<double,K> for K lock-step expansions)
+// T       = coefficient type (double or float)
 // Scheme  = index scheme: IsotropicScheme<N,M> (one order N over M vars)
 //           or MixedScheme<...> (per-axis orders); fixes the monomial layout
 // Storage = storage::Dense (std::array) or storage::Sparse (sorted idx/val vectors)
@@ -128,7 +127,7 @@ tax::TaylorExpansion<T, Scheme, Storage = tax::storage::Dense>
 
 Most code uses the aliases rather than naming a `Scheme` directly (all `double`-valued unless noted):
 ```cpp
-tax::TE<N, M = 1, K = 1>  // dense; K>1 → Batch<double,K> coefficients
+tax::TE<N, M = 1>        // dense Taylor expansion
 tax::TEn<N, M>            // dense, explicit multivariate spelling
 tax::STE<N, M = 1>        // sparse
 tax::NE<N, Axes...>       // named (single order)          — see Named Expansions

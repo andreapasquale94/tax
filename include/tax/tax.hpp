@@ -7,7 +7,6 @@
 #include <tax/core/storage/dense.hpp>
 #include <tax/core/storage/sparse.hpp>
 #include <tax/core/expansion.hpp>
-#include <tax/core/batch.hpp>
 #include <tax/core/named.hpp>
 #include <tax/operators/named_arithmetic.hpp>
 #include <tax/operators/named_math_unary.hpp>

@@ -58,7 +58,7 @@ TAX_NAMED_UNARY_FN( erf )
 // argument type. A qualified call suppresses argument-dependent lookup, so
 // without these the named-expansion overloads (in `tax::named`) and the scalar
 // overloads (in `std`) are invisible to `tax::fn`. The dense / sparse
-// TaylorExpansion and Batch overloads already live directly in `tax`.
+// TaylorExpansion overloads already live directly in `tax`.
 //   using named::fn -> NamedTaylorExpansion
 //   using std::fn   -> float / double / long double + the integral overloads
 // ---------------------------------------------------------------------------

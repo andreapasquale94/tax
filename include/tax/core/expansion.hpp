@@ -18,11 +18,6 @@
 namespace tax
 {
 
-// Forward declaration so the public `TE` alias can name the batched coefficient
-// type without including <tax/core/batch.hpp> (which includes this header).
-template < typename T, int K >
-struct Batch;
-
 // ---------------------------------------------------------------------------
 // Expansion<T, Basis, Scheme, Storage> — a truncated expansion in a chosen
 // polynomial basis over an index scheme. `TaylorExpansion` is the TaylorBasis
@@ -390,10 +385,9 @@ using TaylorExpansion = Expansion< T, TaylorBasis, Scheme, Storage >;
 // Convenience aliases  (dense)
 // ---------------------------------------------------------------------------
 
-/// `TE<N, M, K>` — order-N, M-variate dense `double` Taylor expansion.
-template < int N, int M = 1, int K = 1 >
-using TE = Expansion< std::conditional_t< K == 1, double, Batch< double, K > >, TaylorBasis,
-                      IsotropicScheme< N, M >, storage::Dense >;
+/// `TE<N, M>` — order-N, M-variate dense `double` Taylor expansion.
+template < int N, int M = 1 >
+using TE = Expansion< double, TaylorBasis, IsotropicScheme< N, M >, storage::Dense >;
 
 /// `TEn<N, M>` — explicit M-variate alias, same as `TE<N, M>`.
 template < int N, int M >
