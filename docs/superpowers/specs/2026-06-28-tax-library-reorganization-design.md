@@ -39,6 +39,7 @@ review blueprint is the input to this spec; this document records the **decided*
 | D6 | Namespaces | Make **`tax::la` and `tax::named` inline**; **`tax::mixed` non-inline** (factory disambiguation). Delete the repeated `using`-re-export blocks. |
 | D7 | Umbrella | One umbrella `<tax/tax.hpp>` + three self-complete sub-facades (`expansion.hpp`, `bases.hpp`, `eigen.hpp`). |
 | D8 | Batch | **Remove the `Batch` capability** — delete `Batch<T,K>` (SIMD-style lock-step coefficients), the `K` lane on `TE`, `Batchd`/`Batchf`, `NumTraits<Batch>`, and `test_batch`. Not needed. Resolves the three-batched-spellings incoherence by elimination. |
+| D9 | Eigen-free core | **Make `<tax/expansion.hpp>` fully Eigen-free.** Remove the carrier's `gradient()`/`hessian()` convenience members; the free `tax::gradient(f)`/`tax::hessian(f)` (already in `eigen/`) become the only form. With `Batch` gone these members were the core's last Eigen user, so the expansion core then needs no Eigen at all. |
 
 ---
 
@@ -110,10 +111,10 @@ and **`core/batch.hpp`** (D8 — the `Batch` capability is removed entirely).
 - `<tax/bases.hpp>` — adds the orthogonal basis policies + spectral extras.
 - `<tax/eigen.hpp>` — the Eigen integration; self-complete (includes mixed; fixes today's `la.hpp` gap).
 
-Eigen-free-core note: with `Batch` removed (D8), the only remaining Eigen use in the expansion core is the
-carrier's convenience `gradient()`/`hessian()` members (which return `Eigen::Matrix`). Whether to make the
-expansion core fully Eigen-free by demoting those to free functions only (`tax::gradient(f)`, which already
-exist) is **open question Q-eigfree** (§9) — pending the maintainer's call.
+Eigen-free core (D9): `<tax/expansion.hpp>` is **Eigen-free**. With `Batch` removed (D8) and the carrier's
+`gradient()`/`hessian()` members demoted to the existing free functions in `eigen/`, the expansion capability
+includes no Eigen header — it can be used standalone. `bases.hpp` is likewise Eigen-free; only `eigen.hpp`
+(and `io/series.hpp` for pretty-printing Eigen vectors of expansions) pulls Eigen.
 
 ---
 
@@ -174,13 +175,16 @@ thin Taylor convenience alias of `NamedExpansion` only if still used after the s
 
 These are carried regardless of layout and several precede the move so the safety net lands first.
 
-- **F1 — `k!`-member correctness.** `Expansion::gradient()`, `hessian()`, and the value-form
-  `derivative()`/`derivative<>()` apply `k!` scaling but are unconstrained on `Basis`, so they silently return
-  wrong numbers for orthogonal bases. **Constrain all to `requires std::is_same_v<Basis, TaylorBasis>`.** Keep
-  them (15+ test call sites). Also gate `invert`/`identityMap`/`composeOne` on the Taylor trait.
-- **F2 — sever `core→eigen`.** Spell the carrier members' return types as plain
-  `Eigen::Matrix<T, Scheme::vars, 1>` / `<…, Scheme::vars>` and drop `#include <eigen/types.hpp>` from the
-  carrier (Eigen is already a hard core dep via `batch.hpp`). No API change (identical to today's `VecNT`/`MatNT`).
+- **F1 — `k!`-member correctness.** The value-form `derivative()`/`derivative<>()` members apply `k!` scaling
+  but are unconstrained on `Basis`, so they silently return wrong numbers for orthogonal bases. **Constrain to
+  `requires std::is_same_v<Basis, TaylorBasis>`** (keep them — many test call sites). Also gate
+  `invert`/`identityMap`/`composeOne` on the Taylor trait. (The `gradient()`/`hessian()` members had the same
+  bug; F2 removes them outright, so this fix is the value-form remainder.)
+- **F2 — Eigen-free core; sever `core→eigen` (D9).** **Remove** the carrier's `gradient()`/`hessian()` members
+  and rewrite the ~15 member call sites to the existing free functions (`f.gradient()` → `tax::gradient(f)`).
+  Drop the `<eigen/types.hpp>` and `<Eigen/Core>` includes from `expansion.hpp`; verify no residual Eigen use
+  remains in the expansion core. The free `tax::la::gradient/hessian` (already Taylor-gated) become the sole
+  form — this also subsumes the gradient/hessian half of the F1 correctness bug.
 - **F3 — sever `core→bases`.** Move `BasisPolicy` and `TaylorBasis` into `expansion/`; the carrier needs the
   Taylor policy + Cauchy product, which is a legitimate downward `expansion → expansion/detail` edge.
 - **F4 — mixed operators out of the type header.** Move the inlined mixed operator surface into
@@ -240,8 +244,11 @@ correctness fixes land before the wide tree move.
   `docs/guide/batch.md` (+ the mkdocs nav entry); scrub Batch mentions from `CLAUDE.md`/`README.md`/`docs/guide/
   mixed.md`/`docs/internals/orthogonal-redesign.md`. Historical specs/plans under `docs/superpowers/` are left
   as-is (records of past work).
-- **P1 — `core→eigen` cut + `k!`-constraint (mechanical edit + correctness gate).** *(F1, F2)* — turns prior
-  silent misuse into a compile error; verify orthogonal tests don't rely on it.
+- **P1 — Eigen-free core + `k!`-constraint (mechanical sweep + correctness gate).** Remove the carrier
+  `gradient()`/`hessian()` members; rewrite ~15 call sites to `tax::gradient(f)`/`tax::hessian(f)`; drop Eigen
+  includes from `expansion.hpp` (verify Eigen-free); constrain the value-form `derivative()` members + the
+  `invert` family to `TaylorBasis`. *(F1, F2/D9)* — turns prior silent misuse into a compile error; verify
+  orthogonal tests don't rely on it.
 - **P2 — `BasisPolicy` + `TaylorBasis` into the core capability; rename concept; regularize `Series` arity;
   demote `aliases.hpp` to a pure-alias file (mechanical, wide; one atomic commit).** *(F3, naming)*
 - **P3 — extract `meta.hpp` + `axis.hpp`; collapse `Merge` (3a mechanical, 3b delicate compile-time meta).** *(F8)*
@@ -270,11 +277,9 @@ correctness fixes land before the wide tree move.
   critics flagged for approach B); accepted deliberately for the cleaner capability-grouped tree.
 - **Inline-namespace subtlety (P5):** `tax::value` must be defined inside `tax::la`; ADL behavior of the now-
   `tax::`-level helpers must be re-verified against existing call sites.
-- **Q-eigfree (open):** with `Batch` removed (D8), the expansion core's *only* remaining Eigen use is the
-  carrier's `gradient()`/`hessian()` convenience members. Demoting them to free functions only (the
-  `tax::gradient(f)`/`tax::hessian(f)` free forms already exist) would make `<tax/expansion.hpp>` truly
-  Eigen-free — a real modularity win — at the cost of rewriting ~15 member call sites (`f.gradient()` →
-  `gradient(f)`) and removing two documented members. **Maintainer decision pending.**
+- **Eigen-free core (D9, decided yes):** the carrier `gradient()`/`hessian()` members are removed and ~15 call
+  sites move to `tax::gradient(f)`/`tax::hessian(f)`. Risk is purely the call-site sweep (mechanical, in P1) and
+  re-documenting the two removed members; the free forms already exist and are tested.
 - **Companion `ode/ads` plugin** must adapt to moved include paths and the `*Series→*Expansion` renames;
   `tax::la::` and `derivative()` are preserved to limit its churn.
 
