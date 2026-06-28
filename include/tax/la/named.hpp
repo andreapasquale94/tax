@@ -113,6 +113,20 @@ inline constexpr int axisOffset =
     OffsetOf< typename E::axis_list,
               Axis< Name, ( axisDim< E, Name > >= 1 ? axisDim< E, Name > : 1 ) > >::value;
 
+// is_named — constrains the generic (Eigen-vector) named overloads so they do
+// not also match a vector of mixed-order expansions (whose own overloads live in
+// tax::mixed). Mirrors is_mixed in la/mixed_named.hpp.
+template < typename >
+struct is_named : std::false_type
+{
+};
+template < typename T, typename Basis, int N, typename... Axes >
+struct is_named< NamedExpansion< T, Basis, N, Axes... > > : std::true_type
+{
+};
+template < typename T >
+inline constexpr bool is_named_v = is_named< T >::value;
+
 }  // namespace detail
 
 /// Gradient of a named scalar expansion with respect to one named axis.
@@ -137,6 +151,7 @@ template < FixedString Name, typename T, int N, typename... Axes >
 
 /// Jacobian of a vector of named expansions w.r.t. one named axis.
 template < FixedString Name, typename Derived >
+    requires( detail::is_named_v< typename Derived::Scalar > )
 [[nodiscard]] auto jacobian( const Eigen::MatrixBase< Derived >& F )
 {
     using E = typename Derived::Scalar;
@@ -157,17 +172,6 @@ template < FixedString Name, typename Derived >
 
 namespace detail
 {
-template < typename >
-struct is_named : std::false_type
-{
-};
-template < typename T, typename Basis, int N, typename... Axes >
-struct is_named< NamedExpansion< T, Basis, N, Axes... > > : std::true_type
-{
-};
-template < typename T >
-inline constexpr bool is_named_v = is_named< T >::value;
-
 template < typename E, typename PtDerived >
 [[nodiscard]] typename E::Input namedToPoint( const Eigen::MatrixBase< PtDerived >& at )
 {

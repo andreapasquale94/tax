@@ -7,7 +7,7 @@
 #include <tax/expansion/mixed_named.hpp>
 #include <tax/expansion/ops/math_unary.hpp>
 
-namespace tax::named
+namespace tax::mixed
 {
 
 // Unary math functions (forwarded to the inner expansion, axis set preserved).
@@ -43,4 +43,4 @@ TAX_MIXED_UNARY_FN( erf )
 
 #undef TAX_MIXED_UNARY_FN
 
-}  // namespace tax::named
+}  // namespace tax::mixed

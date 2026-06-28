@@ -11,7 +11,7 @@
 #include <tax/expansion/ops/math_binary.hpp>
 #include <type_traits>
 
-namespace tax::named
+namespace tax::mixed
 {
 
 /// `x^n` for an integer exponent (axis set preserved).
@@ -37,16 +37,16 @@ template < typename T, typename... A, typename... B >
 [[nodiscard]] auto pow( const MixedTaylorExpansion< T, A... >& x,
                         const MixedTaylorExpansion< T, B... >& p ) noexcept
 {
-    using R = detail::MergedMixedTaylorExpansion< T, detail::TypeList< A... >,
-                                                  detail::TypeList< B... > >;
+    using R =
+        detail::MergedMixedTaylorExpansion< T, detail::TypeList< A... >, detail::TypeList< B... > >;
     using tax::pow;
     return R{ pow( x.template embed< R >().inner(), p.template embed< R >().inner() ) };
 }
 
 /// `s^x` for a scalar base (axis set unchanged).
 template < typename T, typename... A >
-[[nodiscard]] MixedTaylorExpansion< T, A... > pow( std::type_identity_t< T > s,
-                                                   const MixedTaylorExpansion< T, A... >& x ) noexcept
+[[nodiscard]] MixedTaylorExpansion< T, A... > pow(
+    std::type_identity_t< T > s, const MixedTaylorExpansion< T, A... >& x ) noexcept
 {
     using tax::pow;
     return MixedTaylorExpansion< T, A... >{ pow( s, x.inner() ) };
@@ -57,8 +57,8 @@ template < typename T, typename... A, typename... B >
 [[nodiscard]] auto atan2( const MixedTaylorExpansion< T, A... >& y,
                           const MixedTaylorExpansion< T, B... >& x ) noexcept
 {
-    using R = detail::MergedMixedTaylorExpansion< T, detail::TypeList< A... >,
-                                                  detail::TypeList< B... > >;
+    using R =
+        detail::MergedMixedTaylorExpansion< T, detail::TypeList< A... >, detail::TypeList< B... > >;
     using tax::atan2;
     return R{ atan2( y.template embed< R >().inner(), x.template embed< R >().inner() ) };
 }
@@ -74,11 +74,11 @@ template < typename T, typename... A >
 
 /// `atan2(y, x)` with a constant `y` (axis set unchanged).
 template < typename T, typename... A >
-[[nodiscard]] MixedTaylorExpansion< T, A... > atan2( std::type_identity_t< T > y,
-                                                     const MixedTaylorExpansion< T, A... >& x ) noexcept
+[[nodiscard]] MixedTaylorExpansion< T, A... > atan2(
+    std::type_identity_t< T > y, const MixedTaylorExpansion< T, A... >& x ) noexcept
 {
     using tax::atan2;
     return MixedTaylorExpansion< T, A... >{ atan2( y, x.inner() ) };
 }
 
-}  // namespace tax::named
+}  // namespace tax::mixed

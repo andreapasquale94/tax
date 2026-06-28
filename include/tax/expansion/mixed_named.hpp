@@ -7,15 +7,18 @@
 
 #include <array>
 #include <cstddef>
-#include <tax/expansion/concepts.hpp>
-#include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/axis.hpp>
-#include <tax/expansion/scheme/mixed.hpp>
+#include <tax/expansion/concepts.hpp>
 #include <tax/expansion/expansion.hpp>
+#include <tax/expansion/multi_index.hpp>
+#include <tax/expansion/scheme/mixed.hpp>
 #include <utility>
 
-namespace tax::named
+namespace tax::mixed
 {
+
+// FixedString (the NTTP labelling each axis) lives in tax::named; borrow it here.
+using tax::named::FixedString;
 
 // Forward declaration so detail::RebindMixed can name the mixed type.
 template < typename T, typename... Axes >
@@ -35,6 +38,20 @@ struct OrderedAxis
 
 namespace detail
 {
+
+// The shared axis metaprogramming lives in tax::named::detail (expansion/axis.hpp
+// + meta.hpp) and stays there; borrow the pieces the mixed layer needs so the
+// qualified `detail::X` spellings below keep resolving inside tax::mixed::detail.
+using tax::named::fixedCompare;
+using tax::named::detail::buildAxisMap;
+using tax::named::detail::DimOfName;
+using tax::named::detail::IsCanonical;
+using tax::named::detail::Merge;
+using tax::named::detail::MergeFoldWith;
+using tax::named::detail::OffsetOf;
+using tax::named::detail::Prepend;
+using tax::named::detail::TotalDim;
+using tax::named::detail::TypeList;
 
 /// Map a pack of OrderedAxis types to MixedScheme<Group<Dim,Order>...> (axis i -> group i).
 template < typename... Axes >
@@ -239,8 +256,7 @@ class MixedTaylorExpansion
                        "slice(): every requested axis name must exist in this expansion" );
         // Build target axis list (sorted, unique): each named axis with its current dim+order.
         using Tgt = typename detail::MergeFoldWith<
-            detail::SameNameMaxOrder,
-            detail::TypeList<>,
+            detail::SameNameMaxOrder, detail::TypeList<>,
             detail::TypeList< OrderedAxis< Names, detail::DimOfName< axis_list, Names >::value,
                                            detail::OrderOfName< axis_list, Names >::value > >... >::
             type;
@@ -318,14 +334,14 @@ class MixedTaylorExpansion
 template < typename... Axes >
 using MTE = MixedTaylorExpansion< double, Axes... >;
 
-}  // namespace tax::named
+}  // namespace tax::mixed
 
 // Public re-exports: OrderedAxis, MixedTaylorExpansion and MTE under `tax`.
 namespace tax
 {
-using named::MixedTaylorExpansion;
-using named::MTE;
-using named::OrderedAxis;
+using mixed::MixedTaylorExpansion;
+using mixed::MTE;
+using mixed::OrderedAxis;
 }  // namespace tax
 
 // Factories: `tax::mixed::variable` / `tax::mixed::variables`.
@@ -336,8 +352,8 @@ namespace tax::mixed
 template < tax::named::FixedString Name, int Order >
 [[nodiscard]] constexpr auto variable( double x0 ) noexcept
 {
-    using Ax = tax::named::OrderedAxis< Name, 1, Order >;
-    using E = tax::named::MixedTaylorExpansion< double, Ax >;
+    using Ax = OrderedAxis< Name, 1, Order >;
+    using E = MixedTaylorExpansion< double, Ax >;
     typename E::Input p{ x0 };
     return E{ E::Inner::template variable< 0 >( p ) };
 }
@@ -347,8 +363,8 @@ template < tax::named::FixedString Name, int Order >
 template < tax::named::FixedString Name, int Order, std::size_t D >
 [[nodiscard]] constexpr auto variables( const std::array< double, D >& x0 ) noexcept
 {
-    using Ax = tax::named::OrderedAxis< Name, int( D ), Order >;
-    using E = tax::named::MixedTaylorExpansion< double, Ax >;
+    using Ax = OrderedAxis< Name, int( D ), Order >;
+    using E = MixedTaylorExpansion< double, Ax >;
     std::array< E, D > out{};
     [&]< std::size_t... I >( std::index_sequence< I... > ) {
         ( ( out[I] = E{ E::Inner::template variable< int( I ) >( x0 ) } ), ... );

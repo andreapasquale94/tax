@@ -8,7 +8,7 @@
 #include <tax/expansion/ops/arithmetic.hpp>
 #include <type_traits>
 
-namespace tax::named
+namespace tax::mixed
 {
 
 // Composition operators (union axis set, max order per shared axis). Each binary
@@ -83,4 +83,4 @@ template < typename T, typename... A >
     return MixedTaylorExpansion< T, A... >{ -a.inner() };
 }
 
-}  // namespace tax::named
+}  // namespace tax::mixed

@@ -1,6 +1,6 @@
 // tests/mixed/test_mixed_named_la.cpp
 //
-// Eigen integration for tax::named::MixedTaylorExpansion:
+// Eigen integration for tax::mixed::MixedTaylorExpansion:
 //   NumTraits (usable as Eigen scalar) and per-axis gradient/hessian/jacobian.
 //
 // Mirrors tests/eigen/test_named_la.cpp for NamedTaylorExpansion.
@@ -17,9 +17,9 @@
 // ---------------------------------------------------------------------------
 
 // Two axes: "p" dim 1 order 3, "x" dim 2 order 4 (canonical: p < x).
-using PAx = tax::named::OrderedAxis< "p", 1, 3 >;
-using XAx = tax::named::OrderedAxis< "x", 2, 4 >;
-using MEpx = tax::named::MixedTaylorExpansion< double, PAx, XAx >;
+using PAx = tax::OrderedAxis< "p", 1, 3 >;
+using XAx = tax::OrderedAxis< "x", 2, 4 >;
+using MEpx = tax::MixedTaylorExpansion< double, PAx, XAx >;
 
 // Canonical union sorted by name → p (var 0), x (var 1, var 2).
 // Total vars_v = 3.
@@ -77,13 +77,13 @@ TEST( MixedNamedLa, GradientByAxis )
     auto f = x[0] * x[0] * p + 2.0 * x[1];
 
     // gradient w.r.t. "x" → [df/dx0, df/dx1] = [12, 2]
-    auto gx = tax::named::gradient< "x" >( f );
+    auto gx = tax::mixed::gradient< "x" >( f );
     ASSERT_EQ( gx.rows(), 2 );
     EXPECT_DOUBLE_EQ( gx( 0 ), 12.0 );
     EXPECT_DOUBLE_EQ( gx( 1 ), 2.0 );
 
     // gradient w.r.t. "p" → [df/dp0] = [9]
-    auto gp = tax::named::gradient< "p" >( f );
+    auto gp = tax::mixed::gradient< "p" >( f );
     ASSERT_EQ( gp.rows(), 1 );
     EXPECT_DOUBLE_EQ( gp( 0 ), 9.0 );
 }
@@ -100,7 +100,7 @@ TEST( MixedNamedLa, HessianByAxis )
     auto p = tax::mixed::variable< "p", 3 >( 2.0 );
     auto f = x[0] * x[0] * p;
 
-    auto H = tax::named::hessian< "x" >( f );
+    auto H = tax::mixed::hessian< "x" >( f );
     ASSERT_EQ( H.rows(), 2 );
     ASSERT_EQ( H.cols(), 2 );
     EXPECT_DOUBLE_EQ( H( 0, 0 ), 4.0 );
@@ -129,7 +129,7 @@ TEST( MixedNamedLa, JacobianByAxis )
     F( 0 ) = f0;
     F( 1 ) = f1;
 
-    auto J = tax::named::jacobian< "x" >( F );
+    auto J = tax::mixed::jacobian< "x" >( F );
     ASSERT_EQ( J.rows(), 2 );
     ASSERT_EQ( J.cols(), 2 );
     EXPECT_DOUBLE_EQ( J( 0, 0 ), 2.0 );  // p0 = 2
@@ -150,11 +150,11 @@ TEST( MixedNamedLa, GradientMatchesIsotropicOracle )
 {
     auto x = tax::mixed::variable< "x", 3 >( 0.7 );
     auto t = tax::mixed::variable< "t", 4 >( 1.3 );
-    // Use unqualified ADL: sin/exp for MixedTaylorExpansion are in tax::named.
+    // Use unqualified ADL: sin/exp for MixedTaylorExpansion are in tax::mixed.
     auto f = sin( x * t ) + exp( x );
 
     // gradient<"x"> should give df/dx at the expansion point.
-    auto gx = tax::named::gradient< "x" >( f );
+    auto gx = tax::mixed::gradient< "x" >( f );
     ASSERT_EQ( gx.rows(), 1 );
 
     // Isotropic oracle: TE<7,2> with t=var0, x=var1.
@@ -193,7 +193,7 @@ TEST( MixedNamedLa, VecNTDotProductViaNumTraits )
     EXPECT_NEAR( d.value(), 5.0, 1e-12 );
 
     // gradient w.r.t. "x" = [2*x[0], 2*x[1]] = [2, 4]
-    auto g = tax::named::gradient< "x" >( d );
+    auto g = tax::mixed::gradient< "x" >( d );
     ASSERT_EQ( g.rows(), 2 );
     EXPECT_NEAR( g( 0 ), 2.0, 1e-12 );
     EXPECT_NEAR( g( 1 ), 4.0, 1e-12 );

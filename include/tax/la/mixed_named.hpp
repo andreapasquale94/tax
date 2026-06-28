@@ -1,12 +1,12 @@
 // include/tax/la/mixed_named.hpp
 //
-// Eigen integration for the mixed named-axis layer (tax::named::MixedTaylorExpansion):
+// Eigen integration for the mixed named-axis layer (tax::mixed::MixedTaylorExpansion):
 //
-//   1. Eigen::NumTraits< tax::named::MixedTaylorExpansion<...> > — lets a mixed
+//   1. Eigen::NumTraits< tax::mixed::MixedTaylorExpansion<...> > — lets a mixed
 //      named expansion act as a first-class Eigen scalar, so
 //      Eigen::Matrix< MixedTaylorExpansion<...>, D, 1 > works.
 //
-//   2. Per-axis differential helpers in namespace tax::named:
+//   2. Per-axis differential helpers in namespace tax::mixed:
 //        gradient<"axis">(f)  — gradient restricted to one named axis block.
 //        hessian <"axis">(f)  — Hessian restricted to one named axis block.
 //        jacobian<"axis">(F)  — Jacobian of a vector of mixed named expansions
@@ -32,10 +32,10 @@ namespace Eigen
 {
 
 template < typename T, typename... Axes >
-struct NumTraits< tax::named::MixedTaylorExpansion< T, Axes... > >
-    : NumTraits< typename tax::named::MixedTaylorExpansion< T, Axes... >::Inner >
+struct NumTraits< tax::mixed::MixedTaylorExpansion< T, Axes... > >
+    : NumTraits< typename tax::mixed::MixedTaylorExpansion< T, Axes... >::Inner >
 {
-    using Self = tax::named::MixedTaylorExpansion< T, Axes... >;
+    using Self = tax::mixed::MixedTaylorExpansion< T, Axes... >;
     using Real = Self;
     using NonInteger = Self;
     using Nested = Self;
@@ -50,7 +50,7 @@ struct NumTraits< tax::named::MixedTaylorExpansion< T, Axes... > >
 
 }  // namespace Eigen
 
-namespace tax::named
+namespace tax::mixed
 {
 
 // -----------------------------------------------------------------------------
@@ -107,8 +107,8 @@ template < FixedString Name, typename T, typename... Axes >
     using E = MixedTaylorExpansion< T, Axes... >;
     constexpr int dim = detail::mixedAxisDim< E, Name >;
     static_assert( dim >= 1, "gradient<Name>(): axis name not present in this expansion" );
-    return detail::axisGradient< T, dim, E::vars_v >( f.inner(),
-                                                      detail::mixedAxisOffset< E, Name > );
+    return tax::named::detail::axisGradient< T, dim, E::vars_v >(
+        f.inner(), detail::mixedAxisOffset< E, Name > );
 }
 
 /// Hessian of a mixed named scalar expansion restricted to one named axis.
@@ -118,8 +118,8 @@ template < FixedString Name, typename T, typename... Axes >
     using E = MixedTaylorExpansion< T, Axes... >;
     constexpr int dim = detail::mixedAxisDim< E, Name >;
     static_assert( dim >= 1, "hessian<Name>(): axis name not present in this expansion" );
-    return detail::axisHessian< T, dim, E::vars_v >( f.inner(),
-                                                     detail::mixedAxisOffset< E, Name > );
+    return tax::named::detail::axisHessian< T, dim, E::vars_v >(
+        f.inner(), detail::mixedAxisOffset< E, Name > );
 }
 
 /// Jacobian of a vector of mixed named expansions w.r.t. one named axis.
@@ -131,7 +131,8 @@ template < FixedString Name, typename Derived >
     using T = typename E::scalar_type;
     constexpr int dim = detail::mixedAxisDim< E, Name >;
     static_assert( dim >= 1, "jacobian<Name>(): axis name not present in the expansion" );
-    return detail::axisJacobian< T, dim, E::vars_v >( F, detail::mixedAxisOffset< E, Name > );
+    return tax::named::detail::axisJacobian< T, dim, E::vars_v >(
+        F, detail::mixedAxisOffset< E, Name > );
 }
 
-}  // namespace tax::named
+}  // namespace tax::mixed

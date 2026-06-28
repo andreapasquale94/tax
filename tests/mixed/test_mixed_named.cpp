@@ -154,8 +154,8 @@ TEST( MixedNamed, SliceByAxisName )
     auto sx = f.template slice< "x" >();
     using SX = decltype( sx );
     // Result should be a MixedTaylorExpansion over only axis "x" at order 3
-    using ExpectedAx = tax::named::OrderedAxis< "x", 1, 3 >;
-    static_assert( std::is_same_v< SX, tax::named::MixedTaylorExpansion< double, ExpectedAx > > );
+    using ExpectedAx = tax::OrderedAxis< "x", 1, 3 >;
+    static_assert( std::is_same_v< SX, tax::MixedTaylorExpansion< double, ExpectedAx > > );
 
     // The x-only slice should keep only monomials with t-degree = 0.
     // f = x + x*t + ... ; slicing drops the x*t term.
@@ -197,10 +197,9 @@ TEST( MixedNamed, TruncateByAxisName )
     auto ft = f.truncate< "t", 2 >();
     using FT = decltype( ft );
     // Expected: {t@2, x@4} — box = numMonomials(2,1)*numMonomials(4,1) = 3*5 = 15
-    using ExpAxT = tax::named::OrderedAxis< "t", 1, 2 >;
-    using ExpAxX = tax::named::OrderedAxis< "x", 1, 4 >;
-    static_assert(
-        std::is_same_v< FT, tax::named::MixedTaylorExpansion< double, ExpAxT, ExpAxX > > );
+    using ExpAxT = tax::OrderedAxis< "t", 1, 2 >;
+    using ExpAxX = tax::OrderedAxis< "x", 1, 4 >;
+    static_assert( std::is_same_v< FT, tax::MixedTaylorExpansion< double, ExpAxT, ExpAxX > > );
     static_assert( FT::Inner::nCoefficients == 15 );
 
     // Coefficients with t-degree <= 2 must match the original.

@@ -28,11 +28,16 @@ using la::jacobian;
 using la::value;
 using la::variables;
 
-// Named + mixed per-axis helpers (mixed overloads live in tax::named too).
+// Named per-axis helpers.
 using named::eval;
 using named::gradient;
 using named::hessian;
 using named::jacobian;
 using named::value;
 using named::variables;
+
+// Mixed-order per-axis helpers (the mixed type and its la helpers live in tax::mixed).
+using mixed::gradient;
+using mixed::hessian;
+using mixed::jacobian;
 }  // namespace tax
