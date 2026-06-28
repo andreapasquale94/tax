@@ -43,7 +43,7 @@ The carrier is
 ```cpp
 template < typename T, typename Basis, typename Scheme, typename Storage = storage::Dense >
 class tax::Expansion;
-// aliases: Series<Basis,N,T>; TaylorSeries<N,M,T>; ChebyshevSeries<N,M,T>
+// aliases: Series<Basis,N,T>; TaylorSeries<N,M,T>; ChebyshevExpansion<N,M,T>
 ```
 
 It owns the `std::array<T, Scheme::nCoeff>` and everything **basis-independent**:

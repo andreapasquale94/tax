@@ -7,12 +7,11 @@
 // NON-callable (SFINAE-disabled) on Chebyshev/Legendre/Hermite.
 
 template < typename E >
-concept HasValueDerivative = requires( const E e, tax::MultiIndex< E::scheme::vars > a ) {
-    e.derivative( a );
-};
+concept HasValueDerivative =
+    requires( const E e, tax::MultiIndex< E::scheme::vars > a ) { e.derivative( a ); };
 
 using TaylorE = tax::TE< 3, 2 >;
-using ChebE = tax::ChebyshevSeries< 3, 2 >;
+using ChebE = tax::ChebyshevExpansion< 3, 2 >;
 using LegE = tax::LegendreSeries< 3, 2 >;
 using HermE = tax::HermiteSeries< 3, 2 >;
 

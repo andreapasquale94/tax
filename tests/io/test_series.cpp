@@ -180,7 +180,8 @@ struct HasToString< F, std::void_t< decltype( tax::to_string( std::declval< cons
 }  // namespace
 
 static_assert( HasToString< tax::TE< 3 > >::value, "Taylor expansion must print" );
-static_assert( HasToString< tax::ChebyshevSeries< 2 > >::value, "orthogonal expansion must print" );
+static_assert( HasToString< tax::ChebyshevExpansion< 2 > >::value,
+               "orthogonal expansion must print" );
 static_assert( HasToString< tax::NE< 3, tax::Axis< "x", 1 > > >::value,
                "named expansion must print" );
 static_assert( !HasToString< int >::value, "scalars are not printable expansions" );

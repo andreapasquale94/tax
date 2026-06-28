@@ -48,7 +48,7 @@ static void checkJacobian()
 
 TEST( BasisGenericLa, GradientHessianChebyshev )
 {
-    checkGradientHessian< tax::ChebyshevSeries< 5, 2 > >();
+    checkGradientHessian< tax::ChebyshevExpansion< 5, 2 > >();
 }
 TEST( BasisGenericLa, GradientHessianLegendre )
 {
@@ -59,7 +59,7 @@ TEST( BasisGenericLa, GradientHessianHermite )
     checkGradientHessian< tax::HermiteSeries< 5, 2 > >();
 }
 
-TEST( BasisGenericLa, JacobianChebyshev ) { checkJacobian< tax::ChebyshevSeries< 5, 2 > >(); }
+TEST( BasisGenericLa, JacobianChebyshev ) { checkJacobian< tax::ChebyshevExpansion< 5, 2 > >(); }
 TEST( BasisGenericLa, JacobianLegendre ) { checkJacobian< tax::LegendreSeries< 5, 2 > >(); }
 TEST( BasisGenericLa, JacobianHermite ) { checkJacobian< tax::HermiteSeries< 5, 2 > >(); }
 
@@ -103,7 +103,7 @@ static void checkNumTraitsMatmul()
 
 TEST( BasisGenericLa, NumTraitsMatmulChebyshev )
 {
-    checkNumTraitsMatmul< tax::ChebyshevSeries< 4, 2 > >();
+    checkNumTraitsMatmul< tax::ChebyshevExpansion< 4, 2 > >();
 }
 TEST( BasisGenericLa, NumTraitsMatmulLegendre )
 {

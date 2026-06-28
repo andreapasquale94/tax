@@ -3,20 +3,20 @@
 #include <cmath>
 #include <tax/tax.hpp>
 
-using tax::ChebyshevSeries;
+using tax::ChebyshevExpansion;
 
 // A modest non-trivial argument whose range stays comfortably inside the
 // domains of the functions under test:  f(x) = 0.3 + 0.4 x  maps [-1,1] to
 // [-0.1, 0.7].
 template < int N >
-static ChebyshevSeries< N > arg()
+static ChebyshevExpansion< N > arg()
 {
-    return 0.3 + 0.4 * ChebyshevSeries< N >::variable();
+    return 0.3 + 0.4 * ChebyshevExpansion< N >::variable();
 }
 
 // Check g(f) against the host function over the whole interval.
 template < int N, typename Series, typename G >
-static void expectComposition( const Series& gf, const ChebyshevSeries< N >& f, G g, double tol )
+static void expectComposition( const Series& gf, const ChebyshevExpansion< N >& f, G g, double tol )
 {
     for ( double x = -1.0; x <= 1.0; x += 0.05 )
         EXPECT_NEAR( gf.eval( x ), g( f.eval( x ) ), tol ) << "at x=" << x;
@@ -28,7 +28,7 @@ TEST( ChebyshevMath, ExpLogSqrt )
     auto f = arg< N >();
     expectComposition( exp( f ), f, []( double v ) { return std::exp( v ); }, 1e-10 );
     // log/sqrt need a positive argument: shift to [0.9, 1.7].
-    auto g = 1.3 + 0.4 * ChebyshevSeries< N >::variable();
+    auto g = 1.3 + 0.4 * ChebyshevExpansion< N >::variable();
     expectComposition( log( g ), g, []( double v ) { return std::log( v ); }, 1e-10 );
     expectComposition( sqrt( g ), g, []( double v ) { return std::sqrt( v ); }, 1e-10 );
     expectComposition( cbrt( g ), g, []( double v ) { return std::cbrt( v ); }, 1e-10 );
@@ -62,8 +62,8 @@ TEST( ChebyshevMath, Hyperbolic )
 TEST( ChebyshevMath, ReciprocalAndDivision )
 {
     constexpr int N = 18;
-    auto f = arg< N >();                                    // [-0.1, 0.7]
-    auto d = 1.5 + 0.3 * ChebyshevSeries< N >::variable();  // [1.2, 1.8], no zero
+    auto f = arg< N >();                                       // [-0.1, 0.7]
+    auto d = 1.5 + 0.3 * ChebyshevExpansion< N >::variable();  // [1.2, 1.8], no zero
     expectComposition( reciprocal( d ), d, []( double v ) { return 1.0 / v; }, 1e-10 );
 
     auto q = f / d;
@@ -77,7 +77,7 @@ TEST( ChebyshevMath, ReciprocalAndDivision )
 TEST( ChebyshevMath, PowReal )
 {
     constexpr int N = 18;
-    auto g = 1.3 + 0.4 * ChebyshevSeries< N >::variable();  // positive
+    auto g = 1.3 + 0.4 * ChebyshevExpansion< N >::variable();  // positive
     auto p = pow( g, 2.5 );
     expectComposition( p, g, []( double v ) { return std::pow( v, 2.5 ); }, 1e-10 );
 }
@@ -87,7 +87,7 @@ TEST( ChebyshevMath, SquareCubeAreExact )
     // square/cube use the exact truncated product, so they match the algebraic
     // identity to machine precision (and are constexpr).
     constexpr int N = 8;
-    auto x = ChebyshevSeries< N >::variable();
+    auto x = ChebyshevExpansion< N >::variable();
     auto f = 1.0 + 2.0 * x;
     auto s = square( f );
     auto c = cube( f );

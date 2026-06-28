@@ -4,7 +4,7 @@
 #include <cmath>
 #include <tax/tax.hpp>
 
-using tax::ChebyshevSeries;
+using tax::ChebyshevExpansion;
 using tax::TaylorSeries;
 
 TEST( SeriesConvert, MonomialSquareToChebyshev )
@@ -39,7 +39,7 @@ TEST( SeriesConvert, EvalAgreesAcrossBases )
 TEST( SeriesConvert, ChebyshevToTaylorEval )
 {
     std::array< double, 5 > c{ 0.3, 1.2, -0.4, 0.8, 0.1 };
-    ChebyshevSeries< 4 > g{ c };
+    ChebyshevExpansion< 4 > g{ c };
     auto tay = tax::toTaylor( g );
     for ( double p : { -0.8, 0.0, 0.45 } ) EXPECT_NEAR( g.eval( p ), tay.eval( p ), 1e-11 );
 }

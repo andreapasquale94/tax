@@ -4,12 +4,12 @@
 // lives in <tax/expansion/expansion.hpp> (with `TaylorExpansion` as its
 // TaylorBasis alias). This header just adds the basis-named series aliases.
 
-#include <tax/expansion/scheme/isotropic.hpp>
-#include <tax/expansion/expansion.hpp>
-#include <tax/expansion/basis.hpp>
 #include <tax/bases/chebyshev_basis.hpp>
 #include <tax/bases/hermite_basis.hpp>
 #include <tax/bases/legendre_basis.hpp>
+#include <tax/expansion/basis.hpp>
+#include <tax/expansion/expansion.hpp>
+#include <tax/expansion/scheme/isotropic.hpp>
 #include <tax/expansion/taylor_basis.hpp>
 
 namespace tax
@@ -25,7 +25,7 @@ using TaylorSeries = Expansion< T, TaylorBasis, IsotropicScheme< N, M > >;
 
 /// Order-N, M-variate Chebyshev (first-kind) expansion.
 template < int N, int M = 1, typename T = double >
-using ChebyshevSeries = Expansion< T, ChebyshevBasis, IsotropicScheme< N, M > >;
+using ChebyshevExpansion = Expansion< T, ChebyshevBasis, IsotropicScheme< N, M > >;
 
 /// Order-N, M-variate Legendre expansion.
 template < int N, int M = 1, typename T = double >

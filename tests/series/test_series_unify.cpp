@@ -54,10 +54,10 @@ TEST( SeriesUnify, TaylorBasisMatchesLegacyMultivariate )
 TEST( SeriesUnify, IoStreamsInBasis )
 {
     // The generic series IO labels terms in the basis (here Chebyshev).
-    tax::ChebyshevSeries< 2 > g{ std::array< double, 3 >{ 1.0, 0.0, 3.0 } };
+    tax::ChebyshevExpansion< 2 > g{ std::array< double, 3 >{ 1.0, 0.0, 3.0 } };
     EXPECT_EQ( tax::to_string( g ), "1 + 3*T_2(x₀)" );
 
-    tax::ChebyshevSeries< 2 > zero{};
+    tax::ChebyshevExpansion< 2 > zero{};
     EXPECT_EQ( tax::to_string( zero ), "0" );
 }
 
@@ -65,7 +65,7 @@ TEST( SeriesUnify, IoStreamsInBasis )
 // joined by '*'. Build the coefficient array directly and pin one cross term.
 TEST( SeriesUnify, MultivariateOrthogonalPrints )
 {
-    using E = tax::ChebyshevSeries< 3, 2 >;  // order 3, 2 vars
+    using E = tax::ChebyshevExpansion< 3, 2 >;  // order 3, 2 vars
     std::array< double, E::nCoefficients > a{};
     a[0] = 2.0;  // constant
     tax::MultiIndex< 2 > m21{};

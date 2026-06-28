@@ -4,7 +4,7 @@
 #include <cmath>
 #include <tax/tax.hpp>
 
-using tax::ChebyshevSeries;
+using tax::ChebyshevExpansion;
 using tax::TaylorSeries;
 
 // ---------------------------------------------------------------------------
@@ -57,8 +57,8 @@ TEST( SeriesMultivar, TaylorTranscendentalMultivariate )
 
 TEST( SeriesMultivar, ChebyshevVariableEval )
 {
-    auto x = ChebyshevSeries< 4, 2 >::variable< 0 >();
-    auto y = ChebyshevSeries< 4, 2 >::variable< 1 >();
+    auto x = ChebyshevExpansion< 4, 2 >::variable< 0 >();
+    auto y = ChebyshevExpansion< 4, 2 >::variable< 1 >();
     std::array< double, 2 > pt{ 0.3, 0.7 };
     EXPECT_NEAR( x.eval( pt ), 0.3, 1e-13 );
     EXPECT_NEAR( y.eval( pt ), 0.7, 1e-13 );
@@ -68,8 +68,8 @@ TEST( SeriesMultivar, ChebyshevTensorProductExact )
 {
     // f, g of total degree <= 2 -> product degree <= 4 stays in box -> exact.
     constexpr int N = 4;
-    auto x = ChebyshevSeries< N, 2 >::variable< 0 >();
-    auto y = ChebyshevSeries< N, 2 >::variable< 1 >();
+    auto x = ChebyshevExpansion< N, 2 >::variable< 0 >();
+    auto y = ChebyshevExpansion< N, 2 >::variable< 1 >();
     auto f = 1.0 + 2.0 * x + y;
     auto g = 0.5 - x + 3.0 * y;
     auto h = f * g;
@@ -81,8 +81,8 @@ TEST( SeriesMultivar, ChebyshevTensorProductExact )
 TEST( SeriesMultivar, ChebyshevPartialDerivativeNumeric )
 {
     constexpr int N = 5;
-    auto x = ChebyshevSeries< N, 2 >::variable< 0 >();
-    auto y = ChebyshevSeries< N, 2 >::variable< 1 >();
+    auto x = ChebyshevExpansion< N, 2 >::variable< 0 >();
+    auto y = ChebyshevExpansion< N, 2 >::variable< 1 >();
     auto f = 1.0 + 2.0 * x + y + 0.5 * ( x * y );
     auto fx = f.deriv< 0 >();
     auto fy = f.deriv< 1 >();
