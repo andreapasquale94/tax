@@ -28,9 +28,8 @@ static_assert(
 static_assert(
     std::same_as< tax::la::MTEVec< 2, POrderedAx >, tax::la::VecNT< 2, tax::MTE< POrderedAx > > > );
 
-// MTE scalar alias mirrors NE: a double-valued MixedTaylorExpansion.
-static_assert(
-    std::same_as< tax::MTE< POrderedAx >, tax::MixedTaylorExpansion< double, POrderedAx > > );
+// MTE scalar alias mirrors NE: a double-valued MixedExpansion.
+static_assert( std::same_as< tax::MTE< POrderedAx >, tax::MixedExpansion< double, POrderedAx > > );
 
 // -----------------------------------------------------------------------------
 // promote_t — the common (union-of-axes) expansion type operands promote into.

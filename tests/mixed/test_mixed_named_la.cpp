@@ -1,6 +1,6 @@
 // tests/mixed/test_mixed_named_la.cpp
 //
-// Eigen integration for tax::mixed::MixedTaylorExpansion:
+// Eigen integration for tax::mixed::MixedExpansion:
 //   NumTraits (usable as Eigen scalar) and per-axis gradient/hessian/jacobian.
 //
 // Mirrors tests/eigen/test_named_la.cpp for NamedTaylorExpansion.
@@ -19,14 +19,14 @@
 // Two axes: "p" dim 1 order 3, "x" dim 2 order 4 (canonical: p < x).
 using PAx = tax::OrderedAxis< "p", 1, 3 >;
 using XAx = tax::OrderedAxis< "x", 2, 4 >;
-using MEpx = tax::MixedTaylorExpansion< double, PAx, XAx >;
+using MEpx = tax::MixedExpansion< double, PAx, XAx >;
 
 // Canonical union sorted by name → p (var 0), x (var 1, var 2).
 // Total vars_v = 3.
 static_assert( MEpx::vars_v == 3 );
 
 // ---------------------------------------------------------------------------
-// TEST: NumTraits lets MixedTaylorExpansion act as an Eigen scalar
+// TEST: NumTraits lets MixedExpansion act as an Eigen scalar
 // ---------------------------------------------------------------------------
 
 TEST( MixedNamedLa, NumTraitsUsableAsEigenScalar )
@@ -150,7 +150,7 @@ TEST( MixedNamedLa, GradientMatchesIsotropicOracle )
 {
     auto x = tax::mixed::variable< "x", 3 >( 0.7 );
     auto t = tax::mixed::variable< "t", 4 >( 1.3 );
-    // Use unqualified ADL: sin/exp for MixedTaylorExpansion are in tax::mixed.
+    // Use unqualified ADL: sin/exp for MixedExpansion are in tax::mixed.
     auto f = sin( x * t ) + exp( x );
 
     // gradient<"x"> should give df/dx at the expansion point.
@@ -200,9 +200,9 @@ TEST( MixedNamedLa, VecNTDotProductViaNumTraits )
 }
 
 // ---------------------------------------------------------------------------
-// TEST: the public `tax::` spelling resolves for MixedTaylorExpansion.
+// TEST: the public `tax::` spelling resolves for MixedExpansion.
 // `tax::gradient<"name">`/`jacobian<"name">` must find the mixed overloads via
-// the re-export in la/mixed_named.hpp (the la/named.hpp using-block predates
+// the re-export in la/mixed.hpp (the la/named.hpp using-block predates
 // them and would not pick them up).
 // ---------------------------------------------------------------------------
 

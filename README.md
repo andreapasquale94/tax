@@ -37,7 +37,7 @@ up to order \(N\) in a single evaluation pass.
 - **Named expansions** — `NamedTaylorExpansion<T, N, Axes...>` attaches
   compile-time *named axes* to an expansion; values over different axis sets
   compose in their union, and `slice`/`deriv`/`integ` are addressed by name.
-  `MixedTaylorExpansion<T, Axes...>` gives each axis its own truncation order.
+  `MixedExpansion<T, Axes...>` gives each axis its own truncation order.
   The whole API is re-exported under `tax` (`tax::NE`, `tax::MTE`,
   `tax::variable(s)`).
 - **Human-readable output** — `std::cout << f` prints the polynomial series;

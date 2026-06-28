@@ -28,7 +28,7 @@ tax/
 │   │   │                     #   IsotropicScheme<N,M> (single order) + MixedScheme (per-axis)
 │   │   ├── taylor_expansion.hpp  # TaylorExpansion<T, Scheme, Storage>: Dense + Sparse
 │   │   ├── named.hpp         #   NamedTaylorExpansion<T,N,Axes...>: single-order named axes
-│   │   ├── mixed_named.hpp   #   MixedTaylorExpansion<T,Axes...>: per-axis-order named axes
+│   │   ├── mixed_named.hpp   #   MixedExpansion<T,Axes...>: per-axis-order named axes
 │   │   ├── promote.hpp       #   promote_t<Ts...>: common (union-of-axes) expansion type
 │   │   └── storage/          #   Dense (std::array) and Sparse (sorted idx/val) policies
 │   ├── kernels/              # Series recurrence kernels (tax::detail::kernels)
@@ -272,7 +272,7 @@ gradient/hessian/jacobian).
 
 ### Mixed-order named expansions (`tax::MTE`)
 
-`tax::MixedTaylorExpansion<T, Axes...>` (alias `MTE<Axes...>`) is the same idea
+`tax::MixedExpansion<T, Axes...>` (alias `MTE<Axes...>`) is the same idea
 but each axis carries its **own** truncation order via `OrderedAxis<Name, Dim,
 Order>` and a `MixedScheme` layout. Factories live in `tax::mixed`
 (`tax::mixed::variable<"x", Order>(...)`, `tax::mixed::variables<...>`). Axis

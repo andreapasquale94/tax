@@ -1,10 +1,10 @@
-// include/tax/la/mixed_named.hpp
+// include/tax/la/mixed.hpp
 //
-// Eigen integration for the mixed named-axis layer (tax::mixed::MixedTaylorExpansion):
+// Eigen integration for the mixed named-axis layer (tax::mixed::MixedExpansion):
 //
-//   1. Eigen::NumTraits< tax::mixed::MixedTaylorExpansion<...> > — lets a mixed
+//   1. Eigen::NumTraits< tax::mixed::MixedExpansion<...> > — lets a mixed
 //      named expansion act as a first-class Eigen scalar, so
-//      Eigen::Matrix< MixedTaylorExpansion<...>, D, 1 > works.
+//      Eigen::Matrix< MixedExpansion<...>, D, 1 > works.
 //
 //   2. Per-axis differential helpers in namespace tax::mixed:
 //        gradient<"axis">(f)  — gradient restricted to one named axis block.
@@ -19,7 +19,7 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <tax/expansion/mixed_named.hpp>
+#include <tax/expansion/mixed.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/named.hpp>
 #include <tax/la/axis_diff.hpp>
@@ -32,10 +32,10 @@ namespace Eigen
 {
 
 template < typename T, typename... Axes >
-struct NumTraits< tax::mixed::MixedTaylorExpansion< T, Axes... > >
-    : NumTraits< typename tax::mixed::MixedTaylorExpansion< T, Axes... >::Inner >
+struct NumTraits< tax::mixed::MixedExpansion< T, Axes... > >
+    : NumTraits< typename tax::mixed::MixedExpansion< T, Axes... >::Inner >
 {
-    using Self = tax::mixed::MixedTaylorExpansion< T, Axes... >;
+    using Self = tax::mixed::MixedExpansion< T, Axes... >;
     using Real = Self;
     using NonInteger = Self;
     using Nested = Self;
@@ -65,21 +65,21 @@ struct is_mixed : std::false_type
 {
 };
 template < typename T, typename... Axes >
-struct is_mixed< MixedTaylorExpansion< T, Axes... > > : std::true_type
+struct is_mixed< MixedExpansion< T, Axes... > > : std::true_type
 {
 };
 template < typename T >
 inline constexpr bool is_mixed_v = is_mixed< T >::value;
 
 // -----------------------------------------------------------------------------
-// Axis-offset helpers for MixedTaylorExpansion
+// Axis-offset helpers for MixedExpansion
 // -----------------------------------------------------------------------------
 
-/// Dimension of axis `Name` within a MixedTaylorExpansion type `E`, or -1.
+/// Dimension of axis `Name` within a MixedExpansion type `E`, or -1.
 template < typename E, FixedString Name >
 inline constexpr int mixedAxisDim = DimOfName< typename E::axis_list, Name >::value;
 
-/// Variable offset of axis `Name` within a MixedTaylorExpansion type `E`, or -1.
+/// Variable offset of axis `Name` within a MixedExpansion type `E`, or -1.
 ///
 /// The dimension is clamped to >= 1 to avoid instantiating an OrderedAxis with
 /// dimension -1 when the name is absent (the caller's static_assert fires first).
@@ -90,7 +90,7 @@ inline constexpr int mixedAxisOffset = []() constexpr -> int {
         return -1;
     else
         // The global variable index of the axis' first coordinate is exactly
-        // its block offset (MixedTaylorExpansion::axisVar<Name, 0>()).
+        // its block offset (MixedExpansion::axisVar<Name, 0>()).
         return E::template axisVar< Name, 0 >();
 }();
 
@@ -102,9 +102,9 @@ inline constexpr int mixedAxisOffset = []() constexpr -> int {
 
 /// Gradient of a mixed named scalar expansion with respect to one named axis.
 template < FixedString Name, typename T, typename... Axes >
-[[nodiscard]] auto gradient( const MixedTaylorExpansion< T, Axes... >& f ) noexcept
+[[nodiscard]] auto gradient( const MixedExpansion< T, Axes... >& f ) noexcept
 {
-    using E = MixedTaylorExpansion< T, Axes... >;
+    using E = MixedExpansion< T, Axes... >;
     constexpr int dim = detail::mixedAxisDim< E, Name >;
     static_assert( dim >= 1, "gradient<Name>(): axis name not present in this expansion" );
     return tax::named::detail::axisGradient< T, dim, E::vars_v >(
@@ -113,9 +113,9 @@ template < FixedString Name, typename T, typename... Axes >
 
 /// Hessian of a mixed named scalar expansion restricted to one named axis.
 template < FixedString Name, typename T, typename... Axes >
-[[nodiscard]] auto hessian( const MixedTaylorExpansion< T, Axes... >& f ) noexcept
+[[nodiscard]] auto hessian( const MixedExpansion< T, Axes... >& f ) noexcept
 {
-    using E = MixedTaylorExpansion< T, Axes... >;
+    using E = MixedExpansion< T, Axes... >;
     constexpr int dim = detail::mixedAxisDim< E, Name >;
     static_assert( dim >= 1, "hessian<Name>(): axis name not present in this expansion" );
     return tax::named::detail::axisHessian< T, dim, E::vars_v >(

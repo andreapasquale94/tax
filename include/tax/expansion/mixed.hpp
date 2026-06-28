@@ -1,6 +1,6 @@
 #pragma once
 
-// Named, per-axis-order Taylor expansions: MixedTaylorExpansion wraps a dense
+// Named, per-axis-order Taylor expansions: MixedExpansion wraps a dense
 // TaylorExpansion<T, MixedScheme<Group<Dim,Order>...>> and attaches a canonical
 // (sorted, unique) list of named ordered axes (OrderedAxis<Name, Dim, Order>).
 // Complements the joint-simplex NamedTaylorExpansion with per-axis truncation.
@@ -23,7 +23,7 @@ using tax::named::FixedString;
 // Forward declaration so detail::RebindMixed can name the mixed type.
 template < typename T, typename... Axes >
     requires Scalar< T >
-class MixedTaylorExpansion;
+class MixedExpansion;
 
 /// Named axis: `Name` labels a block of `Dim` consecutive variables truncated at `Order`.
 template < FixedString Name, int Dim, int Order >
@@ -76,13 +76,13 @@ struct SameNameMaxOrder
     };
 };
 
-/// Rebind a `TypeList` of ordered axes into a `MixedTaylorExpansion< T, Axes... >`.
+/// Rebind a `TypeList` of ordered axes into a `MixedExpansion< T, Axes... >`.
 template < typename T, typename List >
 struct RebindMixed;
 template < typename T, typename... Axes >
 struct RebindMixed< T, TypeList< Axes... > >
 {
-    using type = MixedTaylorExpansion< T, Axes... >;
+    using type = MixedExpansion< T, Axes... >;
 };
 
 /// The mixed type over the merged (union, max-order) axis set of two operands.
@@ -130,14 +130,14 @@ struct ReplaceAxisOrder< TypeList< H, Ts... >, Name, N2 >
 /// Named per-axis-order Taylor expansion over a canonical (sorted, unique) axis set.
 template < typename T, typename... Axes >
     requires Scalar< T >
-class MixedTaylorExpansion
+class MixedExpansion
 {
    public:
     using axis_list = detail::TypeList< Axes... >;
     using scalar_type = T;
 
     static_assert( detail::IsCanonical< axis_list >::value,
-                   "MixedTaylorExpansion axes must be sorted by name and unique; build via "
+                   "MixedExpansion axes must be sorted by name and unique; build via "
                    "tax::mixed::variable()/variables() rather than spelling them by hand" );
 
     /// Number of underlying variables (sum of axis dimensions).
@@ -151,13 +151,13 @@ class MixedTaylorExpansion
     using container_t = typename Inner::container_t;
     static constexpr std::size_t nCoefficients = Inner::nCoefficients;
 
-    constexpr MixedTaylorExpansion() noexcept = default;
+    constexpr MixedExpansion() noexcept = default;
 
     /// Constant expansion (value, all higher-order coefficients zero).
-    /*implicit*/ constexpr MixedTaylorExpansion( T v ) noexcept : inner_{ v } {}
+    /*implicit*/ constexpr MixedExpansion( T v ) noexcept : inner_{ v } {}
 
     /// Wrap an existing anonymous expansion carrying these axes.
-    explicit constexpr MixedTaylorExpansion( const Inner& inner ) noexcept : inner_{ inner } {}
+    explicit constexpr MixedExpansion( const Inner& inner ) noexcept : inner_{ inner } {}
 
     /// Constant (zeroth) coefficient.
     [[nodiscard]] constexpr T value() const noexcept { return inner_.value(); }
@@ -234,16 +234,16 @@ class MixedTaylorExpansion
 
     /// Partial derivative with respect to one coordinate of a named axis.
     template < FixedString Name, int Local = 0 >
-    [[nodiscard]] constexpr MixedTaylorExpansion deriv() const noexcept
+    [[nodiscard]] constexpr MixedExpansion deriv() const noexcept
     {
-        return MixedTaylorExpansion{ inner_.template deriv< axisVar< Name, Local >() >() };
+        return MixedExpansion{ inner_.template deriv< axisVar< Name, Local >() >() };
     }
 
     /// Indefinite integral with respect to one coordinate of a named axis.
     template < FixedString Name, int Local = 0 >
-    [[nodiscard]] constexpr MixedTaylorExpansion integ() const noexcept
+    [[nodiscard]] constexpr MixedExpansion integ() const noexcept
     {
-        return MixedTaylorExpansion{ inner_.template integ< axisVar< Name, Local >() >() };
+        return MixedExpansion{ inner_.template integ< axisVar< Name, Local >() >() };
     }
 
     /// Project onto the subset of axes named by `Names...`; source monomials
@@ -332,14 +332,14 @@ class MixedTaylorExpansion
 
 /// `MTE< Axes... >` — double-valued mixed-order named expansion.
 template < typename... Axes >
-using MTE = MixedTaylorExpansion< double, Axes... >;
+using MTE = MixedExpansion< double, Axes... >;
 
 }  // namespace tax::mixed
 
-// Public re-exports: OrderedAxis, MixedTaylorExpansion and MTE under `tax`.
+// Public re-exports: OrderedAxis, MixedExpansion and MTE under `tax`.
 namespace tax
 {
-using mixed::MixedTaylorExpansion;
+using mixed::MixedExpansion;
 using mixed::MTE;
 using mixed::OrderedAxis;
 }  // namespace tax
@@ -353,7 +353,7 @@ template < tax::named::FixedString Name, int Order >
 [[nodiscard]] constexpr auto variable( double x0 ) noexcept
 {
     using Ax = OrderedAxis< Name, 1, Order >;
-    using E = MixedTaylorExpansion< double, Ax >;
+    using E = MixedExpansion< double, Ax >;
     typename E::Input p{ x0 };
     return E{ E::Inner::template variable< 0 >( p ) };
 }
@@ -364,7 +364,7 @@ template < tax::named::FixedString Name, int Order, std::size_t D >
 [[nodiscard]] constexpr auto variables( const std::array< double, D >& x0 ) noexcept
 {
     using Ax = OrderedAxis< Name, int( D ), Order >;
-    using E = MixedTaylorExpansion< double, Ax >;
+    using E = MixedExpansion< double, Ax >;
     std::array< E, D > out{};
     [&]< std::size_t... I >( std::index_sequence< I... > ) {
         ( ( out[I] = E{ E::Inner::template variable< int( I ) >( x0 ) } ), ... );

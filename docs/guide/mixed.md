@@ -72,12 +72,12 @@ auto p = tax::mixed::variables<"p", 20, 3>(p0);   // std::array of 3 expansions
 auto f = sin(x) + x * p[0];
 ```
 
-The result type is `tax::MixedTaylorExpansion<double, OrderedAxis<"p",3,20>, OrderedAxis<"x",1,4>>`,
-re-exported as `tax::MixedTaylorExpansion<T, Axes…>`.
+The result type is `tax::MixedExpansion<double, OrderedAxis<"p",3,20>, OrderedAxis<"x",1,4>>`,
+re-exported as `tax::MixedExpansion<T, Axes…>`.
 
 ### Canonical type and max-order promotion
 
-The axis list in every `MixedTaylorExpansion` is sorted by name and unique, so
+The axis list in every `MixedExpansion` is sorted by name and unique, so
 `x * p[0]` and `p[0] * x` produce the *same* type. When two operands share an
 axis name, the result uses the **maximum per-axis order** of the two:
 
@@ -96,7 +96,7 @@ operand required.
 
 ### Standard accessors
 
-`MixedTaylorExpansion` supports the same accessors as `TaylorExpansion`:
+`MixedExpansion` supports the same accessors as `TaylorExpansion`:
 
 ```cpp
 double val  = f.value();                   // constant term f(x0)
@@ -143,7 +143,7 @@ from a high-order expansion.
 
 ### Named `la` helpers
 
-`<tax/tax.hpp>` provides `Eigen::NumTraits` for `MixedTaylorExpansion`, so
+`<tax/tax.hpp>` provides `Eigen::NumTraits` for `MixedExpansion`, so
 mixed expansions work as Eigen scalars inside `Eigen::Matrix<…>`. The
 name-addressed differential helpers work with both `tax::named::` and the
 public `tax::` spellings:
@@ -155,14 +155,14 @@ auto Jx = tax::jacobian<"x">(F);         // Jacobian of an Eigen vector F w.r.t.
 ```
 
 Each result is an Eigen matrix/vector of plain `double` values (the dimensions
-match the axis's `Dim`). `tax::la::VecNT<D, MixedTaylorExpansion<…>>` works as
+match the axis's `Dim`). `tax::la::VecNT<D, MixedExpansion<…>>` works as
 expected for storing vectors of mixed expansions.
 
 ---
 
 ## Box vs simplex; the joint cap
 
-The default layout for `MixedScheme` and `MixedTaylorExpansion` is the **full
+The default layout for `MixedScheme` and `MixedExpansion` is the **full
 box**: a monomial is kept iff every group's block degree is within that group's
 per-axis order. There is no joint total-degree constraint across groups.
 
@@ -185,7 +185,7 @@ For the classical joint-simplex named layer (same order on all axes) see
 | `tax::Group<Dim, Order>` | One variable group: `Dim` variables capped at `Order` |
 | `tax::BoxTE<Groups…>` | Anonymous box expansion: `TaylorExpansion<double, MixedScheme<Groups…>>` |
 | `tax::OrderedAxis<Name, Dim, Order>` | Named axis with its own per-axis order |
-| `tax::MixedTaylorExpansion<T, Axes…>` | Named per-axis-order expansion (double alias: `T = double` is most common) |
+| `tax::MixedExpansion<T, Axes…>` | Named per-axis-order expansion (double alias: `T = double` is most common) |
 | `tax::mixed::variable<"name", Order>(x0)` | Factory: 1-D named axis variable |
 | `tax::mixed::variables<"name", Order, D>(arr)` | Factory: D-D named axis variables (`std::array<…, D>`) |
 
@@ -193,7 +193,7 @@ For the classical joint-simplex named layer (same order on all axes) see
 
 ## Notes & limits
 
-- **Dense storage only.** `BoxTE` / `MixedTaylorExpansion` use dense
+- **Dense storage only.** `BoxTE` / `MixedExpansion` use dense
   coefficient storage. Sparse storage is defined only for the isotropic scheme
   (`STE<N, M>`).
 - **Multi-dimensional axes truncate by total degree within the axis.** A

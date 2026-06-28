@@ -4,9 +4,9 @@
 //
 // The per-axis gradient/Hessian/Jacobian of a Taylor named expansion (single
 // order, tax::named::NamedTaylorExpansion) and of a mixed-order named expansion
-// (tax::mixed::MixedTaylorExpansion) are the same computation: read Taylor
+// (tax::mixed::MixedExpansion) are the same computation: read Taylor
 // coefficients off the inner dense expansion at the multi-indices of one axis
-// block. The two public surfaces (la/named.hpp, la/mixed_named.hpp) differ only
+// block. The two public surfaces (la/named.hpp, la/mixed.hpp) differ only
 // in the wrapper type they match and how they locate the axis block (Axis vs
 // OrderedAxis); both compute `(dim, off)` their own way and delegate the actual
 // coefficient walk to the helpers below, so the loop bodies live in one place.

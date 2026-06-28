@@ -12,7 +12,7 @@
 
 #include <tax/la/derivatives.hpp>
 #include <tax/la/invert.hpp>
-#include <tax/la/mixed_named.hpp>
+#include <tax/la/mixed.hpp>
 #include <tax/la/named.hpp>
 #include <tax/la/values.hpp>
 

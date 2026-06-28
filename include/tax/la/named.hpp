@@ -115,7 +115,7 @@ inline constexpr int axisOffset =
 
 // is_named — constrains the generic (Eigen-vector) named overloads so they do
 // not also match a vector of mixed-order expansions (whose own overloads live in
-// tax::mixed). Mirrors is_mixed in la/mixed_named.hpp.
+// tax::mixed). Mirrors is_mixed in la/mixed.hpp.
 template < typename >
 struct is_named : std::false_type
 {

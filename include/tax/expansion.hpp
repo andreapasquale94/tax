@@ -6,7 +6,7 @@
 #include <tax/expansion/concepts.hpp>
 #include <tax/expansion/enumeration.hpp>
 #include <tax/expansion/expansion.hpp>
-#include <tax/expansion/mixed_named.hpp>
+#include <tax/expansion/mixed.hpp>
 #include <tax/expansion/multi_index.hpp>
 #include <tax/expansion/named.hpp>
 #include <tax/expansion/ops/arithmetic.hpp>

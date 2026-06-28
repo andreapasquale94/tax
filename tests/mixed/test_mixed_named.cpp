@@ -153,9 +153,9 @@ TEST( MixedNamed, SliceByAxisName )
 
     auto sx = f.template slice< "x" >();
     using SX = decltype( sx );
-    // Result should be a MixedTaylorExpansion over only axis "x" at order 3
+    // Result should be a MixedExpansion over only axis "x" at order 3
     using ExpectedAx = tax::OrderedAxis< "x", 1, 3 >;
-    static_assert( std::is_same_v< SX, tax::MixedTaylorExpansion< double, ExpectedAx > > );
+    static_assert( std::is_same_v< SX, tax::MixedExpansion< double, ExpectedAx > > );
 
     // The x-only slice should keep only monomials with t-degree = 0.
     // f = x + x*t + ... ; slicing drops the x*t term.
@@ -199,7 +199,7 @@ TEST( MixedNamed, TruncateByAxisName )
     // Expected: {t@2, x@4} — box = numMonomials(2,1)*numMonomials(4,1) = 3*5 = 15
     using ExpAxT = tax::OrderedAxis< "t", 1, 2 >;
     using ExpAxX = tax::OrderedAxis< "x", 1, 4 >;
-    static_assert( std::is_same_v< FT, tax::MixedTaylorExpansion< double, ExpAxT, ExpAxX > > );
+    static_assert( std::is_same_v< FT, tax::MixedExpansion< double, ExpAxT, ExpAxX > > );
     static_assert( FT::Inner::nCoefficients == 15 );
 
     // Coefficients with t-degree <= 2 must match the original.
@@ -329,8 +329,8 @@ TEST( MixedNamed, IsotropicSupersetOracle )
 // constexpr context so a regression fails to COMPILE here.
 TEST( MixedNamed, EmbedToLowerOrderDropsOutOfBox )
 {
-    using Src = tax::MixedTaylorExpansion< double, tax::OrderedAxis< "x", 1, 4 > >;
-    using Tgt = tax::MixedTaylorExpansion< double, tax::OrderedAxis< "x", 1, 1 > >;  // lower order
+    using Src = tax::MixedExpansion< double, tax::OrderedAxis< "x", 1, 4 > >;
+    using Tgt = tax::MixedExpansion< double, tax::OrderedAxis< "x", 1, 1 > >;  // lower order
 
     constexpr Tgt t = []() constexpr {
         Src s{};
