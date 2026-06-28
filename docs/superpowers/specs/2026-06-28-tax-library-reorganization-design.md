@@ -21,7 +21,6 @@ This effort grew out of a multi-agent deep review (6 areas, 43 proposals, advers
 review blueprint is the input to this spec; this document records the **decided** design.
 
 ### Non-goals (explicitly out of scope)
-- Reworking `Batch` to remove its Eigen dependency (so a truly "Eigen-free core" is **not** promised).
 - New capability beyond reorg: generic `convertBasis<Target>`, orthogonal transcendental policy, sparse
   support for orthogonal/Mixed schemes. These are recorded as future feature work, not part of the reorg.
 - Re-litigating the basis-generic `Expansion<T,Basis,Scheme,Storage>` redesign — it is the foundation.
@@ -39,6 +38,7 @@ review blueprint is the input to this spec; this document records the **decided*
 | D5 | Eigen layer | Directory becomes **`eigen/`**; namespace **stays `tax::la`** (intentional dir/namespace divergence, zero API churn). |
 | D6 | Namespaces | Make **`tax::la` and `tax::named` inline**; **`tax::mixed` non-inline** (factory disambiguation). Delete the repeated `using`-re-export blocks. |
 | D7 | Umbrella | One umbrella `<tax/tax.hpp>` + three self-complete sub-facades (`expansion.hpp`, `bases.hpp`, `eigen.hpp`). |
+| D8 | Batch | **Remove the `Batch` capability** — delete `Batch<T,K>` (SIMD-style lock-step coefficients), the `K` lane on `TE`, `Batchd`/`Batchf`, `NumTraits<Batch>`, and `test_batch`. Not needed. Resolves the three-batched-spellings incoherence by elimination. |
 
 ---
 
@@ -64,7 +64,6 @@ include/tax/
     scheme.hpp  scheme/{concept,isotropic,mixed}.hpp
     storage/{dense,sparse}.hpp
     expansion.hpp                  # carrier Expansion<T,Basis,Scheme,Storage>; NO eigen/ or bases/ includes
-    batch.hpp                      # Batch<T,K>; self-contained NumTraits<Batch>
     axis.hpp                       # NEW: Axis, OrderedAxis, axis meta (Offset/Dim/IsCanonical/IsSubsetOf/
                                    #      buildAxisMap), ONE policy-parameterised Merge, embed/slice remap helpers
     named.hpp                      # NamedExpansion (tax::named)
@@ -102,7 +101,8 @@ include/tax/
 ```
 
 Deleted: `kernels/` (→ `expansion/detail/`), `operators/` (→ `expansion/ops/`), `la/` (→ `eigen/`),
-`core/` (→ `expansion/`), `series/io.hpp` (→ `io/series.hpp`), `core/taylor_expansion.hpp` shim, `Doxyfile`.
+`core/` (→ `expansion/`), `series/io.hpp` (→ `io/series.hpp`), `core/taylor_expansion.hpp` shim, `Doxyfile`,
+and **`core/batch.hpp`** (D8 — the `Batch` capability is removed entirely).
 
 ### Public include story
 - `<tax/tax.hpp>` — everything (unchanged contract: the recommended include).
@@ -110,8 +110,10 @@ Deleted: `kernels/` (→ `expansion/detail/`), `operators/` (→ `expansion/ops/
 - `<tax/bases.hpp>` — adds the orthogonal basis policies + spectral extras.
 - `<tax/eigen.hpp>` — the Eigen integration; self-complete (includes mixed; fixes today's `la.hpp` gap).
 
-Honest caveat: `expansion.hpp` still transitively pulls Eigen (via `batch.hpp` and io), so it is "core types
-without orthogonal bases," **not** "Eigen-free." A no-Eigen core is out of scope (Non-goals).
+Eigen-free-core note: with `Batch` removed (D8), the only remaining Eigen use in the expansion core is the
+carrier's convenience `gradient()`/`hessian()` members (which return `Eigen::Matrix`). Whether to make the
+expansion core fully Eigen-free by demoting those to free functions only (`tax::gradient(f)`, which already
+exist) is **open question Q-eigfree** (§9) — pending the maintainer's call.
 
 ---
 
@@ -147,6 +149,8 @@ so `tax::value` and `tax::la::value` are one entity (not a redefinition).
 | `TaylorSeries`, `NamedSeries` | *(delete — redundant)* | `TaylorExpansion` and `NamedExpansion` already exist for these |
 | `Series<Basis,N,T>` (univariate-only) | `Series<Basis,N,M=1,T>` | regularize arity to match the per-basis aliases (generic spelling retained) |
 | `TEn<N,M>` | *(delete)* | fully redundant with `TE<N,M>` |
+| `TE<N,M,K=1>` (K batch lane) | `TE<N,M=1>` | D8 — `Batch` removed, so `TE` drops the `K` parameter and the `conditional_t` |
+| `Batchd<K>` / `Batchf<K>` | *(delete)* | D8 — `Batch` removed |
 | `MixedTE<Groups...>` (unnamed anisotropic alias) | `BoxTE<Groups...>` | removes the `MixedTE`/`MTE`-name-trap; not `MixedTaylorSeries` (recreates the trap) |
 | `core/` dir | `expansion/` | feature-module (D1) |
 | `kernels/` dir | `expansion/detail/` | kernels become private (D1) |
@@ -198,6 +202,10 @@ These are carried regardless of layout and several precede the move so the safet
   the 5th consumer); collapse the `Merge`/`MergeOrdered` families into one policy-parameterised template.
   **Drop** the `AxisCarrier` CRTP idea (the named/mixed twins are not real twins — named is basis-generic,
   mixed Taylor-only, different public surfaces); share only the *meta* and the embed/slice remap helpers.
+- **F9 — remove `Batch` (D8).** Delete the SIMD-style `Batch<T,K>` coefficient capability outright: the type +
+  `NumTraits<Batch>` (`core/batch.hpp`), the `K` lane on `TE` (→ `TE<N,M>`), `Batchd`/`Batchf`, the test, and
+  the docs page. Done first (P0) so every downstream phase works against the simpler `TE`. Eliminates the
+  three-batched-spellings naming incoherence with no migration of its own.
 
 ---
 
@@ -224,8 +232,14 @@ Each phase builds + passes the full `ctest` suite in the mamba `tax` env. "Mecha
 path/namespace moves; "Delicate" = semantics or test-string assertions can shift. Ordered so the safety net and
 correctness fixes land before the wide tree move.
 
-- **P0 — Packaging + CI safety net (mechanical).** `version.hpp`; install/`find_package` CI smoke test;
-  `SameMinorVersion`; delete dead artifacts; fix `basis.hpp` doc drift. *(F7)*
+- **P0 — Packaging + CI safety net + remove `Batch` (mechanical).** `version.hpp`; install/`find_package` CI
+  smoke test; `SameMinorVersion`; delete dead artifacts; fix `basis.hpp` doc drift *(F7)*. **Remove the `Batch`
+  capability** *(D8/F9)*: delete `core/batch.hpp`, `NumTraits<Batch>`, the `Batch` forward-decl + `Batchd`/
+  `Batchf` aliases + the `K` lane on `TE` (→ `TE<N,M=1>`) in `expansion.hpp`, the stale "Batch overloads"
+  comment in `named_math_unary.hpp`, `tests/core/test_batch.cpp` (+ its `tax_add_test` entry), and
+  `docs/guide/batch.md` (+ the mkdocs nav entry); scrub Batch mentions from `CLAUDE.md`/`README.md`/`docs/guide/
+  mixed.md`/`docs/internals/orthogonal-redesign.md`. Historical specs/plans under `docs/superpowers/` are left
+  as-is (records of past work).
 - **P1 — `core→eigen` cut + `k!`-constraint (mechanical edit + correctness gate).** *(F1, F2)* — turns prior
   silent misuse into a compile error; verify orthogonal tests don't rely on it.
 - **P2 — `BasisPolicy` + `TaylorBasis` into the core capability; rename concept; regularize `Series` arity;
@@ -256,9 +270,11 @@ correctness fixes land before the wide tree move.
   critics flagged for approach B); accepted deliberately for the cleaner capability-grouped tree.
 - **Inline-namespace subtlety (P5):** `tax::value` must be defined inside `tax::la`; ADL behavior of the now-
   `tax::`-level helpers must be re-verified against existing call sites.
-- **Q-batching (minor, deferred):** `TE<N,M,K>`, `TaylorExpansion<…Batch<double,K>>`, and `Batchd<K>` are three
-  spellings of a batched Taylor type. Pick one recommended spelling and document the others as equivalents —
-  low urgency, folded into P9 docs.
+- **Q-eigfree (open):** with `Batch` removed (D8), the expansion core's *only* remaining Eigen use is the
+  carrier's `gradient()`/`hessian()` convenience members. Demoting them to free functions only (the
+  `tax::gradient(f)`/`tax::hessian(f)` free forms already exist) would make `<tax/expansion.hpp>` truly
+  Eigen-free — a real modularity win — at the cost of rewriting ~15 member call sites (`f.gradient()` →
+  `gradient(f)`) and removing two documented members. **Maintainer decision pending.**
 - **Companion `ode/ads` plugin** must adapt to moved include paths and the `*Series→*Expansion` renames;
   `tax::la::` and `derivative()` are preserved to limit its churn.
 
