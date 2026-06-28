@@ -19,7 +19,7 @@ namespace tax
 // written once here over `BasisPolicy B`. Division is the exception: the
 // expansion/expansion quotient and the scalar/expansion reciprocal use the
 // Taylor recurrence kernels and stay TaylorBasis-specific — other families
-// supply their own division where it is defined (e.g. series/chebyshev_math.hpp).
+// supply their own division where it is defined (e.g. bases/chebyshev_math.hpp).
 //
 // `TaylorExpansion< T, Scheme >` is the B = TaylorBasis instance of Expansion,
 // so these templates cover the Taylor hot path as well as Chebyshev/Legendre/…

@@ -3,13 +3,13 @@
 // Unary math surface for NamedExpansion (any basis). Each wrapper applies the
 // corresponding `tax::` math function to the inner anonymous expansion and
 // rewraps the result with the same axis list, so transcendental functions of
-// named expansions keep their named structure. Mirrors operators/math_unary.hpp
-// and is basis-generic like operators/named_arithmetic.hpp.
+// named expansions keep their named structure. Mirrors expansion/ops/math_unary.hpp
+// and is basis-generic like expansion/ops/named_arithmetic.hpp.
 //
 // The inner call is unqualified after a `using tax::FN;`: ordinary lookup picks
 // up the Taylor overloads visible here, and ADL augments the set at the point of
 // instantiation with the inner basis' own math (e.g. the Chebyshev overloads in
-// series/chebyshev_math.hpp, which the umbrella includes after this header). A
+// bases/chebyshev_math.hpp, which the umbrella includes after this header). A
 // plain `tax::FN(...)` would suppress that ADL and only see TaylorBasis.
 
 #include <cmath>

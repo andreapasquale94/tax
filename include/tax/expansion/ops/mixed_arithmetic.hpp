@@ -2,7 +2,7 @@
 
 // Free-function arithmetic surface for MixedTaylorExpansion: operands embed into
 // the union (max-order per shared axis) before delegating to the inner
-// TaylorExpansion operators. Mirrors operators/named_arithmetic.hpp.
+// TaylorExpansion operators. Mirrors expansion/ops/named_arithmetic.hpp.
 
 #include <tax/expansion/mixed_named.hpp>
 #include <tax/expansion/ops/arithmetic.hpp>

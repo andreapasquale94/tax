@@ -1,7 +1,7 @@
 #pragma once
 
 // Unary math surface for MixedTaylorExpansion: applies tax::FN to the inner
-// expansion, rewrapping with the same axes. Mirrors operators/named_math_unary.hpp.
+// expansion, rewrapping with the same axes. Mirrors expansion/ops/named_math_unary.hpp.
 
 #include <cmath>
 #include <tax/expansion/mixed_named.hpp>

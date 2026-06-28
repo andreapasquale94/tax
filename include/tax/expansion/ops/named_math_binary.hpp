@@ -2,8 +2,8 @@
 
 // Binary math surface for NamedExpansion (any basis): pow, atan2. Forwarded to
 // the inner expansion; atan2 merges the two operands' axis sets into their union.
-// Mirrors operators/math_binary.hpp for the unnamed dense type and is basis-
-// generic like operators/named_arithmetic.hpp. The inner call is unqualified
+// Mirrors expansion/ops/math_binary.hpp for the unnamed dense type and is basis-
+// generic like expansion/ops/named_arithmetic.hpp. The inner call is unqualified
 // after a `using tax::FN;` so ADL augments the overload set with the inner
 // basis' own math at instantiation (see named_math_unary.hpp for the rationale).
 

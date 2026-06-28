@@ -1,7 +1,7 @@
 #pragma once
 
 // Binary math surface for MixedTaylorExpansion: pow, atan2. Mirrors
-// operators/named_math_binary.hpp; the inner call is unqualified after
+// expansion/ops/named_math_binary.hpp; the inner call is unqualified after
 // `using tax::FN` so ADL reaches the dense math. Reached from user code via ADL
 // only (e.g. `pow(mte, n)`); there is no `tax::pow` re-export for the mixed
 // surface, matching the mixed unary-math convention.
