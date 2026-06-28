@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <tax/core/concepts.hpp>
 #include <tax/core/multi_index.hpp>
-#include <tax/core/named.hpp>
+#include <tax/core/axis.hpp>
 #include <tax/core/scheme/mixed.hpp>
 #include <tax/core/expansion.hpp>
 #include <tax/operators/arithmetic.hpp>
