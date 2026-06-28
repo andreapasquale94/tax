@@ -37,70 +37,89 @@ inline constexpr int axisSign = fixedCompare< A::name, B::name >;
 namespace detail
 {
 
+// --- Same-name combine policies for Merge -----------------------------------
+
+/// Default combine policy: require identical dimension, keep the first axis.
+struct SameNameRequireEqual
+{
+    template < typename A0, typename B0 >
+    struct apply
+    {
+        static_assert( A0::dim == B0::dim,
+                       "named axis used with inconsistent dimension across operands" );
+        using type = A0;
+    };
+};
+
 // --- Merge two name-sorted axis lists into one sorted, unique list ----------
 
-template < int Cmp, typename A, typename B >
+template < int Cmp, typename A, typename B, typename Combine >
 struct MergeChoose;
 
-template < typename A, typename B >
+template < typename A, typename B, typename Combine = SameNameRequireEqual >
 struct Merge;
 
-template < typename... Bs >
-struct Merge< TypeList<>, TypeList< Bs... > >
+template < typename... Bs, typename Combine >
+struct Merge< TypeList<>, TypeList< Bs... >, Combine >
 {
     using type = TypeList< Bs... >;
 };
 
-template < typename A0, typename... As >
-struct Merge< TypeList< A0, As... >, TypeList<> >
+template < typename A0, typename... As, typename Combine >
+struct Merge< TypeList< A0, As... >, TypeList<>, Combine >
 {
     using type = TypeList< A0, As... >;
 };
 
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct Merge< TypeList< A0, As... >, TypeList< B0, Bs... > >
-    : MergeChoose< axisSign< A0, B0 >, TypeList< A0, As... >, TypeList< B0, Bs... > >
+template < typename A0, typename... As, typename B0, typename... Bs, typename Combine >
+struct Merge< TypeList< A0, As... >, TypeList< B0, Bs... >, Combine >
+    : MergeChoose< axisSign< A0, B0 >, TypeList< A0, As... >, TypeList< B0, Bs... >, Combine >
 {
 };
 
 // A0 < B0 : take A0
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeChoose< -1, TypeList< A0, As... >, TypeList< B0, Bs... > >
+template < typename A0, typename... As, typename B0, typename... Bs, typename Combine >
+struct MergeChoose< -1, TypeList< A0, As... >, TypeList< B0, Bs... >, Combine >
 {
-    using type =
-        typename Prepend< A0,
-                          typename Merge< TypeList< As... >, TypeList< B0, Bs... > >::type >::type;
+    using type = typename Prepend<
+        A0, typename Merge< TypeList< As... >, TypeList< B0, Bs... >, Combine >::type >::type;
 };
 
 // A0 > B0 : take B0
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeChoose< 1, TypeList< A0, As... >, TypeList< B0, Bs... > >
+template < typename A0, typename... As, typename B0, typename... Bs, typename Combine >
+struct MergeChoose< 1, TypeList< A0, As... >, TypeList< B0, Bs... >, Combine >
 {
-    using type =
-        typename Prepend< B0,
-                          typename Merge< TypeList< A0, As... >, TypeList< Bs... > >::type >::type;
+    using type = typename Prepend<
+        B0, typename Merge< TypeList< A0, As... >, TypeList< Bs... >, Combine >::type >::type;
 };
 
-// A0 == B0 (same name) : require identical dimension, take one, advance both
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeChoose< 0, TypeList< A0, As... >, TypeList< B0, Bs... > >
+// A0 == B0 (same name) : combine via policy, advance both
+template < typename A0, typename... As, typename B0, typename... Bs, typename Combine >
+struct MergeChoose< 0, TypeList< A0, As... >, TypeList< B0, Bs... >, Combine >
 {
-    static_assert( A0::dim == B0::dim,
-                   "named axis used with inconsistent dimension across operands" );
-    using type =
-        typename Prepend< A0, typename Merge< TypeList< As... >, TypeList< Bs... > >::type >::type;
+    using Merged = typename Combine::template apply< A0, B0 >::type;
+    using type   = typename Prepend<
+        Merged, typename Merge< TypeList< As... >, TypeList< Bs... >, Combine >::type >::type;
 };
 
-/// Left-fold `Merge` over a pack of (singleton) axis lists.
-template < typename Acc, typename... Rest >
-struct MergeFold
+/// Left-fold `Merge` over a pack of (singleton) axis lists, forwarding a Combine policy.
+template < typename Combine, typename Acc, typename... Rest >
+struct MergeFoldWith
 {
     using type = Acc;
 };
-template < typename Acc, typename First, typename... Rest >
-struct MergeFold< Acc, First, Rest... >
+template < typename Combine, typename Acc, typename First, typename... Rest >
+struct MergeFoldWith< Combine, Acc, First, Rest... >
 {
-    using type = typename MergeFold< typename Merge< Acc, First >::type, Rest... >::type;
+    using type = typename MergeFoldWith< Combine,
+                                         typename Merge< Acc, First, Combine >::type,
+                                         Rest... >::type;
+};
+
+/// Convenience alias: left-fold with the default (named) combine policy.
+template < typename Acc, typename... Rest >
+struct MergeFold : MergeFoldWith< SameNameRequireEqual, Acc, Rest... >
+{
 };
 
 // --- Lookups ----------------------------------------------------------------

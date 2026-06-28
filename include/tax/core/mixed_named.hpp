@@ -49,60 +49,17 @@ struct AxesToMixedScheme
 template < typename... Axes >
 using AxesToMixedScheme_t = typename AxesToMixedScheme< Axes... >::type;
 
-// Merge two name-sorted ordered-axis lists into one sorted, unique list. The
-// same-name case takes the MAX of the two per-axis orders (a shared axis must
-// accommodate both operands).
-
-template < int Cmp, typename A, typename B >
-struct MergeOrderedChoose;
-
-template < typename A, typename B >
-struct MergeOrdered;
-
-template < typename... Bs >
-struct MergeOrdered< TypeList<>, TypeList< Bs... > >
+/// Mixed-layer combine policy: require identical dimension, keep the axis with the max order.
+struct SameNameMaxOrder
 {
-    using type = TypeList< Bs... >;
-};
-
-template < typename A0, typename... As >
-struct MergeOrdered< TypeList< A0, As... >, TypeList<> >
-{
-    using type = TypeList< A0, As... >;
-};
-
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeOrdered< TypeList< A0, As... >, TypeList< B0, Bs... > >
-    : MergeOrderedChoose< axisSign< A0, B0 >, TypeList< A0, As... >, TypeList< B0, Bs... > >
-{
-};
-
-// A0 < B0 : take A0
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeOrderedChoose< -1, TypeList< A0, As... >, TypeList< B0, Bs... > >
-{
-    using type = typename Prepend<
-        A0, typename MergeOrdered< TypeList< As... >, TypeList< B0, Bs... > >::type >::type;
-};
-
-// A0 > B0 : take B0
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeOrderedChoose< 1, TypeList< A0, As... >, TypeList< B0, Bs... > >
-{
-    using type = typename Prepend<
-        B0, typename MergeOrdered< TypeList< A0, As... >, TypeList< Bs... > >::type >::type;
-};
-
-// A0 == B0 (same name) : require identical dimension, take max(order), advance both
-template < typename A0, typename... As, typename B0, typename... Bs >
-struct MergeOrderedChoose< 0, TypeList< A0, As... >, TypeList< B0, Bs... > >
-{
-    static_assert( A0::dim == B0::dim,
-                   "named axis used with inconsistent dimension across operands" );
-    using Promoted =
-        OrderedAxis< A0::name, A0::dim, ( A0::order > B0::order ? A0::order : B0::order ) >;
-    using type = typename Prepend<
-        Promoted, typename MergeOrdered< TypeList< As... >, TypeList< Bs... > >::type >::type;
+    template < typename A0, typename B0 >
+    struct apply
+    {
+        static_assert( A0::dim == B0::dim,
+                       "named axis used with inconsistent dimension across operands" );
+        using type =
+            OrderedAxis< A0::name, A0::dim, ( A0::order > B0::order ? A0::order : B0::order ) >;
+    };
 };
 
 /// Rebind a `TypeList` of ordered axes into a `MixedTaylorExpansion< T, Axes... >`.
@@ -117,7 +74,7 @@ struct RebindMixed< T, TypeList< Axes... > >
 /// The mixed type over the merged (union, max-order) axis set of two operands.
 template < typename T, typename ListA, typename ListB >
 using MergedMixedTaylorExpansion =
-    typename RebindMixed< T, typename MergeOrdered< ListA, ListB >::type >::type;
+    typename RebindMixed< T, typename Merge< ListA, ListB, SameNameMaxOrder >::type >::type;
 
 /// Order of the axis named `Name` within a list, or -1 if absent.
 template < typename List, FixedString Name >
@@ -152,19 +109,6 @@ struct ReplaceAxisOrder< TypeList< H, Ts... >, Name, N2 >
         fixedCompare< H::name, Name > == 0,
         Prepend< OrderedAxis< Name, H::dim, N2 >, TypeList< Ts... > >,
         Prepend< H, typename ReplaceAxisOrder< TypeList< Ts... >, Name, N2 >::type > >::type;
-};
-
-/// Left-fold `MergeOrdered` over a pack of (singleton) axis lists (for slice()).
-template < typename Acc, typename... Rest >
-struct MergeFoldOrdered
-{
-    using type = Acc;
-};
-template < typename Acc, typename First, typename... Rest >
-struct MergeFoldOrdered< Acc, First, Rest... >
-{
-    using type =
-        typename MergeFoldOrdered< typename MergeOrdered< Acc, First >::type, Rest... >::type;
 };
 
 }  // namespace detail
@@ -297,7 +241,8 @@ class MixedTaylorExpansion
         static_assert( ( ( detail::DimOfName< axis_list, Names >::value >= 1 ) && ... ),
                        "slice(): every requested axis name must exist in this expansion" );
         // Build target axis list (sorted, unique): each named axis with its current dim+order.
-        using Tgt = typename detail::MergeFoldOrdered<
+        using Tgt = typename detail::MergeFoldWith<
+            detail::SameNameMaxOrder,
             detail::TypeList<>,
             detail::TypeList< OrderedAxis< Names, detail::DimOfName< axis_list, Names >::value,
                                            detail::OrderOfName< axis_list, Names >::value > >... >::
