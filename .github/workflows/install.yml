@@ -1,0 +1,18 @@
+name: install
+on: [push, pull_request]
+jobs:
+  install-consume:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Eigen
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Configure + install tax
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTAX_BUILD_UNITTESTS=OFF
+          cmake --install build --prefix "$PWD/_prefix"
+      - name: Build downstream consumer against the installed package
+        run: |
+          cmake -S tests/install -B _consumer -DCMAKE_PREFIX_PATH="$PWD/_prefix"
+          cmake --build _consumer -j
+          ./_consumer/consumer
