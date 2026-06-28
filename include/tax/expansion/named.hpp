@@ -6,10 +6,10 @@
 
 #include <array>
 #include <cstddef>
-#include <tax/expansion/concepts.hpp>
-#include <tax/expansion/multi_index.hpp>
-#include <tax/expansion/expansion.hpp>
 #include <tax/expansion/axis.hpp>
+#include <tax/expansion/concepts.hpp>
+#include <tax/expansion/expansion.hpp>
+#include <tax/expansion/multi_index.hpp>
 #include <utility>
 
 namespace tax::named
@@ -266,10 +266,6 @@ template < FixedString Name, int N, typename Basis = TaylorBasis, typename T >
 // Convenience aliases
 // ---------------------------------------------------------------------------
 
-/// A named expansion in a given basis (double-valued).
-template < typename Basis, int N, typename... Axes >
-using NamedSeries = NamedExpansion< double, Basis, N, Axes... >;
-
 /// The Taylor instance: `NamedTaylorExpansion< T, N, Axes... >`.
 template < typename T, int N, typename... Axes >
 using NamedTaylorExpansion = NamedExpansion< T, TaylorBasis, N, Axes... >;
@@ -291,7 +287,6 @@ namespace tax
 using named::Axis;
 using named::FixedString;
 using named::NamedExpansion;
-using named::NamedSeries;
 using named::NamedTaylorExpansion;
 using named::NE;
 using named::variable;
