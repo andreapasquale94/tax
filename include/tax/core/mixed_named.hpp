@@ -427,6 +427,13 @@ template < typename T, typename... A >
 }
 
 template < typename T, typename... A >
+[[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator/(
+    std::type_identity_t< T > s, const MixedTaylorExpansion< T, A... >& a ) noexcept
+{
+    return MixedTaylorExpansion< T, A... >{ s / a.inner() };
+}
+
+template < typename T, typename... A >
 [[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator-(
     const MixedTaylorExpansion< T, A... >& a ) noexcept
 {

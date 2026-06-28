@@ -22,6 +22,18 @@ TEST( MixedNamed, VariablesArrayAndAxisDim )
     EXPECT_DOUBLE_EQ( v[2].value(), 0.3 );
 }
 
+// scalar / expansion (reciprocal): the scalar-lhs division operator must exist
+// for mixed-order named expansions, matching the named (single-order) surface.
+TEST( MixedNamed, ScalarDivideExpansion )
+{
+    auto x = tax::mixed::variable< "x", 4 >( 2.0 );
+    auto f = 6.0 / x;  // scalar / expansion
+    EXPECT_NEAR( f.value(), 3.0, 1e-12 );
+    auto ref = 6.0 / x.inner();
+    for ( std::size_t k = 0; k < decltype( x )::Inner::nCoefficients; ++k )
+        EXPECT_NEAR( f.inner()[k], ref[k], 1e-12 );
+}
+
 TEST( MixedNamed, ComposeUnionAxesNoBlowup )
 {
     auto x = tax::mixed::variable< "x", 4 >( 0.3 );

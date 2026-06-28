@@ -95,6 +95,26 @@ TEST( NamedBasisGeneric, NumTraitsChebyshev ) { checkNamedNumTraits< tax::Chebys
 TEST( NamedBasisGeneric, NumTraitsLegendre ) { checkNamedNumTraits< tax::LegendreBasis >(); }
 TEST( NamedBasisGeneric, NumTraitsHermite ) { checkNamedNumTraits< tax::HermiteBasis >(); }
 
+// Transcendental functions on a named NON-Taylor expansion: the named unary math
+// surface must be basis-generic, forwarding to the inner basis' own math (here
+// Chebyshev), not hardcoded to TaylorBasis.
+TEST( NamedBasisGeneric, TranscendentalChebyshev )
+{
+    auto x = tax::named::variable< "x", 8, tax::ChebyshevBasis >( 0.0 );
+    using X = decltype( x );
+
+    auto fx = tax::exp( x );           // basis-generic named unary surface
+    auto ref = tax::exp( x.inner() );  // bare Chebyshev exp
+    static_assert( std::is_same_v< typename decltype( fx )::basis, tax::ChebyshevBasis > );
+    for ( std::size_t k = 0; k < X::Inner::nCoefficients; ++k )
+        EXPECT_NEAR( fx.inner()[k], ref[k], 1e-12 );
+
+    auto sx = tax::sin( x );
+    auto sref = tax::sin( x.inner() );
+    for ( std::size_t k = 0; k < X::Inner::nCoefficients; ++k )
+        EXPECT_NEAR( sx.inner()[k], sref[k], 1e-12 );
+}
+
 // The Taylor named surface is unchanged: NE / NamedTaylorExpansion still alias
 // the merged class, and value() works generically.
 TEST( NamedBasisGeneric, TaylorAliasIntact )

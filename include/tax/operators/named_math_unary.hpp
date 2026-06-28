@@ -1,9 +1,16 @@
 #pragma once
 
-// Unary math surface for NamedTaylorExpansion. Each wrapper applies the
-// corresponding `tax::` series function to the inner anonymous expansion and
+// Unary math surface for NamedExpansion (any basis). Each wrapper applies the
+// corresponding `tax::` math function to the inner anonymous expansion and
 // rewraps the result with the same axis list, so transcendental functions of
-// named expansions keep their named structure. Mirrors operators/math_unary.hpp.
+// named expansions keep their named structure. Mirrors operators/math_unary.hpp
+// and is basis-generic like operators/named_arithmetic.hpp.
+//
+// The inner call is unqualified after a `using tax::FN;`: ordinary lookup picks
+// up the Taylor overloads visible here, and ADL augments the set at the point of
+// instantiation with the inner basis' own math (e.g. the Chebyshev overloads in
+// series/chebyshev_math.hpp, which the umbrella includes after this header). A
+// plain `tax::FN(...)` would suppress that ADL and only see TaylorBasis.
 
 #include <cmath>
 #include <tax/core/named.hpp>
@@ -12,12 +19,13 @@
 namespace tax::named
 {
 
-#define TAX_NAMED_UNARY_FN( FN )                                           \
-    template < typename T, int N, typename... A >                          \
-    [[nodiscard]] NamedTaylorExpansion< T, N, A... > FN(                   \
-        const NamedTaylorExpansion< T, N, A... >& a ) noexcept             \
-    {                                                                      \
-        return NamedTaylorExpansion< T, N, A... >{ tax::FN( a.inner() ) }; \
+#define TAX_NAMED_UNARY_FN( FN )                                       \
+    template < typename T, typename Basis, int N, typename... A >      \
+    [[nodiscard]] NamedExpansion< T, Basis, N, A... > FN(              \
+        const NamedExpansion< T, Basis, N, A... >& a ) noexcept        \
+    {                                                                  \
+        using tax::FN;                                                 \
+        return NamedExpansion< T, Basis, N, A... >{ FN( a.inner() ) }; \
     }
 
 TAX_NAMED_UNARY_FN( square )
