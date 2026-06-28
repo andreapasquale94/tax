@@ -27,7 +27,7 @@ A *basis policy* is a stateless type providing a small static surface
 
 | member                  | meaning                                              |
 |-------------------------|------------------------------------------------------|
-| `name()` / `term(k)`           | short identifier and pretty `P_k` label, for IO              |
+| `name()` / `term(k, var)`      | short identifier and pretty `P_k(var)` label, for IO        |
 | `product<T,Scheme>(out,a,b)`   | truncated bilinear product in the family (tensored)         |
 | `eval<T,Scheme>(c, x)`         | value of the expansion at the point vector `x`              |
 | `derivative<T,Scheme>(out,c,axis)` | coefficients of `∂f/∂x_axis` in the same family        |
