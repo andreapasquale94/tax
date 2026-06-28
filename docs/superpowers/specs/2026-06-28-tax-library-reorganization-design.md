@@ -36,7 +36,7 @@ review blueprint is the input to this spec; this document records the **decided*
 | D3 | `derivative()` accessor | **Keep** `derivative()`/`derivative<>()` (the `k!`-scaled value form). No `partial()` rename. |
 | D4 | Alias families | **Keep both**: terse Taylor shorthands `TE/STE/NE/MTE` + basis-generic `*Expansion`. Delete redundant `TEn`; rename the `MixedTE` trap → `BoxTE`. |
 | D5 | Eigen layer | Directory becomes **`eigen/`**; namespace **stays `tax::la`** (intentional dir/namespace divergence, zero API churn). |
-| D6 | Namespaces | Make **`tax::la` and `tax::named` inline**; **`tax::mixed` non-inline** (factory disambiguation). Delete the repeated `using`-re-export blocks. |
+| D6 | Namespaces | **(Revised in P5 execution.)** Surface the `tax::la` + `tax::named` helpers into `tax::` via a single **`la/exports.hpp`** assembly point (one consolidated `using`-block, included last after all overloads are defined), replacing the three scattered re-export blocks. `tax::la`/`tax::named`/`tax::mixed` stay **normal** namespaces. *Rationale:* the original "inline `tax::la`/`tax::named`" idea was found in execution to promote the ENTIRE named+mixed surface (types + operators + factories) into `tax::`, risking clashes (e.g. `tax::variable` vs `tax::named::variable`); the exports.hpp approach achieves the same documented `tax::gradient(te)`/`tax::gradient<"x">(ne)` resolution with far less risk and no surface-wide promotion. |
 | D7 | Umbrella | One umbrella `<tax/tax.hpp>` + three self-complete sub-facades (`expansion.hpp`, `bases.hpp`, `eigen.hpp`). |
 | D8 | Batch | **Remove the `Batch` capability** — delete `Batch<T,K>` (SIMD-style lock-step coefficients), the `K` lane on `TE`, `Batchd`/`Batchf`, `NumTraits<Batch>`, and `test_batch`. Not needed. Resolves the three-batched-spellings incoherence by elimination. |
 | D9 | Sever core→la edge | **The expansion core must not depend on the `tax::la` module.** Move the carrier's `gradient()`/`hessian()` members to the free `tax::la::gradient(f)`/`hessian(f)` (re-home their loop bodies). The carrier KEEPS the `eval(Eigen-vector)` convenience member, so it includes `<Eigen/Core>` *directly* instead of `<tax/la/types.hpp>`. Result: the core no longer reaches up into `tax::la` (the F2 layering goal) — though it is **not** fully Eigen-free (it still uses the external `Eigen` lib for `eval(Eigen)`). *(Revised from "fully Eigen-free core" after the carrier was found to also expose `eval(Eigen)`; the maintainer chose to keep that member.)* |
@@ -257,9 +257,15 @@ correctness fixes land before the wide tree move.
   demote `aliases.hpp` to a pure-alias file (mechanical, wide; one atomic commit).** *(F3, naming)*
 - **P3 — extract `meta.hpp` + `axis.hpp`; collapse `Merge` (3a mechanical, 3b delicate compile-time meta).** *(F8)*
 - **P4 — mixed operators → `operators/mixed_*.hpp` (sever core→operators); full binary parity (named + mixed).** *(F4, H-C/H-D)* **M-B deferred:** moving the mixed *type* `tax::named`→`tax::mixed` is delicate (the type body uses `tax::named::detail` helpers; `la/mixed_named.hpp`+NumTraits reference it) and medium-value — folded into the **P6** tree move where namespaces are revisited. The moved mixed operators stay in `tax::named` for now.
-- **P5 — eigen consolidation + inline namespaces.** Merge named+mixed la surface → `named_diff.hpp`; one shared
-  `ExpansionNumTraits` factory (Batch excluded); unify `traits.hpp`; inline `tax::la`/`tax::named`, delete the
-  `using`-blocks; self-complete `eigen.hpp`. *(F5)*
+- **P5 — la re-export consolidation + self-complete la.hpp (scoped).** Self-complete `la.hpp` (include
+  `mixed_named.hpp` — it currently lacks `NumTraits<MTE>` + mixed `gradient` on its own). Replace the three
+  scattered `using`-re-export blocks with a single `la/exports.hpp` (D6 revised: assembly point, NOT inline
+  namespaces) included last, surfacing BOTH the dense `tax::la` helpers (fixes the `tax::gradient(te)` gap) and
+  the named/mixed helpers into `tax::`. *(F5, H-E/M-F)*
+  **Deferred from P5** (low reorg value / subtleties — note for a later pass): the shared `ExpansionNumTraits`
+  factory (LA-2; cost-enum differs Expansion/Named-vs-Mixed), `traits.hpp` unification (LA-9; is_te in
+  `tax::la::detail` vs is_named/is_mixed in `tax::named::detail`), and giving MIXED the point-form value/eval
+  overloads named has (LA-3 remainder; the coeff-form already shares `la/axis_diff.hpp`).
 - **P6 — THE tree move (mechanical, wide; one atomic compile-verified commit).** `core/→expansion/`,
   `kernels/→expansion/detail/`, `operators/→expansion/ops/`, `series/→bases/`, `la/→eigen/`; add the three
   facades + shrink `tax.hpp`. The ODR-sensitive `stencil_config.hpp` keeps the macro order intact.
