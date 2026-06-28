@@ -15,7 +15,7 @@ namespace tax
 // Dense arithmetic — basis-generic over Expansion< T, Basis, Scheme >.
 //
 // Every linear-space operation, and the bilinear product (which delegates to
-// the basis' own Basis::product), is identical for every basis, so each is
+// the basis' own B::product), is identical for every basis, so each is
 // written once here over `BasisPolicy B`. Division is the exception: the
 // expansion/expansion quotient and the scalar/expansion reciprocal use the
 // Taylor recurrence kernels and stay TaylorBasis-specific — other families

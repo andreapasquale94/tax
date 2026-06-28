@@ -12,8 +12,8 @@ namespace tax
 // Basis-generic operator surface.
 //
 // The linear-space operators and the bilinear product are basis-generic and
-// live in <tax/operators/arithmetic.hpp> (one set of templates over `Basis B`,
-// the product delegating to `Basis::product`). This header only adds the
+// live in <tax/operators/arithmetic.hpp> (one set of templates over `BasisPolicy B`,
+// the product delegating to `B::product`). This header only adds the
 // integer power, which a Taylor expansion already gets a recurrence-based form
 // of via <tax/operators/math_binary.hpp>; here it is provided by repeated
 // squaring for the other (non-Taylor) product-bearing families.
