@@ -196,6 +196,7 @@ class Expansion< T, Basis, Scheme, storage::Dense >
 
     /// Runtime partial derivative value `d^|alpha| f / dx^alpha` at x0.
     [[nodiscard]] constexpr T derivative( const MultiIndex< Scheme::vars >& alpha ) const noexcept
+        requires( std::is_same_v< Basis, TaylorBasis > )
     {
         // Accumulate the factorial in T: std::size_t overflows at 21! on 64-bit.
         T fac = T{ 1 };
@@ -207,6 +208,7 @@ class Expansion< T, Basis, Scheme, storage::Dense >
     /// Compile-time partial derivative value.
     template < int... Alpha >
     [[nodiscard]] constexpr T derivative() const noexcept
+        requires( std::is_same_v< Basis, TaylorBasis > )
     {
         static_assert( sizeof...( Alpha ) == std::size_t( Scheme::vars ),
                        "derivative<Alpha...>(): arity must match variable count" );

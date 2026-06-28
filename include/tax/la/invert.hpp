@@ -87,7 +87,7 @@ namespace tax::la
 /// Formally invert a square polynomial map (perturbation part only; constant terms are
 /// dropped). Requires an invertible linear part; throws std::invalid_argument if singular.
 template < typename Derived >
-    requires( detail::is_te_v< typename Derived::Scalar > )
+    requires( detail::is_taylor_te_v< typename Derived::Scalar > )
 [[nodiscard]] auto invert( const Eigen::MatrixBase< Derived >& map_in )
 {
     using TE = typename Derived::Scalar;
