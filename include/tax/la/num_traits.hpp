@@ -14,10 +14,10 @@
 namespace Eigen
 {
 
-template < typename T, typename Scheme, typename Storage >
-struct NumTraits< tax::TaylorExpansion< T, Scheme, Storage > > : NumTraits< T >
+template < typename T, typename Basis, typename Scheme, typename Storage >
+struct NumTraits< tax::Expansion< T, Basis, Scheme, Storage > > : NumTraits< T >
 {
-    using Self = tax::TaylorExpansion< T, Scheme, Storage >;
+    using Self = tax::Expansion< T, Basis, Scheme, Storage >;
     using Real = Self;
     using NonInteger = Self;
     using Nested = Self;
@@ -61,14 +61,15 @@ namespace tax::la::detail
 template < typename >
 struct te_traits;
 
-template < typename T, typename Scheme, typename S >
-struct te_traits< TaylorExpansion< T, Scheme, S > >
+template < typename T, typename Basis, typename Scheme, typename S >
+struct te_traits< Expansion< T, Basis, Scheme, S > >
 {
     using scalar_type = T;
     static constexpr int order_v = Scheme::order;
     static constexpr int vars_v = Scheme::vars;
     using scheme_t = Scheme;
     using storage_t = S;
+    using basis_t = Basis;
 };
 
 template < typename T >
@@ -76,13 +77,20 @@ struct is_te : std::false_type
 {
 };
 
-template < typename T, typename Scheme, typename S >
-struct is_te< TaylorExpansion< T, Scheme, S > > : std::true_type
+template < typename T, typename Basis, typename Scheme, typename S >
+struct is_te< Expansion< T, Basis, Scheme, S > > : std::true_type
 {
 };
 
+/// Any tax `Expansion` (used by basis-generic la helpers: variables/value/eval).
 template < typename T >
 inline constexpr bool is_te_v = is_te< T >::value;
+
+/// A `TaylorExpansion` specifically — gate for the Taylor-only value semantics
+/// (k!-scaled derivative *values*, expansion-point gradient/Hessian/Jacobian).
+template < typename E >
+inline constexpr bool is_taylor_te_v =
+    is_te_v< E > && std::is_same_v< typename te_traits< E >::basis_t, TaylorBasis >;
 
 /// Rebind the scalar type of an Eigen matrix expression.
 template < typename Derived, typename Scalar >

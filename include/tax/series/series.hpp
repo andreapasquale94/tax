@@ -8,6 +8,8 @@
 #include <tax/core/taylor_expansion.hpp>
 #include <tax/series/basis.hpp>
 #include <tax/series/chebyshev_basis.hpp>
+#include <tax/series/hermite_basis.hpp>
+#include <tax/series/legendre_basis.hpp>
 #include <tax/series/taylor_basis.hpp>
 
 namespace tax
@@ -24,5 +26,13 @@ using TaylorSeries = Expansion< T, TaylorBasis, IsotropicScheme< N, M > >;
 /// Order-N, M-variate Chebyshev (first-kind) expansion.
 template < int N, int M = 1, typename T = double >
 using ChebyshevSeries = Expansion< T, ChebyshevBasis, IsotropicScheme< N, M > >;
+
+/// Order-N, M-variate Legendre expansion.
+template < int N, int M = 1, typename T = double >
+using LegendreSeries = Expansion< T, LegendreBasis, IsotropicScheme< N, M > >;
+
+/// Order-N, M-variate probabilists' Hermite expansion.
+template < int N, int M = 1, typename T = double >
+using HermiteSeries = Expansion< T, HermiteBasis, IsotropicScheme< N, M > >;
 
 }  // namespace tax
