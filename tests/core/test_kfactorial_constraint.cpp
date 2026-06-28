@@ -22,6 +22,20 @@ static_assert( !HasValueDerivative< ChebE >,
 static_assert( !HasValueDerivative< LegE >,
                "Legendre expansion must NOT expose the k!-scaled derivative()" );
 
+// Also prove the compile-time template overload derivative<Alpha...>() is
+// equally constrained to TaylorBasis.
+template < typename E >
+concept HasTemplateDerivative = requires( const E e ) {
+    e.template derivative< 1, 0 >();  // 2-variable form matching TE<3,2>
+};
+
+static_assert( HasTemplateDerivative< TaylorE >,
+               "Taylor expansion must expose derivative<Alpha...>()" );
+static_assert( !HasTemplateDerivative< ChebE >,
+               "Chebyshev expansion must NOT expose derivative<Alpha...>()" );
+static_assert( !HasTemplateDerivative< LegE >,
+               "Legendre expansion must NOT expose derivative<Alpha...>()" );
+
 TEST( KFactorialConstraint, TaylorOnly )
 {
     // The static_asserts above are the real test; this keeps a runtime hook so
