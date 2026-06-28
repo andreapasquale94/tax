@@ -28,10 +28,10 @@
 namespace Eigen
 {
 
-template < typename T, int N, typename... Axes >
-struct NumTraits< tax::named::NamedTaylorExpansion< T, N, Axes... > > : NumTraits< T >
+template < typename T, typename Basis, int N, typename... Axes >
+struct NumTraits< tax::named::NamedExpansion< T, Basis, N, Axes... > > : NumTraits< T >
 {
-    using Self = tax::named::NamedTaylorExpansion< T, N, Axes... >;
+    using Self = tax::named::NamedExpansion< T, Basis, N, Axes... >;
     using Real = Self;
     using NonInteger = Self;
     using Nested = Self;
@@ -68,15 +68,16 @@ namespace tax::named
 // variables — Eigen-vector overload of the single-axis coordinate factory
 // -----------------------------------------------------------------------------
 
-/// Build the coordinate variables of a single named axis `Name` from an Eigen vector expansion point.
-template < FixedString Name, int N, typename Derived >
+/// Build the coordinate variables of a single named axis `Name` from an Eigen vector expansion
+/// point.
+template < FixedString Name, int N, typename Basis = TaylorBasis, typename Derived >
 [[nodiscard]] auto variables( const Eigen::MatrixBase< Derived >& x0 )
 {
     constexpr int D = Derived::SizeAtCompileTime;
     static_assert( D != Eigen::Dynamic,
                    "variables(Eigen): expansion point must have a compile-time size" );
     using T = typename Derived::Scalar;
-    using E = NamedTaylorExpansion< T, N, Axis< Name, D > >;
+    using E = NamedExpansion< T, Basis, N, Axis< Name, D > >;
 
     typename E::Input p{};
     for ( int i = 0; i < D; ++i ) p[std::size_t( i )] = T( x0( i ) );
@@ -182,28 +183,102 @@ template < FixedString Name, typename Derived >
 }
 
 // -----------------------------------------------------------------------------
-// value / eval — mirror tax::la for named states
+// Point-form per-axis differential helpers (any basis)
+//
+// For non-Taylor families the partial derivatives are not coefficients; these
+// overloads differentiate the named expansion along one axis and evaluate at an
+// explicit joint point. Distinguished from the Taylor expansion-point forms by
+// the extra point argument.
 // -----------------------------------------------------------------------------
 
 namespace detail
 {
-
 template < typename >
 struct is_named : std::false_type
 {
 };
-template < typename T, int N, typename... Axes >
-struct is_named< NamedTaylorExpansion< T, N, Axes... > > : std::true_type
+template < typename T, typename Basis, int N, typename... Axes >
+struct is_named< NamedExpansion< T, Basis, N, Axes... > > : std::true_type
 {
 };
 template < typename T >
 inline constexpr bool is_named_v = is_named< T >::value;
 
+template < typename E, typename PtDerived >
+[[nodiscard]] typename E::Input namedToPoint( const Eigen::MatrixBase< PtDerived >& at )
+{
+    using T = typename E::scalar_type;
+    constexpr int V = E::vars_v;
+    static_assert(
+        PtDerived::SizeAtCompileTime == V || PtDerived::SizeAtCompileTime == Eigen::Dynamic,
+        "point size must match the joint variable count" );
+    typename E::Input p{};
+    for ( int i = 0; i < V; ++i ) p[std::size_t( i )] = T( at( i ) );
+    return p;
+}
 }  // namespace detail
 
+/// Gradient w.r.t. one named axis, evaluated at joint point `at`.
+template < FixedString Name, typename T, typename Basis, int N, typename... Axes,
+           typename PtDerived >
+[[nodiscard]] auto gradient( const NamedExpansion< T, Basis, N, Axes... >& f,
+                             const Eigen::MatrixBase< PtDerived >& at )
+{
+    using E = NamedExpansion< T, Basis, N, Axes... >;
+    constexpr int dim = detail::axisDim< E, Name >;
+    static_assert( dim >= 1, "gradient<Name>(f, at): axis name not present in this expansion" );
+    constexpr int off = detail::axisOffset< E, Name >;
+    const typename E::Input p = detail::namedToPoint< E >( at );
+    Eigen::Matrix< T, dim, 1 > g;
+    for ( int i = 0; i < dim; ++i ) g( i ) = f.inner().deriv( off + i ).eval( p );
+    return g;
+}
+
+/// Hessian restricted to one named axis, evaluated at joint point `at`.
+template < FixedString Name, typename T, typename Basis, int N, typename... Axes,
+           typename PtDerived >
+[[nodiscard]] auto hessian( const NamedExpansion< T, Basis, N, Axes... >& f,
+                            const Eigen::MatrixBase< PtDerived >& at )
+{
+    using E = NamedExpansion< T, Basis, N, Axes... >;
+    constexpr int dim = detail::axisDim< E, Name >;
+    static_assert( dim >= 1, "hessian<Name>(f, at): axis name not present in this expansion" );
+    constexpr int off = detail::axisOffset< E, Name >;
+    const typename E::Input p = detail::namedToPoint< E >( at );
+    Eigen::Matrix< T, dim, dim > H;
+    for ( int i = 0; i < dim; ++i )
+        for ( int j = 0; j < dim; ++j )
+            H( i, j ) = f.inner().deriv( off + i ).deriv( off + j ).eval( p );
+    return H;
+}
+
+/// Jacobian of a vector of named expansions w.r.t. one named axis, at joint point `at`.
+template < FixedString Name, typename Derived, typename PtDerived >
+    requires( detail::is_named_v< typename Derived::Scalar > )
+[[nodiscard]] auto jacobian( const Eigen::MatrixBase< Derived >& F,
+                             const Eigen::MatrixBase< PtDerived >& at )
+{
+    using E = typename Derived::Scalar;
+    using T = typename E::scalar_type;
+    constexpr int dim = detail::axisDim< E, Name >;
+    static_assert( dim >= 1, "jacobian<Name>(F, at): axis name not present in the expansion" );
+    constexpr int off = detail::axisOffset< E, Name >;
+    constexpr int K = Derived::SizeAtCompileTime;
+    const typename E::Input p = detail::namedToPoint< E >( at );
+    Eigen::Matrix< T, K, dim > out( F.size(), dim );
+    for ( Eigen::Index r = 0; r < F.size(); ++r )
+        for ( int j = 0; j < dim; ++j )
+            out( r, j ) = F.derived().coeff( r ).inner().deriv( off + j ).eval( p );
+    return out;
+}
+
+// -----------------------------------------------------------------------------
+// value / eval — mirror tax::la for named states
+// -----------------------------------------------------------------------------
+
 /// Constant term of a single named expansion.
-template < typename T, int N, typename... Axes >
-[[nodiscard]] T value( const NamedTaylorExpansion< T, N, Axes... >& f ) noexcept
+template < typename T, typename Basis, int N, typename... Axes >
+[[nodiscard]] T value( const NamedExpansion< T, Basis, N, Axes... >& f ) noexcept
 {
     return f.value();
 }
@@ -222,8 +297,8 @@ template < typename Derived >
 }
 
 /// Evaluate a single named expansion at a joint displacement `dx`.
-template < typename T, int N, typename... Axes, typename DxDerived >
-[[nodiscard]] T eval( const NamedTaylorExpansion< T, N, Axes... >& f,
+template < typename T, typename Basis, int N, typename... Axes, typename DxDerived >
+[[nodiscard]] T eval( const NamedExpansion< T, Basis, N, Axes... >& f,
                       const Eigen::MatrixBase< DxDerived >& dx )
 {
     return f.inner().eval( dx );

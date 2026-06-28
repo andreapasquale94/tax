@@ -162,15 +162,37 @@ Taylor instance reproduces the previous behaviour exactly:
 Sparse storage remains `TaylorBasis`-only (a `static_assert` enforces it);
 generalising the sparse recurrences to other families is future work.
 
+## Families and ecosystem coverage
+
+| family            | product/eval/calculus | multivariate | `tax::la` | named axes |
+|-------------------|:---------------------:|:------------:|:---------:|:----------:|
+| Taylor (monomial) | ✓                     | ✓            | ✓ (+k!-forms) | ✓      |
+| Chebyshev (T_n)   | ✓ (+domain, +math)    | ✓            | ✓         | ✓          |
+| Legendre (P_n)    | ✓                     | ✓            | ✓         | ✓          |
+| Hermite (He_n)    | ✓                     | ✓            | ✓         | ✓          |
+
+Legendre and Hermite are driven by a **generic orthogonal engine**
+(`series/ortho.hpp`): a family supplies only its three-term recurrence
+`x·P_n = α_n P_{n+1} + β_n P_n + γ_n P_{n-1}` (`Rec::xmul`), and the engine
+derives multiplication-by-coordinate (Jacobi operator), the truncated product
+(multiply-by-P_n ladder, tensored over axes) and evaluation; the basis adds its
+closed-form derivative/integral. Adding Laguerre, Chebyshev-2nd-kind, etc. is
+one small policy each.
+
+**Named axes** (`NamedExpansion<T, Basis, N, Axes…>`, with `NamedTaylorExpansion`
+its Taylor alias) and **`tax::la`** (Eigen `NumTraits`, point-form
+gradient/Hessian/Jacobian, axis-addressed forms) now work for every basis. The
+Taylor-only value semantics (k!-scaled derivative values, expansion-point
+gradient/Hessian/Jacobian) stay gated to `TaylorBasis`; other families use the
+point-form operators.
+
 ## Roadmap
 
-- **More families**: Legendre, Hermite, Laguerre — each is one policy
-  (recurrence-defined product + Gauss-quadrature evaluation/projection).
 - **Transcendentals in any basis, exactly**: solve `y' = g'·y` etc. as a banded
   linear system in coefficient space (replacing Chebyshev's sample-and-fit with
   a `constexpr` exact path); multivariate Chebyshev composition.
-- **Chebyshev on the ecosystem**: named axes, sparse, and `tax::la` for
-  non-Taylor bases; per-axis Chebyshev domains.
-- **Spectral utilities**: Clenshaw–Curtis quadrature, rootfinding, adaptive
-  degree.
+- **Sparse / Batch for non-Taylor**: generalise the sparse recurrences and SIMD
+  batch coefficients beyond `TaylorBasis`.
+- **Spectral utilities**: Clenshaw–Curtis / Gauss quadrature, rootfinding,
+  adaptive degree; per-axis Chebyshev domains.
 ```

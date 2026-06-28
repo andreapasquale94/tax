@@ -33,8 +33,8 @@ template < typename T, int N, typename... A, typename... B >
 [[nodiscard]] auto atan2( const NamedTaylorExpansion< T, N, A... >& y,
                           const NamedTaylorExpansion< T, N, B... >& x ) noexcept
 {
-    using R = detail::MergedNamedTaylorExpansion< T, N, detail::TypeList< A... >,
-                                                  detail::TypeList< B... > >;
+    using R = detail::MergedNamedExpansion< T, TaylorBasis, N, detail::TypeList< A... >,
+                                            detail::TypeList< B... > >;
     return R{ tax::atan2( y.template embed< R >().inner(), x.template embed< R >().inner() ) };
 }
 

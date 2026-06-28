@@ -268,26 +268,26 @@ template < typename Src, typename Tgt, bool allowDrop >
 }  // namespace detail
 
 // Forward declaration so `detail::Rebind` can name the named type.
-template < typename T, int N, typename... Axes >
-    requires Scalar< T >
-class NamedTaylorExpansion;
+template < typename T, typename Basis, int N, typename... Axes >
+    requires Scalar< T > && tax::Basis< Basis >
+class NamedExpansion;
 
 namespace detail
 {
 
-/// Rebind a `TypeList` of axes into an `NamedTaylorExpansion< T, N, Axes... >`.
-template < typename T, int N, typename List >
+/// Rebind a `TypeList` of axes into a `NamedExpansion< T, Basis, N, Axes... >`.
+template < typename T, typename Basis, int N, typename List >
 struct Rebind;
-template < typename T, int N, typename... Axes >
-struct Rebind< T, N, TypeList< Axes... > >
+template < typename T, typename Basis, int N, typename... Axes >
+struct Rebind< T, Basis, N, TypeList< Axes... > >
 {
-    using type = NamedTaylorExpansion< T, N, Axes... >;
+    using type = NamedExpansion< T, Basis, N, Axes... >;
 };
 
 /// The named type over the merged (union) axis set of two operands.
-template < typename T, int N, typename ListA, typename ListB >
-using MergedNamedTaylorExpansion =
-    typename Rebind< T, N, typename Merge< ListA, ListB >::type >::type;
+template < typename T, typename Basis, int N, typename ListA, typename ListB >
+using MergedNamedExpansion =
+    typename Rebind< T, Basis, N, typename Merge< ListA, ListB >::type >::type;
 
 }  // namespace detail
 
@@ -295,16 +295,17 @@ using MergedNamedTaylorExpansion =
 // NamedTaylorExpansion — a named Taylor expansion
 // ---------------------------------------------------------------------------
 
-template < typename T, int N, typename... Axes >
-    requires Scalar< T >
-class NamedTaylorExpansion
+template < typename T, typename Basis, int N, typename... Axes >
+    requires Scalar< T > && tax::Basis< Basis >
+class NamedExpansion
 {
    public:
     using axis_list = detail::TypeList< Axes... >;
     using scalar_type = T;
+    using basis = Basis;
 
     static_assert( detail::IsCanonical< axis_list >::value,
-                   "NamedTaylorExpansion axes must be sorted by name and unique; build via "
+                   "NamedExpansion axes must be sorted by name and unique; build via "
                    "variables()/composition rather than spelling them by hand" );
 
     /// Number of underlying variables (sum of axis dimensions).
@@ -312,7 +313,7 @@ class NamedTaylorExpansion
     static constexpr int order_v = N;
 
     /// Underlying anonymous dense expansion type.
-    using Inner = TaylorExpansion< T, IsotropicScheme< N, vars_v >, storage::Dense >;
+    using Inner = Expansion< T, Basis, IsotropicScheme< N, vars_v >, storage::Dense >;
     using Input = typename Inner::Input;
 
     // Mirror the underlying storage traits so NamedTaylorExpansion satisfies the
@@ -324,21 +325,21 @@ class NamedTaylorExpansion
     // Constructors
     // ------------------------------------------------------------------
 
-    constexpr NamedTaylorExpansion() noexcept = default;
+    constexpr NamedExpansion() noexcept = default;
 
     /// Constant expansion (value in every axis direction is flat).
-    /*implicit*/ constexpr NamedTaylorExpansion( T v ) noexcept : inner_{ v } {}
+    /*implicit*/ constexpr NamedExpansion( T v ) noexcept : inner_{ v } {}
 
     /// Wrap an existing anonymous expansion carrying these axes.
-    explicit constexpr NamedTaylorExpansion( const Inner& inner ) noexcept : inner_{ inner } {}
+    explicit constexpr NamedExpansion( const Inner& inner ) noexcept : inner_{ inner } {}
 
     /// Implicit promotion from an expansion over a subset of these axes.
     template < typename... B >
         requires( !std::is_same_v< detail::TypeList< B... >, axis_list > &&
                   detail::IsSubsetOf< detail::TypeList< B... >, axis_list >::value )
-    /*implicit*/ constexpr NamedTaylorExpansion(
-        const NamedTaylorExpansion< T, N, B... >& other ) noexcept
-        : inner_{ other.template embed< NamedTaylorExpansion >().inner() }
+    /*implicit*/ constexpr NamedExpansion(
+        const NamedExpansion< T, Basis, N, B... >& other ) noexcept
+        : inner_{ other.template embed< NamedExpansion >().inner() }
     {
     }
 
@@ -348,10 +349,10 @@ class NamedTaylorExpansion
 
     /// The I-th coordinate variable of the joint variable space at `p`.
     template < int I >
-    [[nodiscard]] static constexpr NamedTaylorExpansion variable( const Input& p ) noexcept
+    [[nodiscard]] static constexpr NamedExpansion variable( const Input& p ) noexcept
         requires( I >= 0 && I < vars_v )
     {
-        return NamedTaylorExpansion{ Inner::template variable< I >( p ) };
+        return NamedExpansion{ Inner::template variable< I >( p ) };
     }
 
     // ------------------------------------------------------------------
@@ -404,7 +405,7 @@ class NamedTaylorExpansion
             detail::TypeList<>,
             detail::TypeList< Axis< Names, detail::DimOfName< axis_list, Names >::value > >... >::
             type;
-        using R = typename detail::Rebind< T, N, Tgt >::type;
+        using R = typename detail::Rebind< T, Basis, N, Tgt >::type;
 
         constexpr auto map = detail::buildAxisMap< axis_list, Tgt, /*allowDrop=*/true >();
         typename R::Inner out{};
@@ -451,16 +452,16 @@ class NamedTaylorExpansion
 
     /// Partial derivative with respect to one coordinate of a named axis.
     template < FixedString Name, int Local = 0 >
-    [[nodiscard]] constexpr NamedTaylorExpansion deriv() const noexcept
+    [[nodiscard]] constexpr NamedExpansion deriv() const noexcept
     {
-        return NamedTaylorExpansion{ inner_.template deriv< axisVar< Name, Local >() >() };
+        return NamedExpansion{ inner_.template deriv< axisVar< Name, Local >() >() };
     }
 
     /// Indefinite integral with respect to one coordinate of a named axis.
     template < FixedString Name, int Local = 0 >
-    [[nodiscard]] constexpr NamedTaylorExpansion integ() const noexcept
+    [[nodiscard]] constexpr NamedExpansion integ() const noexcept
     {
-        return NamedTaylorExpansion{ inner_.template integ< axisVar< Name, Local >() >() };
+        return NamedExpansion{ inner_.template integ< axisVar< Name, Local >() >() };
     }
 
     // ------------------------------------------------------------------
@@ -469,16 +470,16 @@ class NamedTaylorExpansion
 
     /// Order-reducing truncation: drop monomials of degree > N2, yielding a lower-order expansion.
     template < int N2 >
-    [[nodiscard]] constexpr NamedTaylorExpansion< T, N2, Axes... > truncate() const noexcept
+    [[nodiscard]] constexpr NamedExpansion< T, Basis, N2, Axes... > truncate() const noexcept
         requires( N2 >= 0 && N2 <= N )
     {
-        return NamedTaylorExpansion< T, N2, Axes... >{ inner_.template truncate< N2 >() };
+        return NamedExpansion< T, Basis, N2, Axes... >{ inner_.template truncate< N2 >() };
     }
 
     /// Same-order truncation: zero every coefficient of total degree > d (d>=N copies, d<0 zeroes).
-    [[nodiscard]] constexpr NamedTaylorExpansion truncate( int d ) const noexcept
+    [[nodiscard]] constexpr NamedExpansion truncate( int d ) const noexcept
     {
-        return NamedTaylorExpansion{ inner_.truncate( d ) };
+        return NamedExpansion{ inner_.truncate( d ) };
     }
 
    private:
@@ -489,12 +490,13 @@ class NamedTaylorExpansion
 // Coordinate-variable factory for a single named axis
 // ---------------------------------------------------------------------------
 
-/// Build the `D` coordinate variables of a single named axis `Name`.
-template < FixedString Name, int N, typename T, std::size_t D >
+/// Build the `D` coordinate variables of a single named axis `Name` (basis-generic;
+/// `Basis` defaults to TaylorBasis).
+template < FixedString Name, int N, typename Basis = TaylorBasis, typename T, std::size_t D >
 [[nodiscard]] constexpr auto variables( const std::array< T, D >& x0 ) noexcept
 {
     using Ax = Axis< Name, int( D ) >;
-    using E = NamedTaylorExpansion< T, N, Ax >;
+    using E = NamedExpansion< T, Basis, N, Ax >;
     std::array< E, D > out{};
     [&]< std::size_t... I >( std::index_sequence< I... > ) {
         ( ( out[I] = E::template variable< int( I ) >( x0 ) ), ... );
@@ -503,22 +505,30 @@ template < FixedString Name, int N, typename T, std::size_t D >
 }
 
 /// Build the single coordinate variable of a 1-D named axis `Name`.
-template < FixedString Name, int N, typename T >
+template < FixedString Name, int N, typename Basis = TaylorBasis, typename T >
     requires Scalar< T >
 [[nodiscard]] constexpr auto variable( T x0 ) noexcept
 {
-    using E = NamedTaylorExpansion< T, N, Axis< Name, 1 > >;
+    using E = NamedExpansion< T, Basis, N, Axis< Name, 1 > >;
     typename E::Input p{ x0 };
     return E::template variable< 0 >( p );
 }
 
 // ---------------------------------------------------------------------------
-// Convenience alias (double-valued)
+// Convenience aliases
 // ---------------------------------------------------------------------------
 
-/// `NE< N, Axes... >` — double-valued named expansion of order N.
+/// A named expansion in a given basis (double-valued).
+template < typename Basis, int N, typename... Axes >
+using NamedSeries = NamedExpansion< double, Basis, N, Axes... >;
+
+/// The Taylor instance: `NamedTaylorExpansion< T, N, Axes... >`.
+template < typename T, int N, typename... Axes >
+using NamedTaylorExpansion = NamedExpansion< T, TaylorBasis, N, Axes... >;
+
+/// `NE< N, Axes... >` — double-valued named Taylor expansion of order N.
 template < int N, typename... Axes >
-using NE = NamedTaylorExpansion< double, N, Axes... >;
+using NE = NamedExpansion< double, TaylorBasis, N, Axes... >;
 
 }  // namespace tax::named
 
@@ -532,6 +542,8 @@ namespace tax
 {
 using named::Axis;
 using named::FixedString;
+using named::NamedExpansion;
+using named::NamedSeries;
 using named::NamedTaylorExpansion;
 using named::NE;
 using named::variable;
