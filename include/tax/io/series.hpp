@@ -132,6 +132,24 @@ template < typename... Axes >
     return result;
 }
 
+/// Types with a streamScalar path: any-basis Expansion and any-basis NamedExpansion.
+/// Used to constrain to_string()/series() so misuse is a clean constraint error.
+/// (Mixed expansions are intentionally excluded — they have no streamScalar overload.)
+template < typename >
+struct is_printable : std::false_type
+{
+};
+template < typename T, typename B, typename Scheme, typename Storage >
+struct is_printable< Expansion< T, B, Scheme, Storage > > : std::true_type
+{
+};
+template < typename T, typename B, int N, typename... Axes >
+struct is_printable< named::NamedExpansion< T, B, N, Axes... > > : std::true_type
+{
+};
+template < typename F >
+inline constexpr bool is_printable_v = is_printable< F >::value;
+
 /// Core writer shared by every expansion kind. `coeffAt(k)` reads the coefficient
 /// at flat index `k`; `nameOf(v)` names variable `v`. The monomial set and
 /// flat<->multi maps come from `Scheme`.
@@ -362,7 +380,7 @@ std::ostream& operator<<( std::ostream& os, const Expansion< T, B, Scheme, stora
 
 /// Stream a scalar / named expansion with explicit options (style, precision, ...).
 template < typename F >
-    requires( !std::is_base_of_v< Eigen::EigenBase< F >, F > )
+    requires( detail::is_printable_v< F > )
 [[nodiscard]] detail::ScalarSeriesProxy< F > series( const F& f, SeriesOptions opts = {} )
 {
     return { f, opts };
@@ -378,6 +396,7 @@ template < typename Derived >
 
 /// Render any streamable expansion (scalar, named, or Eigen vector/matrix) to a string.
 template < typename F >
+    requires( detail::is_printable_v< F > || std::is_base_of_v< Eigen::EigenBase< F >, F > )
 [[nodiscard]] std::string to_string( const F& f, SeriesOptions opts = {} )
 {
     std::ostringstream os;

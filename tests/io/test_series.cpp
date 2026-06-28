@@ -160,3 +160,30 @@ TEST( SeriesVector, LabeledRows )
     EXPECT_NE( s.find( "[0]" ), std::string::npos );
     EXPECT_NE( s.find( "[1]" ), std::string::npos );
 }
+
+// ---------------------------------------------------------------------------
+// to_string is constrained: only printable expansions (any basis) + Eigen
+// matrices of them resolve; arbitrary types are a clean constraint error.
+// ---------------------------------------------------------------------------
+
+namespace
+{
+template < typename F, typename = void >
+struct HasToString : std::false_type
+{
+};
+template < typename F >
+struct HasToString< F, std::void_t< decltype( tax::to_string( std::declval< const F& >() ) ) > >
+    : std::true_type
+{
+};
+}  // namespace
+
+static_assert( HasToString< tax::TE< 3 > >::value, "Taylor expansion must print" );
+static_assert( HasToString< tax::ChebyshevSeries< 2 > >::value, "orthogonal expansion must print" );
+static_assert( HasToString< tax::NE< 3, tax::Axis< "x", 1 > > >::value,
+               "named expansion must print" );
+static_assert( !HasToString< int >::value, "scalars are not printable expansions" );
+static_assert( !HasToString< std::string >::value, "std::string is not a printable expansion" );
+static_assert( !HasToString< tax::MTE< tax::OrderedAxis< "x", 1, 3 > > >::value,
+               "mixed-expansion printing is out of scope" );
