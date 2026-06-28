@@ -12,9 +12,6 @@
 #include <tax/core/axis.hpp>
 #include <tax/core/scheme/mixed.hpp>
 #include <tax/core/expansion.hpp>
-#include <tax/operators/arithmetic.hpp>
-#include <tax/operators/math_binary.hpp>
-#include <tax/operators/math_unary.hpp>
 #include <utility>
 
 namespace tax::named
@@ -312,111 +309,6 @@ class MixedTaylorExpansion
    private:
     Inner inner_{};
 };
-
-// Composition operators (union axis set, max order per shared axis). Each binary
-// op embeds both operands into the merged mixed type, then delegates to the
-// underlying TaylorExpansion operator on the (now box-compatible) inners.
-#define TAX_MIXED_BINARY_OP( OP )                                                                 \
-    template < typename T, typename... A, typename... B >                                         \
-    [[nodiscard]] constexpr auto operator OP( const MixedTaylorExpansion< T, A... >& a,           \
-                                              const MixedTaylorExpansion< T, B... >& b ) noexcept \
-    {                                                                                             \
-        using R = detail::MergedMixedTaylorExpansion< T, detail::TypeList< A... >,                \
-                                                      detail::TypeList< B... > >;                 \
-        return R{ a.template embed< R >().inner() OP b.template embed< R >().inner() };           \
-    }
-
-TAX_MIXED_BINARY_OP( +)
-TAX_MIXED_BINARY_OP( -)
-TAX_MIXED_BINARY_OP( * )
-TAX_MIXED_BINARY_OP( / )
-
-#undef TAX_MIXED_BINARY_OP
-
-// Scalar combinations (axis set unchanged).
-
-#define TAX_MIXED_SCALAR_OP( OP )                                                        \
-    template < typename T, typename... A >                                               \
-    [[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator OP(                 \
-        const MixedTaylorExpansion< T, A... >& a, std::type_identity_t< T > s ) noexcept \
-    {                                                                                    \
-        return MixedTaylorExpansion< T, A... >{ a.inner() OP s };                        \
-    }
-
-TAX_MIXED_SCALAR_OP( +)
-TAX_MIXED_SCALAR_OP( -)
-TAX_MIXED_SCALAR_OP( * )
-TAX_MIXED_SCALAR_OP( / )
-
-#undef TAX_MIXED_SCALAR_OP
-
-template < typename T, typename... A >
-[[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator+(
-    std::type_identity_t< T > s, const MixedTaylorExpansion< T, A... >& a ) noexcept
-{
-    return a + s;
-}
-
-template < typename T, typename... A >
-[[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator*(
-    std::type_identity_t< T > s, const MixedTaylorExpansion< T, A... >& a ) noexcept
-{
-    return a * s;
-}
-
-template < typename T, typename... A >
-[[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator-(
-    std::type_identity_t< T > s, const MixedTaylorExpansion< T, A... >& a ) noexcept
-{
-    return MixedTaylorExpansion< T, A... >{ s - a.inner() };
-}
-
-template < typename T, typename... A >
-[[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator/(
-    std::type_identity_t< T > s, const MixedTaylorExpansion< T, A... >& a ) noexcept
-{
-    return MixedTaylorExpansion< T, A... >{ s / a.inner() };
-}
-
-template < typename T, typename... A >
-[[nodiscard]] constexpr MixedTaylorExpansion< T, A... > operator-(
-    const MixedTaylorExpansion< T, A... >& a ) noexcept
-{
-    return MixedTaylorExpansion< T, A... >{ -a.inner() };
-}
-
-// Unary math functions (forwarded to the inner expansion, axis set preserved).
-
-#define TAX_MIXED_UNARY_FN( FN )                                        \
-    template < typename T, typename... A >                              \
-    [[nodiscard]] MixedTaylorExpansion< T, A... > FN(                   \
-        const MixedTaylorExpansion< T, A... >& a ) noexcept             \
-    {                                                                   \
-        return MixedTaylorExpansion< T, A... >{ tax::FN( a.inner() ) }; \
-    }
-
-TAX_MIXED_UNARY_FN( square )
-TAX_MIXED_UNARY_FN( cube )
-TAX_MIXED_UNARY_FN( sqrt )
-TAX_MIXED_UNARY_FN( cbrt )
-TAX_MIXED_UNARY_FN( reciprocal )
-TAX_MIXED_UNARY_FN( exp )
-TAX_MIXED_UNARY_FN( log )
-TAX_MIXED_UNARY_FN( sin )
-TAX_MIXED_UNARY_FN( cos )
-TAX_MIXED_UNARY_FN( tan )
-TAX_MIXED_UNARY_FN( asin )
-TAX_MIXED_UNARY_FN( acos )
-TAX_MIXED_UNARY_FN( atan )
-TAX_MIXED_UNARY_FN( sinh )
-TAX_MIXED_UNARY_FN( cosh )
-TAX_MIXED_UNARY_FN( tanh )
-TAX_MIXED_UNARY_FN( asinh )
-TAX_MIXED_UNARY_FN( acosh )
-TAX_MIXED_UNARY_FN( atanh )
-TAX_MIXED_UNARY_FN( erf )
-
-#undef TAX_MIXED_UNARY_FN
 
 // ---------------------------------------------------------------------------
 // Convenience alias (double-valued)
