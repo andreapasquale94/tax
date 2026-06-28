@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <tax/kernels/cauchy.hpp>
-#include <tax/kernels/cauchy_unroll.hpp>
+#include <tax/expansion/detail/cauchy.hpp>
+#include <tax/expansion/detail/cauchy_unroll.hpp>
 
 template < int N >
 void runDiffUni( double tol = 1e-12 )

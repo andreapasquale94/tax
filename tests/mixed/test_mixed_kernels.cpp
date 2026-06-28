@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <tax/core/scheme.hpp>
-#include <tax/core/multi_index.hpp>
-#include <tax/kernels/algebra.hpp>
-#include <tax/kernels/transcendental.hpp>
+#include <tax/expansion/scheme.hpp>
+#include <tax/expansion/multi_index.hpp>
+#include <tax/expansion/detail/algebra.hpp>
+#include <tax/expansion/detail/transcendental.hpp>
 #include <tax/tax.hpp>
 
 using tax::Group;

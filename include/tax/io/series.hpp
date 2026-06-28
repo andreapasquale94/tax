@@ -16,9 +16,9 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <tax/core/multi_index.hpp>
-#include <tax/core/named.hpp>
-#include <tax/core/expansion.hpp>
+#include <tax/expansion/multi_index.hpp>
+#include <tax/expansion/named.hpp>
+#include <tax/expansion/expansion.hpp>
 #include <type_traits>
 #include <vector>
 

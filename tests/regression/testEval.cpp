@@ -7,7 +7,7 @@
 #include <dace/dace.h>
 #include <gtest/gtest.h>
 
-#include <tax/la/types.hpp>
+#include <tax/eigen/types.hpp>
 #include <cmath>
 #include <tax/tax.hpp>
 

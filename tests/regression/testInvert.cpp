@@ -8,7 +8,7 @@
 #include <dace/dace.h>
 #include <gtest/gtest.h>
 
-#include <tax/la/types.hpp>
+#include <tax/eigen/types.hpp>
 #include <tax/tax.hpp>
 
 #include "regressionUtils.hpp"

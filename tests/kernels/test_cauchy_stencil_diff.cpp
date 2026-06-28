@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <tax/kernels/algebra.hpp>
-#include <tax/kernels/cauchy.hpp>
-#include <tax/kernels/cauchy_stencil.hpp>
-#include <tax/kernels/recurrence_stencil.hpp>
+#include <tax/expansion/detail/algebra.hpp>
+#include <tax/expansion/detail/cauchy.hpp>
+#include <tax/expansion/detail/cauchy_stencil.hpp>
+#include <tax/expansion/detail/recurrence_stencil.hpp>
 
 template < int N, int M >
 void runDiffMulti( double tol = 1e-12 )

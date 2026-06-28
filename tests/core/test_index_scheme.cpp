@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <tax/core/scheme.hpp>
-#include <tax/kernels/recurrence_stencil.hpp>
+#include <tax/expansion/scheme.hpp>
+#include <tax/expansion/detail/recurrence_stencil.hpp>
 #include <tax/tax.hpp>
 
 using tax::IsotropicScheme;

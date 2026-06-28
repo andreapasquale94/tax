@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "../testUtils.hpp"
-#include <tax/la.hpp>
+#include <tax/eigen.hpp>
 
 TEST( EigenDerivative, ElementWiseCompileTime )
 {

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "../testUtils.hpp"
-#include <tax/kernels/cauchy.hpp>
+#include <tax/expansion/detail/cauchy.hpp>
 
 TEST(CauchyDense, AgreesWithOperator) {
     auto x = tax::TE<5>::variable(0.3);

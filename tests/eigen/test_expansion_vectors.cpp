@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <concepts>
-#include <tax/la.hpp>
+#include <tax/eigen.hpp>
 
 #include "../testUtils.hpp"
 
