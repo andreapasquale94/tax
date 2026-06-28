@@ -28,26 +28,11 @@ namespace tax::named
         return NamedExpansion< T, Basis, N, A... >{ FN( a.inner() ) }; \
     }
 
-TAX_NAMED_UNARY_FN( square )
-TAX_NAMED_UNARY_FN( cube )
-TAX_NAMED_UNARY_FN( sqrt )
-TAX_NAMED_UNARY_FN( cbrt )
-TAX_NAMED_UNARY_FN( reciprocal )
-TAX_NAMED_UNARY_FN( exp )
-TAX_NAMED_UNARY_FN( log )
-TAX_NAMED_UNARY_FN( sin )
-TAX_NAMED_UNARY_FN( cos )
-TAX_NAMED_UNARY_FN( tan )
-TAX_NAMED_UNARY_FN( asin )
-TAX_NAMED_UNARY_FN( acos )
-TAX_NAMED_UNARY_FN( atan )
-TAX_NAMED_UNARY_FN( sinh )
-TAX_NAMED_UNARY_FN( cosh )
-TAX_NAMED_UNARY_FN( tanh )
-TAX_NAMED_UNARY_FN( asinh )
-TAX_NAMED_UNARY_FN( acosh )
-TAX_NAMED_UNARY_FN( atanh )
-TAX_NAMED_UNARY_FN( erf )
+#define TAX_UNARY_CE( NAME, KERNEL ) TAX_NAMED_UNARY_FN( NAME )
+#define TAX_UNARY_RT( NAME, KERNEL ) TAX_NAMED_UNARY_FN( NAME )
+#include <tax/expansion/ops/unary_functions.def>
+#undef TAX_UNARY_CE
+#undef TAX_UNARY_RT
 
 #undef TAX_NAMED_UNARY_FN
 
@@ -70,23 +55,11 @@ namespace tax
     using named::FN;             \
     using std::FN;
 
-TAX_REEXPORT_UNARY( sqrt )
-TAX_REEXPORT_UNARY( cbrt )
-TAX_REEXPORT_UNARY( exp )
-TAX_REEXPORT_UNARY( log )
-TAX_REEXPORT_UNARY( sin )
-TAX_REEXPORT_UNARY( cos )
-TAX_REEXPORT_UNARY( tan )
-TAX_REEXPORT_UNARY( asin )
-TAX_REEXPORT_UNARY( acos )
-TAX_REEXPORT_UNARY( atan )
-TAX_REEXPORT_UNARY( sinh )
-TAX_REEXPORT_UNARY( cosh )
-TAX_REEXPORT_UNARY( tanh )
-TAX_REEXPORT_UNARY( asinh )
-TAX_REEXPORT_UNARY( acosh )
-TAX_REEXPORT_UNARY( atanh )
-TAX_REEXPORT_UNARY( erf )
+#define TAX_UNARY_CE( NAME, KERNEL )  // square/cube/reciprocal: no std analogue
+#define TAX_UNARY_RT( NAME, KERNEL ) TAX_REEXPORT_UNARY( NAME )
+#include <tax/expansion/ops/unary_functions.def>
+#undef TAX_UNARY_CE
+#undef TAX_UNARY_RT
 
 #undef TAX_REEXPORT_UNARY
 

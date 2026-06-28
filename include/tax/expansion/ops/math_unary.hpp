@@ -40,37 +40,11 @@ namespace tax
         return r;                                                                   \
     }
 
-// Pure-polynomial recurrences (constexpr).
-TAX_UNARY_OP_CE( square, seriesSquare )
-TAX_UNARY_OP_CE( cube, seriesCube )
-TAX_UNARY_OP_CE( reciprocal, seriesReciprocal )
-
-// Roots.
-TAX_UNARY_OP( sqrt, seriesSqrt )
-TAX_UNARY_OP( cbrt, seriesCbrt )
-
-// Exponential / logarithm.
-TAX_UNARY_OP( exp, seriesExp )
-TAX_UNARY_OP( log, seriesLog )
-
-// Hyperbolic and inverse-hyperbolic.
-TAX_UNARY_OP( sinh, seriesSinh )
-TAX_UNARY_OP( cosh, seriesCosh )
-TAX_UNARY_OP( tanh, seriesTanh )
-TAX_UNARY_OP( asinh, seriesAsinh )
-TAX_UNARY_OP( acosh, seriesAcosh )
-TAX_UNARY_OP( atanh, seriesAtanh )
-
-// Error function.
-TAX_UNARY_OP( erf, seriesErf )
-
-// Trigonometric and inverse-trigonometric.
-TAX_UNARY_OP( sin, seriesSin )
-TAX_UNARY_OP( cos, seriesCos )
-TAX_UNARY_OP( tan, seriesTan )
-TAX_UNARY_OP( asin, seriesAsin )
-TAX_UNARY_OP( acos, seriesAcos )
-TAX_UNARY_OP( atan, seriesAtan )
+#define TAX_UNARY_CE( NAME, KERNEL ) TAX_UNARY_OP_CE( NAME, KERNEL )
+#define TAX_UNARY_RT( NAME, KERNEL ) TAX_UNARY_OP( NAME, KERNEL )
+#include <tax/expansion/ops/unary_functions.def>
+#undef TAX_UNARY_CE
+#undef TAX_UNARY_RT
 
 #undef TAX_UNARY_OP
 #undef TAX_UNARY_OP_CE

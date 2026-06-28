@@ -20,26 +20,11 @@ namespace tax::mixed
         return MixedTaylorExpansion< T, A... >{ tax::FN( a.inner() ) }; \
     }
 
-TAX_MIXED_UNARY_FN( square )
-TAX_MIXED_UNARY_FN( cube )
-TAX_MIXED_UNARY_FN( sqrt )
-TAX_MIXED_UNARY_FN( cbrt )
-TAX_MIXED_UNARY_FN( reciprocal )
-TAX_MIXED_UNARY_FN( exp )
-TAX_MIXED_UNARY_FN( log )
-TAX_MIXED_UNARY_FN( sin )
-TAX_MIXED_UNARY_FN( cos )
-TAX_MIXED_UNARY_FN( tan )
-TAX_MIXED_UNARY_FN( asin )
-TAX_MIXED_UNARY_FN( acos )
-TAX_MIXED_UNARY_FN( atan )
-TAX_MIXED_UNARY_FN( sinh )
-TAX_MIXED_UNARY_FN( cosh )
-TAX_MIXED_UNARY_FN( tanh )
-TAX_MIXED_UNARY_FN( asinh )
-TAX_MIXED_UNARY_FN( acosh )
-TAX_MIXED_UNARY_FN( atanh )
-TAX_MIXED_UNARY_FN( erf )
+#define TAX_UNARY_CE( NAME, KERNEL ) TAX_MIXED_UNARY_FN( NAME )
+#define TAX_UNARY_RT( NAME, KERNEL ) TAX_MIXED_UNARY_FN( NAME )
+#include <tax/expansion/ops/unary_functions.def>
+#undef TAX_UNARY_CE
+#undef TAX_UNARY_RT
 
 #undef TAX_MIXED_UNARY_FN
 

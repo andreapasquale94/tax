@@ -1,0 +1,30 @@
+// X-macro list of the unary math functions, single source of truth for every
+// consumer (dense ops, named, mixed, and the named re-exports). Include this
+// after defining TAX_UNARY_CE / TAX_UNARY_RT; #undef them afterwards.
+//
+//   TAX_UNARY_CE(name, kernel) — pure-recurrence ops (constexpr): no std analogue
+//   TAX_UNARY_RT(name, kernel) — runtime ops: the kernel evaluates std::fn at the point
+//
+// (No include guard / #pragma once on purpose — this file is re-included.)
+
+TAX_UNARY_CE( square, seriesSquare )
+TAX_UNARY_CE( cube, seriesCube )
+TAX_UNARY_CE( reciprocal, seriesReciprocal )
+
+TAX_UNARY_RT( sqrt, seriesSqrt )
+TAX_UNARY_RT( cbrt, seriesCbrt )
+TAX_UNARY_RT( exp, seriesExp )
+TAX_UNARY_RT( log, seriesLog )
+TAX_UNARY_RT( sinh, seriesSinh )
+TAX_UNARY_RT( cosh, seriesCosh )
+TAX_UNARY_RT( tanh, seriesTanh )
+TAX_UNARY_RT( asinh, seriesAsinh )
+TAX_UNARY_RT( acosh, seriesAcosh )
+TAX_UNARY_RT( atanh, seriesAtanh )
+TAX_UNARY_RT( erf, seriesErf )
+TAX_UNARY_RT( sin, seriesSin )
+TAX_UNARY_RT( cos, seriesCos )
+TAX_UNARY_RT( tan, seriesTan )
+TAX_UNARY_RT( asin, seriesAsin )
+TAX_UNARY_RT( acos, seriesAcos )
+TAX_UNARY_RT( atan, seriesAtan )
