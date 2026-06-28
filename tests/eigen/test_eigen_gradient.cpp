@@ -19,7 +19,7 @@ TEST( EigenGradient, MethodMatchesFreeFunction )
     auto v = tax::la::variables< tax::TE< 3, 2 > >( x0 );
     auto f  = v( 0 ) * v( 1 );
     auto g1 = tax::la::gradient( f );
-    auto g2 = f.gradient();
+    auto g2 = tax::la::gradient( f );
     EXPECT_NEAR( ( g1 - g2 ).norm(), 0.0, 1e-15 );
 }
 

@@ -30,27 +30,46 @@ template < int... Alpha, typename Derived >
 }
 
 // -----------------------------------------------------------------------------
-// gradient — free-function wrapper around TaylorExpansion::gradient()
+// gradient — gradient of a scalar TaylorExpansion at its expansion point
 // -----------------------------------------------------------------------------
 
-/// Compute the gradient of a scalar `TaylorExpansion` at its expansion point.
+/// Gradient `[df/dx_0, …, df/dx_{M-1}]` of a scalar `TaylorExpansion` at its expansion point.
 template < typename T, typename Scheme, typename S >
 [[nodiscard]] Eigen::Matrix< T, Scheme::vars, 1 > gradient(
     const TaylorExpansion< T, Scheme, S >& f ) noexcept
 {
-    return f.gradient();
+    Eigen::Matrix< T, Scheme::vars, 1 > g;
+    MultiIndex< Scheme::vars > alpha{};
+    for ( int i = 0; i < Scheme::vars; ++i )
+    {
+        alpha[std::size_t( i )] = 1;
+        g( i ) = f.derivative( alpha );
+        alpha[std::size_t( i )] = 0;
+    }
+    return g;
 }
 
 // -----------------------------------------------------------------------------
-// hessian — free-function wrapper around TaylorExpansion::hessian()
+// hessian — Hessian of a scalar TaylorExpansion at its expansion point
 // -----------------------------------------------------------------------------
 
-/// Compute the Hessian matrix of a scalar `TaylorExpansion` at its expansion point.
+/// Hessian `H(i,j) = d^2 f / (dx_i dx_j)` of a scalar `TaylorExpansion` at its expansion point.
 template < typename T, typename Scheme, typename S >
 [[nodiscard]] Eigen::Matrix< T, Scheme::vars, Scheme::vars > hessian(
     const TaylorExpansion< T, Scheme, S >& f ) noexcept
 {
-    return f.hessian();
+    Eigen::Matrix< T, Scheme::vars, Scheme::vars > H;
+    for ( int i = 0; i < Scheme::vars; ++i )
+    {
+        for ( int j = 0; j < Scheme::vars; ++j )
+        {
+            MultiIndex< Scheme::vars > alpha{};
+            alpha[std::size_t( i )] += 1;
+            alpha[std::size_t( j )] += 1;
+            H( i, j ) = f.derivative( alpha );
+        }
+    }
+    return H;
 }
 
 // -----------------------------------------------------------------------------

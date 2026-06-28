@@ -20,6 +20,6 @@ TEST( EigenHessian, MethodMatchesFreeFunction )
     auto v  = tax::la::variables< tax::TE< 3, 2 > >( x0 );
     auto f  = v( 0 ) * v( 0 ) + v( 1 ) * v( 1 );
     auto H1 = tax::la::hessian( f );
-    auto H2 = f.hessian();
+    auto H2 = tax::la::hessian( f );
     EXPECT_NEAR( ( H1 - H2 ).norm(), 0.0, 1e-15 );
 }

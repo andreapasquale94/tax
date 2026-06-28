@@ -85,8 +85,8 @@ TEST( MixedLA, MemberGradientMatchesIso )
     auto y_iso = makeIsoY();
     auto f_iso = tax::sin( x_iso * y_iso ) + tax::exp( x_iso );
 
-    const auto g_me = f_me.gradient();
-    const auto g_iso = f_iso.gradient();
+    const auto g_me = tax::la::gradient( f_me );
+    const auto g_iso = tax::la::gradient( f_iso );
 
     EXPECT_NEAR( g_me( 0 ), g_iso( 0 ), 1e-12 ) << "gradient x: ME vs ISO";
     EXPECT_NEAR( g_me( 1 ), g_iso( 1 ), 1e-12 ) << "gradient y: ME vs ISO";
@@ -108,7 +108,7 @@ TEST( MixedLA, FreeFunctionGradientAgreesWithMember )
     auto y = makeMeY();
     auto f = tax::sin( x * y ) + tax::exp( x );
 
-    const auto g_method = f.gradient();
+    const auto g_method = tax::la::gradient( f );
     const auto g_free = tax::la::gradient( f );
 
     EXPECT_NEAR( ( g_method - g_free ).norm(), 0.0, 1e-15 ) << "method vs free-function gradient";
@@ -132,8 +132,8 @@ TEST( MixedLA, HessianMatchesIso )
     auto y_iso = makeIsoY();
     auto f_iso = tax::sin( x_iso * y_iso ) + tax::exp( x_iso );
 
-    const auto H_me = f_me.hessian();
-    const auto H_iso = f_iso.hessian();
+    const auto H_me = tax::la::hessian( f_me );
+    const auto H_iso = tax::la::hessian( f_iso );
 
     for ( int i = 0; i < 2; ++i )
         for ( int j = 0; j < 2; ++j )
@@ -164,7 +164,7 @@ TEST( MixedLA, FreeFunctionHessianAgreesWithMember )
     auto y = makeMeY();
     auto f = tax::sin( x * y ) + tax::exp( x );
 
-    const auto H_method = f.hessian();
+    const auto H_method = tax::la::hessian( f );
     const auto H_free = tax::la::hessian( f );
 
     EXPECT_NEAR( ( H_method - H_free ).norm(), 0.0, 1e-15 ) << "method vs free-function hessian";
@@ -259,13 +259,13 @@ TEST( MixedLA, VariablesBuilder )
 
     // v(0) is the x-variable: value = kX0, gradient = (1, 0)
     EXPECT_NEAR( v( 0 ).value(), kX0, 1e-15 ) << "variables v(0) value";
-    const auto gv0 = v( 0 ).gradient();
+    const auto gv0 = tax::la::gradient( v( 0 ) );
     EXPECT_NEAR( gv0( 0 ), 1.0, 1e-15 ) << "variables v(0) grad[0]";
     EXPECT_NEAR( gv0( 1 ), 0.0, 1e-15 ) << "variables v(0) grad[1]";
 
     // v(1) is the y-variable: value = kY0, gradient = (0, 1)
     EXPECT_NEAR( v( 1 ).value(), kY0, 1e-15 ) << "variables v(1) value";
-    const auto gv1 = v( 1 ).gradient();
+    const auto gv1 = tax::la::gradient( v( 1 ) );
     EXPECT_NEAR( gv1( 0 ), 0.0, 1e-15 ) << "variables v(1) grad[0]";
     EXPECT_NEAR( gv1( 1 ), 1.0, 1e-15 ) << "variables v(1) grad[1]";
 }
@@ -294,7 +294,7 @@ TEST( MixedLA, NumTraitsEigenDot )
     EXPECT_NEAR( dot.value(), kX0 * kX0 + kY0 * kY0, 1e-12 ) << "NumTraits dot value";
 
     // Gradient of x²+y² = (2x, 2y) at expansion point
-    const auto g = dot.gradient();
+    const auto g = tax::la::gradient( dot );
     EXPECT_NEAR( g( 0 ), 2.0 * kX0, 1e-12 ) << "NumTraits dot grad[0]";
     EXPECT_NEAR( g( 1 ), 2.0 * kY0, 1e-12 ) << "NumTraits dot grad[1]";
 }

@@ -9,7 +9,7 @@
 #include <tax/core/scheme.hpp>
 #include <tax/core/storage/dense.hpp>
 #include <tax/core/storage/sparse.hpp>
-#include <tax/la/types.hpp>
+#include <Eigen/Core>
 #include <tax/series/basis.hpp>
 #include <tax/series/taylor_basis.hpp>
 #include <type_traits>
@@ -322,41 +322,6 @@ class Expansion< T, Basis, Scheme, storage::Dense >
         if ( d >= 0 )
             for ( std::size_t k = 0; k < numMonomials( d, Scheme::vars ); ++k ) out[k] = c_[k];
         return Expansion{ out };
-    }
-
-    // ------------------------------------------------------------------
-    // Gradient and Hessian (Taylor value semantics)
-    // ------------------------------------------------------------------
-
-    /// Gradient vector `[df/dx_0, ..., df/dx_{M-1}]` at the expansion point.
-    [[nodiscard]] tax::la::VecNT< Scheme::vars, T > gradient() const noexcept
-    {
-        tax::la::VecNT< Scheme::vars, T > g;
-        MultiIndex< Scheme::vars > alpha{};
-        for ( int i = 0; i < Scheme::vars; ++i )
-        {
-            alpha[std::size_t( i )] = 1;
-            g( i ) = derivative( alpha );
-            alpha[std::size_t( i )] = 0;
-        }
-        return g;
-    }
-
-    /// Hessian matrix `H(i,j) = d^2 f / (dx_i dx_j)` at the expansion point.
-    [[nodiscard]] tax::la::MatNT< Scheme::vars, T > hessian() const noexcept
-    {
-        tax::la::MatNT< Scheme::vars, T > H;
-        for ( int i = 0; i < Scheme::vars; ++i )
-        {
-            for ( int j = 0; j < Scheme::vars; ++j )
-            {
-                MultiIndex< Scheme::vars > alpha{};
-                alpha[std::size_t( i )] += 1;
-                alpha[std::size_t( j )] += 1;
-                H( i, j ) = derivative( alpha );
-            }
-        }
-        return H;
     }
 
     // ------------------------------------------------------------------
