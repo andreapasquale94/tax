@@ -121,9 +121,30 @@ displacement $d\mathbf{x} = \mathbf{x} - \mathbf{x}_0$.
 | `expansionPoint()`, `domain()` | $\mathbf{x}_0$, $[\mathbf{a},\mathbf{b}]$ |
 | `displacementDomain()` | $D_i = [a_i - x_{0i},\, b_i - x_{0i}]$; always contains 0 |
 | `value()` | constant coefficient (COSY `CONS`) |
-| `polynomialBound()` | rigorous $B(P)$ over the domain |
+| `polynomialBound(which = Bounder::Quadratic)` | rigorous $B(P)$ over the domain |
 | `orderBound(k)` | per-order bound $I^k$ of the degree-$k$ homogeneous part |
-| `bound()` | total enclosure $B(P) + I$ (COSY `IN`) |
+| `bound(which = Bounder::Quadratic)` | total enclosure $B(P) + I$ (COSY `IN`) |
+
+### Range-bounding strategy
+
+```cpp
+namespace tax::model {   // re-exported as tax::Bounder
+enum class Bounder { Naive, Quadratic };
+}
+```
+
+`bound(which)` and `polynomialBound(which)` select how the polynomial part is
+bounded. Both strategies are rigorous enclosures; `Quadratic` is the default
+and is never wider than `Naive`.
+
+| Value | Behaviour |
+|---|---|
+| `Bounder::Naive` | order-sum of the monomial enclosures (thesis "algorithm 0/1"); exact for orders 0–1, cheapest |
+| `Bounder::Quadratic` | diagonal exact-quadratic tightening (§5.4.3): each `q_ii·h_i² + g_i·h_i` bounded exactly via vertex analysis, cross terms and orders ≥ 3 naive, intersected with the naive bound |
+
+Remainder propagation inside arithmetic and intrinsics always uses the naive
+sum (as the thesis does); the `Bounder` choice only affects the reported
+range bounds.
 | `eval(dx)` | `Interval` enclosure of $f(\mathbf{x}_0 + d\mathbf{x})$; throws `std::domain_error` outside the domain |
 | `compatibleWith(g)` | same expansion point and domain? |
 | `integ<I>()` / `integ(i)` | antiderivative Taylor model w.r.t. $x_I$, eq. (4.12) |

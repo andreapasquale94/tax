@@ -118,6 +118,17 @@ returns an `Interval`, since a rigorous statement about one point still
 carries the remainder. Points outside the domain throw — the containment
 guarantee only holds inside.
 
+`bound()` and `polynomialBound()` accept an optional `Bounder` strategy. The
+default `Bounder::Quadratic` bounds each variable's quadratic-plus-linear
+part exactly (capturing interior minima the order-sum misses); pass
+`Bounder::Naive` for the cheaper order-sum. Both are rigorous:
+
+```cpp
+auto g = (x - 0.3) * (x - 0.3);      // true range [0, 1.69] on a wide domain
+g.bound(tax::Bounder::Naive);        // [-0.51, 1.69] — loose below zero
+g.bound();                           // [0, 1.69] — exact, interior vertex found
+```
+
 ## Verified integration
 
 Antiderivation (thesis eq. 4.12) integrates the polynomial part and absorbs

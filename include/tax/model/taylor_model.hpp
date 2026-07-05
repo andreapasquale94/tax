@@ -7,6 +7,7 @@
 #include <tax/core/scheme/isotropic.hpp>
 #include <tax/core/storage/dense.hpp>
 #include <tax/core/taylor_expansion.hpp>
+#include <tax/model/bounders.hpp>
 #include <tax/model/interval.hpp>
 #include <utility>
 
@@ -33,134 +34,9 @@ namespace tax::model
 // coefficient-error sweeping of COSY's RD type, ch. 5, is future work).
 // ===========================================================================
 
-namespace detail
-{
-
-/// Compile-time table mapping flat index k to its multi-index.
-template < int N, int M >
-struct MultiIndexTable
-{
-    static constexpr std::size_t size = numMonomials( N, M );
-    std::array< MultiIndex< M >, size > value{};
-
-    constexpr MultiIndexTable() noexcept
-    {
-        for ( std::size_t k = 0; k < size; ++k ) value[k] = unflatIndex< M >( k );
-    }
-};
-
-/// Interval powers of the displacement domain: pw[i][j] encloses D_i^j.
-/// Each entry is computed by `pow` directly (not by repeated multiplication)
-/// so even powers keep the sharp non-negative lower bound of (5.4).
-template < std::floating_point T, int M, int P >
-struct DomainPowers
-{
-    std::array< std::array< Interval< T >, std::size_t( P ) + 1 >, std::size_t( M ) > pw{};
-
-    explicit constexpr DomainPowers( const std::array< Interval< T >, std::size_t( M ) >& D )
-    {
-        for ( std::size_t i = 0; i < std::size_t( M ); ++i )
-        {
-            for ( int j = 0; j <= P; ++j ) pw[i][std::size_t( j )] = model::pow( D[i], j );
-        }
-    }
-};
-
-/// Naive range bound B(P) of a dense polynomial over the displacement box:
-/// the interval sum of the monomial enclosures c_alpha * D^alpha. Exact for
-/// the constant and linear parts (interval evaluation of a linear function
-/// over a box is exact); the per-order bounds I^k of higher orders are the
-/// "no tightening" sums of §5.4.
-template < std::floating_point T, int N, int M, int P >
-[[nodiscard]] constexpr Interval< T > polyRangeBound(
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Dense >& p,
-    const DomainPowers< T, M, P >& pows ) noexcept
-    requires( P >= N )
-{
-    constexpr auto kIdx = MultiIndexTable< N, M >{};
-    Interval< T > r{ p[0] };
-    for ( std::size_t k = 1; k < numMonomials( N, M ); ++k )
-    {
-        if ( p[k] == T{ 0 } ) continue;
-        Interval< T > term{ p[k] };
-        const auto& alpha = kIdx.value[k];
-        for ( std::size_t i = 0; i < std::size_t( M ); ++i )
-        {
-            const int e = alpha[i];
-            if ( e != 0 ) term = term * pows.pw[i][std::size_t( e )];
-        }
-        r = r + term;
-    }
-    return r;
-}
-
-/// Range bound of the homogeneous degree-`deg` part of `p` (the per-order
-/// bound I^deg): graded-lex keeps each degree in one contiguous block.
-template < std::floating_point T, int N, int M, int P >
-[[nodiscard]] constexpr Interval< T > orderRangeBound(
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Dense >& p, int deg,
-    const DomainPowers< T, M, P >& pows ) noexcept
-    requires( P >= N )
-{
-    constexpr auto kIdx = MultiIndexTable< N, M >{};
-    if ( deg < 0 || deg > N ) return {};
-    if ( deg == 0 ) return Interval< T >{ p[0] };
-    Interval< T > r{};
-    for ( std::size_t k = numMonomials( deg - 1, M ); k < numMonomials( deg, M ); ++k )
-    {
-        if ( p[k] == T{ 0 } ) continue;
-        Interval< T > term{ p[k] };
-        const auto& alpha = kIdx.value[k];
-        for ( std::size_t i = 0; i < std::size_t( M ); ++i )
-        {
-            const int e = alpha[i];
-            if ( e != 0 ) term = term * pows.pw[i][std::size_t( e )];
-        }
-        r = r + term;
-    }
-    return r;
-}
-
-/// Bound of the order-(> N) excess of the product a * b over the domain:
-/// the degree-(> N) cross terms of the Cauchy convolution that the truncated
-/// polynomial product drops, folded into the remainder (§4.3 / §5.3.2).
-template < std::floating_point T, int N, int M, int P >
-[[nodiscard]] constexpr Interval< T > excessProductBound(
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Dense >& a,
-    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Dense >& b,
-    const DomainPowers< T, M, P >& pows ) noexcept
-    requires( P >= 2 * N )
-{
-    constexpr auto kIdx = MultiIndexTable< N, M >{};
-    constexpr auto kDeg = DegreeOf< N, M >{};
-    constexpr std::size_t n_coeff = numMonomials( N, M );
-
-    Interval< T > r{};
-    for ( std::size_t i = 0; i < n_coeff; ++i )
-    {
-        if ( a[i] == T{ 0 } ) continue;
-        const int da = kDeg.value[i];
-        if ( da == 0 ) continue;  // partner degree would need to exceed N
-        // Partners of degree db with da + db > N start the contiguous block
-        // of degree N - da + 1.
-        for ( std::size_t j = numMonomials( N - da, M ); j < n_coeff; ++j )
-        {
-            if ( b[j] == T{ 0 } ) continue;
-            Interval< T > term = Interval< T >{ a[i] } * Interval< T >{ b[j] };
-            const auto& alpha = kIdx.value[i];
-            const auto& beta = kIdx.value[j];
-            for ( std::size_t v = 0; v < std::size_t( M ); ++v )
-            {
-                const int e = alpha[v] + beta[v];
-                if ( e != 0 ) term = term * pows.pw[v][std::size_t( e )];
-            }
-            r = r + term;
-        }
-    }
-    return r;
-}
-
-}  // namespace detail
+// The shared bounding machinery (DomainPowers, polyRangeBound,
+// orderRangeBound, excessProductBound) and the exact quadratic bounder live
+// in <tax/model/bounders.hpp>, in namespace tax::model::detail.
 
 // ===========================================================================
 // TaylorModel
@@ -293,10 +169,15 @@ class TaylorModel
     // ------------------------------------------------------------------
 
     /// Rigorous range bound B(P) of the polynomial part over the domain.
-    [[nodiscard]] constexpr Interval< T > polynomialBound() const noexcept
+    /// Defaults to the diagonal exact-quadratic bounder (§5.4.3), which is
+    /// never wider than the naive order-sum; pass `Bounder::Naive` for the
+    /// cheaper order-sum. Both are valid enclosures.
+    [[nodiscard]] constexpr Interval< T > polynomialBound(
+        Bounder which = Bounder::Quadratic ) const noexcept
     {
-        const detail::DomainPowers< T, M, N > pows{ displacementDomain() };
-        return detail::polyRangeBound( poly_, pows );
+        const Domain disp = displacementDomain();
+        const detail::DomainPowers< T, M, N > pows{ disp };
+        return detail::rangeBound( which, poly_, pows, disp );
     }
 
     /// Per-order bound I^k: range of the homogeneous degree-k part (§5.4).
@@ -307,10 +188,10 @@ class TaylorModel
     }
 
     /// Total enclosure of the modeled function over the domain:
-    /// B(P) + I (COSY's IN).
-    [[nodiscard]] constexpr Interval< T > bound() const noexcept
+    /// B(P) + I (COSY's IN). See `polynomialBound` for the `which` strategy.
+    [[nodiscard]] constexpr Interval< T > bound( Bounder which = Bounder::Quadratic ) const noexcept
     {
-        return polynomialBound() + rem_;
+        return polynomialBound( which ) + rem_;
     }
 
     // ------------------------------------------------------------------

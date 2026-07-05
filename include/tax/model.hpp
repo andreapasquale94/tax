@@ -11,6 +11,7 @@ namespace tax
 {
 
 // Re-export the public types; the operator/function surface is found via ADL.
+using model::Bounder;
 using model::Interval;
 using model::TaylorModel;
 using model::TM;

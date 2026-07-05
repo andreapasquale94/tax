@@ -94,9 +94,58 @@ Properties exploited:
 - multi-indices come from a `constexpr` `MultiIndexTable<N, M>` — no runtime
   `unflatIndex` calls in the loops.
 
-This bounder is deliberately **pluggable-simple**; the sharper bounders of
-thesis §5.4.3 are future work (see below). All bound consumers overestimate
-gracefully: a wider $B(P)$ only widens remainders, never invalidates them.
+All bound consumers overestimate gracefully: a wider $B(P)$ only widens
+remainders, never invalidates them.
+
+### Exact quadratic bounder (§5.4.3)
+
+`polynomialBound(which)` / `bound(which)` take a `Bounder` strategy;
+`Bounder::Quadratic` is the default. It tightens the naive bound by treating
+the order-$\le 2$ part more carefully, and is selected because the *total*
+bound — not the remainder — is the quality metric a user reads and the
+input every downstream consumer (domain checks, quadrature widths, splitting
+decisions) sees.
+
+`detail::quadraticRangeBound` bounds each variable's diagonal quadratic plus
+its linear term **exactly**, keeps cross terms and orders $\ge 3$ on the
+naive sum, and intersects the whole thing with the naive bound:
+
+$$
+B_{\text{quad}}(P) = \Bigg( c_0 + \sum_i B_{\text{1D}}\!\big(q_{ii} h_i^2 + g_i h_i\big)
++ \sum_{i<j} q_{ij} D_i D_j + \!\!\sum_{|\alpha|\ge 3}\!\! I^{|\alpha|} \Bigg)
+\;\cap\; B_{\text{naive}}(P) .
+$$
+
+The 1-D bounder `boundDiagonalQuadratic(a_2, a_1, D)` returns the endpoint
+hull $\operatorname{hull}(F(a), F(b))$ and, when the parabola vertex
+$h^\* = -a_1/(2a_2)$ **may** lie in $D$ (a conservative interval test), folds
+in the vertex value $-a_1^2/(4a_2)$ — a genuinely attained extremum. This is
+what recovers an interior minimum that the naive sum misses: for
+$(h-0.3)^2$ on $[-1,1]$ the naive bound is $[-0.51, 1.69]$ (it independently
+widens $-0.6h$ and $h^2$), while the quadratic bounder returns the **exact**
+$[0, 1.69]$.
+
+Why this is rigorous and never regresses:
+
+- each 1-D diagonal bound is a valid enclosure of its term (endpoint hull is
+  exact off-vertex; the vertex value is an attained value, so including it
+  only ever *widens*, never invalidates);
+- cross terms $h_i h_j$ over a box have range exactly $D_i D_j$ (the two
+  variables are independent), so the interval product is sharp;
+- the sum of valid enclosures is a valid enclosure of the sum;
+- intersecting with $B_{\text{naive}}$ — itself always valid — guarantees the
+  result is **no wider than naive** even in adversarial rounding, so adopting
+  the default can never regress an existing bound.
+
+Cost is $O(n_{\text{coeff}} \cdot M)$, the same order as naive, with no
+recursion. It is a *diagonal* subset of the thesis's full §5.4.3 bounder:
+the coupling between a variable's linear term and its cross terms, and the
+exact multivariate interior stationary point (which needs a rigorous interval
+linear solve and has factorial face-recursion cost, Table 5.5), are left on
+the naive sum. Remainder propagation deliberately stays on `Bounder::Naive`
+(the thesis computes remainders from the order-sum $\sum_k I^k$), so the
+worked remainder oracles of ch. 4 stay pinned; only user-facing bounds
+upgrade.
 
 ## Multiplication
 
@@ -273,8 +322,11 @@ interval multiplications per operation. Nothing allocates; all tables are
 ## What chapter 5 adds
 
 Chapter 4 is the *mathematics* of Taylor models; chapter 5 is their
-*production implementation* as COSY INFINITY's `RD` type. Relative to what
-`tax::model` implements today, ch. 5 adds four things:
+*production implementation* as COSY INFINITY's `RD` type. Its sharpest
+range-bounder (§5.4.3) is **partially adopted** — a rigorous diagonal
+quadratic bounder is the default for user-facing bounds (see
+[Exact quadratic bounder](#exact-quadratic-bounder-543) above). The
+remaining ch. 5 additions, relative to what `tax::model` implements today:
 
 1. **Cached per-order bound intervals.** `RD` stores $I^0, \dots, I^n$
    alongside the remainder (Table 5.4), so $B(\bar P) = \sum_k I^k$ is a free
@@ -288,21 +340,24 @@ Chapter 4 is the *mathematics* of Taylor models; chapter 5 is their
    mutation.*
 
 2. **Sharper polynomial bounders** (§5.4): the tightening-algorithm ladder
-   (naive sums → default alg. 1 → `POLVAL`/Horner → scanning), the **exact
-   quadratic bounder** — solving $\nabla(\text{order} \le 2\ \text{part}) =
-   0$ exactly, recursing over boundary faces — and the **iterative
-   third-order refinement** (5.10). The thesis's own data (Table 5.6) shows
-   why: the *remainder* is nearly bounder-independent, but the *total* bound
-   improves ~7× (from $\pm 36$ to $\pm 4.8$) going from naive to
-   tightened bounds. Our order-3 total bound for $1/x + x$ is 0.1514 vs the
-   thesis's 0.14988 for the same reason.
-   *Verdict: the highest-value upgrade. `bound()` sharpness is the product's
-   visible quality metric, and it feeds every downstream consumer (domain
-   checks, ADS-style splitting decisions, quadrature widths). The
-   quadratic bounder is exact for the dominant low orders, moderate effort,
-   and drops in behind `polyRangeBound` — which is why that function is
-   documented as pluggable. The scanning algorithms (4/5) are heuristic
-   cross-checks and not worth carrying.*
+   (naive sums → default alg. 1 → `POLVAL`/Horner → scanning) and the
+   **iterative third-order refinement** (5.10). The thesis's own data
+   (Table 5.6) shows why bounder sharpness matters: the *remainder* is
+   nearly bounder-independent, but the *total* bound improves ~7× (from
+   $\pm 36$ to $\pm 4.8$) going from naive to tightened bounds.
+   *Status: partially done.* The rigorous **diagonal quadratic bounder** is
+   implemented and is the default `Bounder::Quadratic`; it drops the order-3
+   $1/x+x$ total bound from 0.15138 (naive) to 0.15013 and recovers exact
+   interior minima the naive sum misses. What remains from §5.4.3 is the
+   *full* multivariate exact bounder — the interior stationary point via a
+   rigorous interval linear solve, with recursion over the $2v$ boundary
+   faces (factorial cost, Table 5.5) — which would close the last
+   $0.15013 \to 0.14988$ gap on this example.
+   *Verdict on the remainder: worth it for small $M$ where the coupling
+   between a variable's linear and cross terms dominates, gated by a
+   compile-time $M$ threshold with the diagonal bounder as fallback; the
+   scanning algorithms (4/5) are heuristic cross-checks and not worth
+   carrying.*
 
 3. **Floating-point coefficient-error sweeping** — the `RD` implementation
    accounts for the rounding of every polynomial coefficient operation in
@@ -319,8 +374,9 @@ Chapter 4 is the *mathematics* of Taylor models; chapter 5 is their
    constructors, accessor routines — §5.1): superseded by C++ types; nothing
    to port.
 
-Suggested order if/when extending: (2) exact quadratic bounder behind a
-pluggable bounder policy → (1) per-order bound caching → (3) coefficient
-sweeping. The worked examples of both chapters are already pinned as tests
-(`tests/model/test_thesis_examples.cpp`), so each upgrade can be measured
-directly against Tables 4.2/4.3/5.6–5.8.
+Suggested order for the remaining work: the full multivariate exact
+quadratic bounder (finishing item 2, behind the same `Bounder` policy) →
+(1) per-order bound caching → (3) coefficient sweeping. The worked examples
+of both chapters are already pinned as tests
+(`tests/model/test_thesis_examples.cpp`, `test_bounders.cpp`), so each
+upgrade can be measured directly against Tables 4.2/4.3/5.6–5.8.

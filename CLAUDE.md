@@ -61,6 +61,7 @@ tax/
 │   │   └── invert.hpp        #   formal polynomial-map inversion (Picard)
 │   ├── model/                # Taylor models (Makino ch. 4): polynomial + remainder interval
 │   │   ├── interval.hpp      #   Interval<T>: outward-rounded interval arithmetic
+│   │   ├── bounders.hpp      #   range-bound machinery + Bounder policy (naive / quadratic §5.4.3)
 │   │   ├── taylor_model.hpp  #   TaylorModel<T,N,M> = (P, I, x0, [a,b]); bounds, integ
 │   │   ├── arithmetic.hpp    #   +, -, * with excess-order remainder folding
 │   │   └── math.hpp          #   intrinsics with Lagrange remainder enclosures
@@ -344,13 +345,21 @@ Key rules for working on this module:
   *coefficients* themselves is not swept into the remainder (COSY's ch. 5
   coefficient-error tallying is future work). Keep new code on the right side
   of this line: anything feeding a remainder must use `Interval` arithmetic.
-- **Range bounding is the naive order-sum** (`detail::polyRangeBound`, exact
-  for orders 0-1). The thesis's exact quadratic bounder / iterative refinement
-  (§5.4.3) are natural future upgrades — keep the bounder pluggable.
+- **Range bounding is pluggable via `Bounder`** (`model/bounders.hpp`).
+  `Bounder::Quadratic` (the default for `bound()`/`polynomialBound()`) applies
+  the rigorous diagonal exact-quadratic tightening of §5.4.3 — each variable's
+  `q_ii*h_i^2 + g_i*h_i` bounded exactly via vertex analysis, intersected with
+  the naive order-sum so it never regresses. `Bounder::Naive` is the plain
+  order-sum (`detail::polyRangeBound`, exact for orders 0-1). Remainder
+  propagation inside arithmetic/intrinsics stays on the naive sum (as the
+  thesis does), so the ch. 4 remainder oracles stay pinned. The *full*
+  multivariate exact bounder (interior stationary point + face recursion) is
+  the remaining §5.4.3 upgrade.
 - Tests live in `tests/model/`; `test_thesis_examples.cpp` pins worked
   computations from the thesis (remainder values, Table 4.2/4.3 numbers, the
-  §5.5.2 verified double integral) as regression oracles. Containment sweeps
-  use `tax::test::ExpectEncloses` from `tests/model/modelTestUtils.hpp`.
+  §5.5.2 verified double integral) as regression oracles and `test_bounders.cpp`
+  pins the quadratic-bounder tightening. Containment sweeps use
+  `tax::test::ExpectEncloses` from `tests/model/modelTestUtils.hpp`.
 
 ---
 
