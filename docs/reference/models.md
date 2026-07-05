@@ -179,6 +179,39 @@ domain, `std::invalid_argument` if the inner models disagree on expansion
 point/domain. `jacobian` reads `∂(state_i)/∂x_j` from the polynomial parts —
 for a flow map this is the state-transition matrix.
 
+### Eigen compatibility (`tax/model/eigen.hpp`)
+
+`Eigen::NumTraits<TaylorModel<T,N,M>>` is specialised, so `TaylorModel` is a
+first-class Eigen scalar. `Eigen::Matrix<TM, …>` supports storage,
+`+`/`-`/`*`, matrix and matrix-vector products, `transpose`, and
+`Identity`/`Zero`. Ordering-based paths (fuzzy `isApprox`, pivoted
+decompositions) are **not** supported — Taylor models are unordered.
+
+```cpp
+namespace tax::model {
+template <int D, int N, int M>       using TMVec = Eigen::Matrix<TaylorModel<double,N,M>, D, 1>;
+template <int R, int C, int N, int M> using TMMat = Eigen::Matrix<TaylorModel<double,N,M>, R, C>;
+
+// Eigen column vector of the M coordinate variables over the box:
+template <..., int M>
+Eigen::Matrix<TaylorModel<T,N,M>, M, 1> variables(const std::array<T,M>& x0,
+                                                  const std::array<Interval<T>,M>& dom);
+
+// Eigen overloads over a vector/matrix of models:
+auto value(const Eigen::MatrixBase<Derived>&);                   // -> Matrix<T,...>
+auto bound(const Eigen::MatrixBase<Derived>&, Bounder = Quadratic); // -> Matrix<Interval<T>,...>
+auto jacobian(const Eigen::MatrixBase<Derived>& state);         // -> STM, Matrix<T,D,M>
+}
+```
+
+The enabling mechanism is the **domain-agnostic constant**: a `TaylorModel`
+built from a bare scalar (`TM{0.0}`, or the `0`/`1` literals Eigen
+synthesises) has no concrete domain and adopts its partner's in any binary
+operation — because a constant function is valid over every domain.
+`isAbstractConstant()` reports the flag; `overDomain(x0, dom)` re-homes such a
+constant explicitly. Two operands over *different concrete* domains still
+throw `std::invalid_argument`.
+
 ### Operators
 
 All binary Taylor-model operators require compatible operands

@@ -4,6 +4,7 @@
 
 #include <tax/model/arithmetic.hpp>
 #include <tax/model/compose.hpp>
+#include <tax/model/eigen.hpp>
 #include <tax/model/interval.hpp>
 #include <tax/model/io.hpp>
 #include <tax/model/math.hpp>

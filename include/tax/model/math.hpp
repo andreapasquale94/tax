@@ -470,6 +470,14 @@ template < std::floating_point T, int N, int M >
 [[nodiscard]] TaylorModel< T, N, M > operator/( const TaylorModel< T, N, M >& a,
                                                 const TaylorModel< T, N, M >& b )
 {
+    // Dividing by an abstract constant is an exact scalar divide (no domain
+    // interaction); a constant numerator adopts the divisor's domain.
+    if ( b.isAbstractConstant() )
+    {
+        if ( a.isAbstractConstant() ) return TaylorModel< T, N, M >{ a.value() / b.value() };
+        return a * ( T{ 1 } / b.value() );
+    }
+    if ( a.isAbstractConstant() ) return a.overDomain( b.expansionPoint(), b.domain() ) / b;
     detail::checkCompatible( a, b );
     return a * reciprocal( b );
 }

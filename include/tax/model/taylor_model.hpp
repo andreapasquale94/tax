@@ -87,6 +87,18 @@ class TaylorModel
         }
     }
 
+    /// Domain-agnostic constant `c` — the constant function, which is valid
+    /// over *every* domain. Such a value carries no concrete expansion
+    /// point/domain of its own; in any binary operation it adopts its
+    /// partner's, and two concrete operands still require matching domains.
+    /// This is what lets `TaylorModel` act as an Eigen scalar: the `0` and `1`
+    /// literals Eigen synthesises (in `setZero`, `Identity`, reductions, …)
+    /// have no domain, yet compose correctly with real domain-carrying models.
+    /*implicit*/ constexpr TaylorModel( T c ) noexcept
+        : poly_{ Poly::constant( c ) }, abstract_{ true }
+    {
+    }
+
     // ------------------------------------------------------------------
     // Named factories
     // ------------------------------------------------------------------
@@ -162,6 +174,26 @@ class TaylorModel
     [[nodiscard]] constexpr bool compatibleWith( const TaylorModel& o ) const noexcept
     {
         return x0_ == o.x0_ && dom_ == o.dom_;
+    }
+
+    /// True for a domain-agnostic constant (see the `TaylorModel(T)` ctor).
+    [[nodiscard]] constexpr bool isAbstractConstant() const noexcept { return abstract_; }
+
+    /// Re-home a domain-agnostic constant onto a concrete expansion point and
+    /// domain (a constant is valid over any domain). The full constructor
+    /// still validates `x0 in dom`.
+    [[nodiscard]] constexpr TaylorModel overDomain( const Point& x0, const Domain& dom ) const
+    {
+        return TaylorModel{ poly_, rem_, x0, dom };
+    }
+
+    /// A copy flagged as a domain-agnostic constant — used to propagate the
+    /// flag when two abstract constants are combined.
+    [[nodiscard]] constexpr TaylorModel asAbstractConstant() const noexcept
+    {
+        TaylorModel r = *this;
+        r.abstract_ = true;
+        return r;
     }
 
     // ------------------------------------------------------------------
@@ -362,6 +394,8 @@ class TaylorModel
     Interval< T > rem_{};
     Point x0_{};
     Domain dom_{};
+    /// Domain-agnostic constant marker (Eigen-scalar literals); see ctor.
+    bool abstract_ = false;
 };
 
 // ---------------------------------------------------------------------------

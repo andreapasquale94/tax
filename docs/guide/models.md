@@ -192,6 +192,45 @@ extraction) lives in `tests/model/test_ode_integration.cpp`.
     (Schauder fixed point) to bound the Picard tail — that logic belongs to
     the integrator (e.g. the `tax-flow` plugin), not to the TM core.
 
+## Taylor models as Eigen scalars
+
+`TaylorModel` is a first-class Eigen scalar, so a state vector or a
+state-transition matrix can be an `Eigen::Matrix<TM, …>` instead of a
+hand-rolled `std::array` — matrix products, `Identity()`, and reductions all
+just work:
+
+```cpp
+using TM = tax::TM<6, 2>;                     // 2 initial-condition variables
+auto r0 = tax::model::variables<double, 6, 2>(x0, dom);   // Eigen Vector<TM,2>
+
+Eigen::Matrix<TM, 2, 2> R;                    // the flow map / STM
+R << TM{cos(t)}, TM{sin(t)}, TM{-sin(t)}, TM{cos(t)};
+Eigen::Vector<TM, 2> r = R * r0;              // propagate the state, rigorously
+
+auto v = tax::model::value(r);                // Eigen vector of constant parts
+auto b = tax::model::bound(r);                // Eigen vector of enclosures
+auto J = tax::model::jacobian(r);             // state-transition matrix
+```
+
+The one subtlety a domain-carrying scalar creates: Eigen synthesises `0` and
+`1` literals (in `setZero`, `Identity`, reductions, products) with **no
+domain**. A `TaylorModel` built from a bare scalar is a *domain-agnostic
+constant* — mathematically a constant function is valid over every domain — so
+it adopts its partner's expansion point and domain in any operation and
+composes correctly with real models. Two models over *different concrete*
+domains still throw, exactly as before.
+
+```cpp
+tax::TM<3> zero{0.0};        // domain-agnostic constant
+auto g = zero + x;           // takes x's domain; g == x
+```
+
+!!! warning "Not ordered"
+    Eigen paths that need `<` on the scalar — fuzzy `isApprox`, pivoted
+    decompositions (LU/QR with pivoting) — are unsupported, since Taylor
+    models are not ordered. Storage, `+`/`-`/`*`, matrix and matrix-vector
+    products, `transpose`, `Identity`/`Zero`, and the helpers above are.
+
 ## Interval arithmetic on its own
 
 `tax::Interval<T>` is usable stand-alone and is **outward-rounded**: every

@@ -66,6 +66,7 @@ tax/
 │   │   ├── arithmetic.hpp    #   +, -, * with excess-order remainder folding
 │   │   ├── compose.hpp       #   TM ∘ TM-vector composition (flow/map substitution)
 │   │   ├── io.hpp            #   operator<<, to_string; value/bound/jacobian over TM states
+│   │   ├── eigen.hpp         #   Eigen NumTraits + TMVec/TMMat + variables/value/bound/jacobian
 │   │   └── math.hpp          #   intrinsics with Lagrange remainder enclosures
 │   └── io/series.hpp         # human-readable streaming: operator<<, series(), to_string()
 ├── tests/                    # Google Test suite
@@ -367,9 +368,18 @@ Key rules for working on this module:
   (state-transition matrix) over a `std::array<TM, D>` state. The library
   supplies rigorous *primitives*; the a-priori-enclosure / contraction step of
   a rigorous integrator belongs to the consumer (the `tax-flow` plugin), not
-  the TM core. Note: no Eigen `NumTraits<TaylorModel>` — a domain-carrying
-  `TM(0)` literal is incompatible with real-domain TMs, so use
-  `std::array<TM, D>` for state vectors, not `Eigen::Vector<TM, D>`.
+  the TM core.
+- **Eigen compatibility** (`model/eigen.hpp`): `TaylorModel` is a first-class
+  Eigen scalar (`Eigen::NumTraits` specialised), so state vectors / STMs can be
+  `Eigen::Matrix<TM, …>` (`TMVec`/`TMMat` aliases, `variables`/`value`/`bound`/
+  `jacobian` Eigen overloads). The enabler is the **domain-agnostic constant**:
+  a TM built from a bare scalar (`TM{0.0}`, and the `0`/`1` literals Eigen
+  synthesises) carries no concrete domain and adopts its partner's in any
+  binary op — a constant function is valid over every domain. `abstract_` marks
+  it; `reconcile`/`keepAbstract` (arithmetic.hpp) thread it through the
+  operators without touching the concrete-concrete fast path (which still
+  throws on mismatched domains). Unordered, so Eigen's `isApprox`/pivoted
+  decompositions are unsupported; storage, `+`/`-`/`*`, and mat-vec products are.
 - Tests live in `tests/model/`; `test_thesis_examples.cpp` pins worked
   computations from the thesis (remainder values, Table 4.2/4.3 numbers, the
   §5.5.2 verified double integral) as regression oracles, `test_bounders.cpp`

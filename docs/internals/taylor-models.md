@@ -326,12 +326,41 @@ one for map composition:
 
 `model/io.hpp` adds `value`/`bound`/`jacobian` over a `std::array<TM, D>`
 state; `jacobian` reads $\partial(\text{state}_i)/\partial x_j$ from the
-polynomial parts (the state-transition matrix of a flow). We do **not** ship
-`Eigen::NumTraits<TaylorModel>`: a domain-carrying `TM(0)` literal (which
-Eigen synthesises in reductions/`setZero`) is incompatible with real-domain
-TMs and would throw, so state vectors use `std::array`, not Eigen columns.
-The full worked example — flow, multi-step continuation, STM — is in
+polynomial parts (the state-transition matrix of a flow). The full worked
+example — flow, multi-step continuation, STM — is in
 `tests/model/test_ode_integration.cpp`.
+
+## Eigen compatibility
+
+`model/eigen.hpp` makes `TaylorModel` a first-class Eigen scalar
+(`Eigen::NumTraits` specialised), so an ODE state or state-transition matrix
+can be `Eigen::Matrix<TM, …>` rather than a `std::array`. The obstacle a
+domain-carrying scalar creates is that Eigen synthesises `Scalar(0)` /
+`Scalar(1)` literals — in `setZero`, `Identity`, reductions, products — with
+**no domain**, and a naive strict TM would throw when one is added to a
+real-domain model.
+
+The fix is mathematically clean rather than a special case: a `TaylorModel`
+built from a bare scalar (the `TaylorModel(T)` constructor) is a
+**domain-agnostic constant**. A constant function is valid over *every*
+domain, so such a value carries no expansion point/domain of its own and
+adopts its partner's in any binary operation. The flag lives in `abstract_`;
+`detail::reconcile` promotes an abstract operand onto the concrete partner's
+domain (`overDomain`), and `keepAbstract` propagates the flag through the
+scalar/interval operators so a literal-derived constant never silently decays
+into a *concrete degenerate-domain* value (which would then clash). Crucially
+the concrete–concrete path is untouched: two models over different real
+domains still throw, and the abstract branches are guarded by two `bool`
+reads so the hot arithmetic path keeps its original cost.
+
+This is enough for `Eigen::Matrix<TM,…>` storage, `+`/`-`/`*`, matrix and
+matrix-vector products (the variational STM $\times$ state pattern),
+`transpose`, and `Identity`/`Zero`. What it does *not* cover — deliberately —
+is any Eigen path that orders the scalar: fuzzy `isApprox` (needs `norm ≤
+prec·norm`) and pivoted decompositions, since Taylor models have no `<`.
+`variables` returns an Eigen column of coordinate models, and `value` /
+`bound` / `jacobian` have Eigen-vector overloads alongside the `std::array`
+ones. See `tests/model/test_eigen.cpp`.
 
 ## Rigor contract
 
