@@ -9,6 +9,7 @@ above the public API that make the library both fast and ergonomic.
 | [Kernels & Recurrences](kernels.md) | Where each mathematical operation is implemented and how |
 | [Recurrence Relations](recurrences.md) | The univariate and multivariate recurrence math for every operation |
 | [Map Inversion](map-inversion.md) | Picard-iteration inversion of polynomial maps (`tax::invert`) |
+| [Taylor Models](taylor-models.md) | Outward-rounded intervals, remainder propagation, Lagrange tails, and the ch. 4 vs ch. 5 boundary |
 
 The headline ideas:
 

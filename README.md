@@ -40,6 +40,14 @@ up to order \(N\) in a single evaluation pass.
   `MixedTaylorExpansion<T, Axes...>` gives each axis its own truncation order.
   The whole API is re-exported under `tax` (`tax::NE`, `tax::MTE`,
   `tax::variable(s)`).
+- **Taylor models** — `TM<N, M>` pairs a truncated expansion with a rigorous
+  remainder-bound interval over a domain box (Makino's remainder-enhanced DA):
+  outward-rounded `Interval<T>` arithmetic, verified range bounds (naive +
+  exact-quadratic bounders), intrinsics with Lagrange remainder enclosures,
+  antiderivation for verified integrals, the composition / partial-evaluation
+  primitives (`compose`, `fix`, `retarget`) for building a verified ODE
+  integrator on top, and an Eigen scalar layer (`Eigen::Matrix<TM, …>` state
+  vectors and state-transition matrices) — namespace `tax::model`.
 - **Batch coefficients** — `TE<N, M, K>` makes each coefficient a `Batch<double,
   K>`, evaluating `K` independent expansions in lock-step.
 - **Human-readable output** — `std::cout << f` prints the polynomial series;
@@ -169,6 +177,18 @@ auto fx   = f.slice<"x">();             // project onto a single axis
 
 `tax::jacobian<"x">(F)` likewise takes the Jacobian of an Eigen vector of named
 expansions with respect to a named axis.
+
+### Taylor models
+
+```cpp
+using I = tax::Interval<double>;
+auto x = tax::TM<3>::variable(2.0, I{1.9, 2.1});  // f(x) ∈ P(x-2) + I on [1.9, 2.1]
+auto f = 1.0 / x + x;
+
+auto rem = f.remainder();    // [0, 4.04e-6] — rigorous truncation-error bound
+auto rng = f.bound();        // verified enclosure of f over the whole domain
+auto F = cos(x).integ<0>();  // antiderivative Taylor model, verified remainder
+```
 
 ---
 
