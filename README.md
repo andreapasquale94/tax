@@ -42,9 +42,11 @@ up to order \(N\) in a single evaluation pass.
   `tax::variable(s)`).
 - **Taylor models** — `TM<N, M>` pairs a truncated expansion with a rigorous
   remainder-bound interval over a domain box (Makino's remainder-enhanced DA):
-  outward-rounded `Interval<T>` arithmetic, verified range bounds, intrinsics
-  with Lagrange remainder enclosures, and antiderivation for verified
-  integrals (namespace `tax::model`).
+  outward-rounded `Interval<T>` arithmetic, verified range bounds (naive +
+  exact-quadratic bounders), intrinsics with Lagrange remainder enclosures,
+  antiderivation for verified integrals, and the composition / partial-
+  evaluation primitives (`compose`, `fix`, `retarget`) for building a verified
+  ODE integrator on top (namespace `tax::model`).
 - **Batch coefficients** — `TE<N, M, K>` makes each coefficient a `Batch<double,
   K>`, evaluating `K` independent expansions in lock-step.
 - **Human-readable output** — `std::cout << f` prints the polynomial series;

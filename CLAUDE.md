@@ -62,8 +62,10 @@ tax/
 │   ├── model/                # Taylor models (Makino ch. 4): polynomial + remainder interval
 │   │   ├── interval.hpp      #   Interval<T>: outward-rounded interval arithmetic
 │   │   ├── bounders.hpp      #   range-bound machinery + Bounder policy (naive / quadratic §5.4.3)
-│   │   ├── taylor_model.hpp  #   TaylorModel<T,N,M> = (P, I, x0, [a,b]); bounds, integ
+│   │   ├── taylor_model.hpp  #   TaylorModel<T,N,M> = (P, I, x0, [a,b]); bounds, integ, fix, retarget
 │   │   ├── arithmetic.hpp    #   +, -, * with excess-order remainder folding
+│   │   ├── compose.hpp       #   TM ∘ TM-vector composition (flow/map substitution)
+│   │   ├── io.hpp            #   operator<<, to_string; value/bound/jacobian over TM states
 │   │   └── math.hpp          #   intrinsics with Lagrange remainder enclosures
 │   └── io/series.hpp         # human-readable streaming: operator<<, series(), to_string()
 ├── tests/                    # Google Test suite
@@ -355,10 +357,25 @@ Key rules for working on this module:
   thesis does), so the ch. 4 remainder oracles stay pinned. The *full*
   multivariate exact bounder (interior stationary point + face recursion) is
   the remaining §5.4.3 upgrade.
+- **ODE-integrator primitives.** A Taylor-model ODE integrator is Picard
+  iteration (`r = r0 + ∫ F(r) dt`) over TMs in (initial conditions, time) —
+  it needs only arithmetic + intrinsics + `integ`, all present. Step
+  continuation adds `fix<I>(v)` (partial-evaluate one axis exactly, keep the
+  rest symbolic) and `retarget<I>(x0, dom)` (recycle the collapsed time slot).
+  `compose` (`model/compose.hpp`) substitutes a TM-vector into a TM for
+  flow/map composition. `model/io.hpp` adds `value`/`bound`/`jacobian`
+  (state-transition matrix) over a `std::array<TM, D>` state. The library
+  supplies rigorous *primitives*; the a-priori-enclosure / contraction step of
+  a rigorous integrator belongs to the consumer (the `tax-flow` plugin), not
+  the TM core. Note: no Eigen `NumTraits<TaylorModel>` — a domain-carrying
+  `TM(0)` literal is incompatible with real-domain TMs, so use
+  `std::array<TM, D>` for state vectors, not `Eigen::Vector<TM, D>`.
 - Tests live in `tests/model/`; `test_thesis_examples.cpp` pins worked
   computations from the thesis (remainder values, Table 4.2/4.3 numbers, the
-  §5.5.2 verified double integral) as regression oracles and `test_bounders.cpp`
-  pins the quadratic-bounder tightening. Containment sweeps use
+  §5.5.2 verified double integral) as regression oracles, `test_bounders.cpp`
+  pins the quadratic-bounder tightening, and `test_ode_primitives.cpp` /
+  `test_ode_integration.cpp` cover fix/retarget/compose and a worked
+  harmonic-oscillator integrator. Containment sweeps use
   `tax::test::ExpectEncloses` from `tests/model/modelTestUtils.hpp`.
 
 ---

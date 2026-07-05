@@ -148,6 +148,50 @@ integrals by inclusion–exclusion over the corners — the §5.5.2 double
 integral of the thesis is worked exactly this way in
 `tests/model/test_thesis_examples.cpp`.
 
+## Toward an ODE integrator
+
+Taylor models carry everything needed to build a verified ODE integrator on
+top. The Makino–Berz method rewrites `r' = F(r, t)` as the Picard fixed point
+`r(t) = r₀ + ∫₀ᵗ F(r(s), s) ds` and iterates it *on Taylor models* in the
+variables (initial conditions, time). That loop uses only arithmetic,
+intrinsics, and antiderivation — all shown above. Three more primitives
+handle stepping and sensitivity:
+
+```cpp
+// State over (y1_0, y2_0, tau); tau is the local step time in [0, h].
+using TM = tax::TaylorModel<double, 7, 3>;
+std::array<TM, 2> state{ TM::variable<0>(x0, dom), TM::variable<1>(x0, dom) };
+
+std::array<TM, 2> flow = picardStep(state);   // r₀ + ∫₀^tau F(r) dtau, iterated
+
+// Advance to the step endpoint tau = h, keeping the initial conditions symbolic…
+auto next0 = flow[0].fix<2>(h);               // partial evaluation of one axis
+// …then recycle the (now-collapsed) tau slot for the next step's [0, h] window:
+next0 = next0.retarget<2>(0.0, I{0.0, h});
+```
+
+- **`fix<I>(v)`** evaluates variable `I` at the coordinate `v` (exactly, since
+  a point adds no remainder), collapsing that axis while the others stay
+  symbolic — the state-continuation primitive.
+- **`retarget<I>(x0, dom)`** resets a collapsed variable's domain so the slot
+  can be reused for the next step (valid only when the model no longer depends
+  on that variable).
+- **`compose(G, H)`** substitutes a Taylor-model vector `H` into `G` (with a
+  rigorous check that `H`'s range stays inside `G`'s domain) — the flow/map
+  composition tool for long-time integration and Poincaré maps.
+
+Vector helpers read a state out: `value(state)`, `bound(state)`, and
+`jacobian(state)` — the last returns the **state-transition matrix**
+`∂(state)/∂(initial conditions)` from the polynomial part. A complete worked
+integrator for the harmonic oscillator (flow, multi-step continuation, and STM
+extraction) lives in `tests/model/test_ode_integration.cpp`.
+
+!!! note "The library gives primitives, not the integrator"
+    `fix`/`integ`/`compose` are rigorous building blocks. A *rigorous* ODE
+    integrator additionally needs the a-priori-enclosure / contraction step
+    (Schauder fixed point) to bound the Picard tail — that logic belongs to
+    the integrator (e.g. the `tax-flow` plugin), not to the TM core.
+
 ## Interval arithmetic on its own
 
 `tax::Interval<T>` is usable stand-alone and is **outward-rounded**: every

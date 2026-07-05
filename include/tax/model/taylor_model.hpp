@@ -238,7 +238,106 @@ class TaylorModel
         return integImpl( poly_.integ( var ), var );
     }
 
+    // ------------------------------------------------------------------
+    // Partial evaluation (variable fixing)
+    // ------------------------------------------------------------------
+
+    /// Evaluate variable `I` at the absolute coordinate `value`, keeping the
+    /// other variables symbolic. The axis collapses exactly (the fixed
+    /// coordinate is a point, so no remainder growth): every monomial in x_I
+    /// folds into the lower-degree monomials, and the model becomes constant
+    /// in variable I over the degenerate domain `[value, value]`. `value`
+    /// must lie in the variable's domain, else the enclosure would not hold.
+    ///
+    /// This is the step-continuation primitive for a Taylor-model ODE
+    /// integrator: fixing the time variable at the step endpoint yields the
+    /// end-of-step state as a function of the remaining (initial-condition)
+    /// variables. Throws std::domain_error if `value` is out of domain.
+    template < int I >
+    [[nodiscard]] constexpr TaylorModel fix( T value ) const
+        requires( I >= 0 && I < M )
+    {
+        return fixImpl( I, value );
+    }
+
+    /// Runtime-indexed partial evaluation. Throws std::out_of_range /
+    /// std::domain_error.
+    [[nodiscard]] TaylorModel fix( int var, T value ) const
+    {
+        if ( var < 0 || var >= M )
+            throw std::out_of_range( "tax::model::TaylorModel::fix: var must be in [0, M)" );
+        return fixImpl( var, value );
+    }
+
+    /// Reset variable `I`'s expansion point and domain. Only valid when the
+    /// model does not depend on variable I (all monomials containing x_I are
+    /// zero) — e.g. after `fix` has collapsed that axis — so that reusing the
+    /// slot as a fresh coordinate keeps the enclosure valid. This lets an ODE
+    /// integrator recycle the (collapsed) time slot for the next step's
+    /// domain [0, h]. Throws std::invalid_argument on violation.
+    template < int I >
+    [[nodiscard]] constexpr TaylorModel retarget( T x0_new, Interval< T > dom_new ) const
+        requires( I >= 0 && I < M )
+    {
+        return retargetImpl( I, x0_new, dom_new );
+    }
+
+    /// Runtime-indexed retarget. Throws std::out_of_range /
+    /// std::invalid_argument.
+    [[nodiscard]] TaylorModel retarget( int var, T x0_new, Interval< T > dom_new ) const
+    {
+        if ( var < 0 || var >= M )
+            throw std::out_of_range( "tax::model::TaylorModel::retarget: var must be in [0, M)" );
+        return retargetImpl( var, x0_new, dom_new );
+    }
+
    private:
+    [[nodiscard]] constexpr TaylorModel fixImpl( int var, T value ) const
+    {
+        if ( !dom_[std::size_t( var )].contains( value ) )
+            throw std::domain_error(
+                "tax::model::TaylorModel::fix: value outside the variable's domain" );
+        const T d = value - x0_[std::size_t( var )];
+        Poly out{};
+        for ( std::size_t k = 0; k < nCoefficients; ++k )
+        {
+            const T c = poly_[k];
+            if ( c == T{ 0 } ) continue;
+            auto alpha = scheme::multiOf( k );
+            const int e = alpha[std::size_t( var )];
+            T dp = T{ 1 };
+            for ( int j = 0; j < e; ++j ) dp *= d;
+            alpha[std::size_t( var )] = 0;
+            out[scheme::flatOf( alpha )] += c * dp;
+        }
+        TaylorModel r{};
+        r.poly_ = out;
+        r.rem_ = rem_;  // fixing to a point does not enlarge the remainder
+        r.x0_ = x0_;
+        r.x0_[std::size_t( var )] = value;
+        r.dom_ = dom_;
+        r.dom_[std::size_t( var )] = Interval< T >{ value };
+        return r;
+    }
+
+    [[nodiscard]] constexpr TaylorModel retargetImpl( int var, T x0_new,
+                                                      Interval< T > dom_new ) const
+    {
+        for ( std::size_t k = 0; k < nCoefficients; ++k )
+        {
+            if ( poly_[k] != T{ 0 } && scheme::multiOf( k )[std::size_t( var )] > 0 )
+                throw std::invalid_argument(
+                    "tax::model::TaylorModel::retarget: model depends on the variable" );
+        }
+        if ( !dom_new.contains( x0_new ) )
+            throw std::invalid_argument(
+                "tax::model::TaylorModel::retarget: expansion point outside new domain" );
+        TaylorModel r = *this;
+        r.x0_[std::size_t( var )] = x0_new;
+        r.dom_[std::size_t( var )] = dom_new;
+        return r;
+    }
+
     [[nodiscard]] constexpr TaylorModel integImpl( const Poly& raw_integral,
                                                    int var ) const noexcept
     {

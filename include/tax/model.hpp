@@ -3,7 +3,9 @@
 // remainder-verified truncated Taylor expansions (namespace tax::model).
 
 #include <tax/model/arithmetic.hpp>
+#include <tax/model/compose.hpp>
 #include <tax/model/interval.hpp>
+#include <tax/model/io.hpp>
 #include <tax/model/math.hpp>
 #include <tax/model/taylor_model.hpp>
 

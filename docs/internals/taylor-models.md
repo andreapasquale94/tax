@@ -288,6 +288,51 @@ by evaluating the antiderivative at displacement endpoints (multidimensional
 boxes by inclusion–exclusion over corners; see
 `tests/model/test_thesis_examples.cpp`, §5.5.2).
 
+Note that only $\partial^{-1}$ is exposed, not the derivation $\partial$.
+This is deliberate: the thesis (§4.3.3) shows a TM cannot bound $\partial f$
+(nothing constrains how fast $f - P$ varies inside the remainder), and the
+motivating application — ODE flow solving — needs only integration. The
+Makino–Berz integrator is the Picard fixed point
+$r(t) = r_0 + \int_0^t F(r(s), s)\,ds$, iterated on TMs in the variables
+(initial conditions, time); each iteration is TM arithmetic + intrinsics +
+`integ`, all present.
+
+## ODE-integrator primitives
+
+Two operations turn the antiderivation loop into a stepping integrator, plus
+one for map composition:
+
+- **`fix<I>(v)`** — partial evaluation. Substituting a *point* $v$ for one
+  variable is exact (a point adds no remainder), so the axis collapses by
+  Horner in $T$: every monomial $c_\alpha\,x_I^{e}\cdots$ folds into the
+  degree-$(e{-}0)$-lower monomial via $c_\alpha (v - x_{0I})^{e}$, the
+  remainder is copied unchanged, and variable $I$'s domain collapses to
+  $[v, v]$. In an integrator, fixing the time axis at the step endpoint yields
+  the end-of-step state as a function of the (still symbolic) initial
+  conditions.
+- **`retarget<I>(x_0', \text{dom}')`** — resets a variable's expansion point
+  and domain. Guarded to reject any model that still depends on the variable
+  (a nonzero coefficient with $x_I$ present throws), so it is only ever used
+  to recycle an axis that `fix` has already collapsed — e.g. reusing the time
+  slot for the next step's $[0, h]$ window.
+- **`compose(G, H)`** — substitutes an inner TM-vector $H$ (over $u$) into an
+  outer model $G$ (over $M$ variables). With the precondition
+  $B(H_j) \subseteq \text{domain}(G)_j$ (checked; else `std::domain_error`),
+  $G(H(u)) \in P_G(H(u) - x_{0G}) + I_G$, so the result is the outer
+  polynomial evaluated at the shifted inner models in TM arithmetic over $u$,
+  plus $I_G$. All intermediates share $H$'s expansion parameter, so every TM
+  multiply is compatible. This is the flow/map-composition tool for long-time
+  integration and Poincaré sections.
+
+`model/io.hpp` adds `value`/`bound`/`jacobian` over a `std::array<TM, D>`
+state; `jacobian` reads $\partial(\text{state}_i)/\partial x_j$ from the
+polynomial parts (the state-transition matrix of a flow). We do **not** ship
+`Eigen::NumTraits<TaylorModel>`: a domain-carrying `TM(0)` literal (which
+Eigen synthesises in reductions/`setZero`) is incompatible with real-domain
+TMs and would throw, so state vectors use `std::array`, not Eigen columns.
+The full worked example — flow, multi-step continuation, STM — is in
+`tests/model/test_ode_integration.cpp`.
+
 ## Rigor contract
 
 Two different arithmetic layers coexist, with an explicit boundary:

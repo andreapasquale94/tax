@@ -148,6 +148,36 @@ range bounds.
 | `eval(dx)` | `Interval` enclosure of $f(\mathbf{x}_0 + d\mathbf{x})$; throws `std::domain_error` outside the domain |
 | `compatibleWith(g)` | same expansion point and domain? |
 | `integ<I>()` / `integ(i)` | antiderivative Taylor model w.r.t. $x_I$, eq. (4.12) |
+| `fix<I>(v)` / `fix(i, v)` | partial evaluation: fix variable $I$ at coordinate $v$ (exact axis collapse), keep the rest symbolic; throws `std::domain_error` if $v$ is out of domain, `std::out_of_range` on bad index |
+| `retarget<I>(x0, dom)` / `retarget(i, x0, dom)` | reset variable $I$'s expansion point + domain, valid only when the model is independent of $I$; throws `std::invalid_argument` otherwise |
+
+### Composition and vector helpers (`tax/model/compose.hpp`, `io.hpp`)
+
+```cpp
+namespace tax::model {
+// Substitute an inner TM-vector into an outer model (multivariate Horner in
+// TM arithmetic + I_G); requires each inner range ⊆ outer domain.
+template <..., int M, int M2>
+TaylorModel<T,N,M2> compose(const TaylorModel<T,N,M>& g,
+                            const std::array<TaylorModel<T,N,M2>, M>& h);
+template <..., std::size_t D>            // component-wise vector form
+std::array<TaylorModel<T,N,M2>, D> compose(const std::array<TaylorModel<T,N,M>, D>& g,
+                                           const std::array<TaylorModel<T,N,M2>, M>& h);
+
+// Read a state of D models:
+std::array<T, D>            value(const std::array<TaylorModel<T,N,M>, D>&);
+std::array<Interval<T>, D>  bound(const std::array<TaylorModel<T,N,M>, D>&, Bounder = Quadratic);
+Eigen::Matrix<T, D, M>      jacobian(const std::array<TaylorModel<T,N,M>, D>&);  // STM
+
+std::ostream& operator<<(std::ostream&, const TaylorModel<T,N,M>&);  // P + I on [box]
+std::string   to_string(const TaylorModel<T,N,M>&);
+}
+```
+
+`compose` throws `std::domain_error` if any inner range leaves the outer
+domain, `std::invalid_argument` if the inner models disagree on expansion
+point/domain. `jacobian` reads `∂(state_i)/∂x_j` from the polynomial parts —
+for a flow map this is the state-transition matrix.
 
 ### Operators
 
