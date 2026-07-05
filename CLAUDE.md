@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N. It provides dense and sparse storage, *named* expansions (type-level variable axes) including *mixed-order* axes, optional *batch* (SIMD-style) coefficients, and Eigen integration (`tax::la`).
+**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N. It provides dense and sparse storage, *named* expansions (type-level variable axes) including *mixed-order* axes, optional *batch* (SIMD-style) coefficients, Eigen integration (`tax::la`), and *Taylor models* — expansions carrying rigorous interval remainder bounds (`tax::model`).
 
 > **Note:** adaptive ODE integration (`tax::ode`) and Automatic Domain Splitting (`tax::ads`) are no longer part of this repository — they were split out, unchanged, into a separate companion plugin built on top of `tax` (see the README). Do not look for `include/tax/ode` or `include/tax/ads` here.
 
@@ -20,6 +20,7 @@ tax/
 ├── include/tax/              # Header-only library (the entire library lives here)
 │   ├── tax.hpp               # Umbrella header — users include only this
 │   ├── la.hpp                # Facade: linear-algebra / Eigen helpers (tax::la)
+│   ├── model.hpp             # Facade: Taylor models (tax::model)
 │   ├── core/                 # The TaylorExpansion type and its foundations
 │   │   ├── concepts.hpp      #   Scalar, TaylorPolynomial, DensePolynomial concepts
 │   │   ├── multi_index.hpp   #   MultiIndex<M>, flatIndex/unflatIndex, numMonomials
@@ -58,6 +59,11 @@ tax/
 │   │   ├── named.hpp         #   NumTraits + gradient/hessian/jacobian by axis name
 │   │   ├── mixed_named.hpp   #   the same for mixed-order named expansions
 │   │   └── invert.hpp        #   formal polynomial-map inversion (Picard)
+│   ├── model/                # Taylor models (Makino ch. 4): polynomial + remainder interval
+│   │   ├── interval.hpp      #   Interval<T>: outward-rounded interval arithmetic
+│   │   ├── taylor_model.hpp  #   TaylorModel<T,N,M> = (P, I, x0, [a,b]); bounds, integ
+│   │   ├── arithmetic.hpp    #   +, -, * with excess-order remainder folding
+│   │   └── math.hpp          #   intrinsics with Lagrange remainder enclosures
 │   └── io/series.hpp         # human-readable streaming: operator<<, series(), to_string()
 ├── tests/                    # Google Test suite
 │   ├── core/                 #   ctor/accessors, multi-index, enumeration, deriv/integ, named
@@ -65,6 +71,7 @@ tax/
 │   ├── operators/            #   one file per math-function family
 │   ├── sparse/               #   sparse ctor/arith/conversion/substitution
 │   ├── mixed/                #   MixedScheme + mixed-order named expansions
+│   ├── model/                #   Interval + TaylorModel + thesis worked-example oracles
 │   ├── eigen/                #   tax::la helpers (gradient, jacobian, invert, named, …)
 │   ├── io/                   #   series / streaming
 │   ├── regression/           #   DACE comparison suite (opt-in, TAX_BUILD_REGRESSIONS)
@@ -133,6 +140,7 @@ tax::TEn<N, M>            // dense, explicit multivariate spelling
 tax::STE<N, M = 1>        // sparse
 tax::NE<N, Axes...>       // named (single order)          — see Named Expansions
 tax::MTE<Axes...>         // mixed-order named             — see Named Expansions
+tax::TM<N, M = 1>         // Taylor model (TE + remainder) — see Taylor Models
 ```
 
 - **Dense:** `std::array<T, numMonomials(N, M)>` coefficients in graded-lex
@@ -296,6 +304,53 @@ like `NE`. Key files: `core/mixed_named.hpp`, `kernels/mixed_stencils.hpp`,
 - Printing (`io/series.hpp`): `std::cout << f` (polynomial series),
   `tax::series(f, opts)` (tabular / per-element for Eigen vectors),
   `tax::to_string(f)`.
+
+---
+
+## Taylor Models (`tax::model`)
+
+`tax::TaylorModel<T, N, M>` (alias `tax::TM<N, M>`, `double`-valued) implements
+Makino's remainder-enhanced DA (PhD thesis MSUCL-1093, ch. 4): a dense
+`TaylorExpansion` polynomial part `P`, a remainder interval `I`, an expansion
+point `x0`, and a domain box `[a, b]`, guaranteeing `f(x) ∈ P(x - x0) + I` for
+all `x` in the domain.
+
+```cpp
+using I = tax::Interval<double>;
+auto x = tax::TM<3>::variable(2.0, I{1.9, 2.1});
+auto f = 1.0 / x + x;        // remainder [0, 4.04e-6] (thesis §4.4.1)
+auto b = f.bound();          // verified range enclosure B(P) + I
+auto F = cos(x).integ<0>();  // antiderivation, eq. (4.12)
+```
+
+Key rules for working on this module:
+
+- **`tax::Interval<T>` is outward-rounded**: every computed endpoint is
+  widened by 1 ulp (2 ulps for libm endpoints) via `bit_cast` nextUp/nextDown,
+  so interval results are guaranteed enclosures; `sqr`/even `pow` keep the
+  sharp non-negative lower bound of thesis eq. (5.4). Exact endpoints (ctor
+  inputs, the 0 of even powers) are never padded.
+- **Binary TM operations require identical `x0`/domain** (else
+  `std::invalid_argument`); multiplication folds the degree->N excess of the
+  polynomial product into the remainder along with `B(P_a) I_b + B(P_b) I_a +
+  I_a I_b`.
+- **Intrinsics** (`exp log sqrt isqrt reciprocal square pow sin cos tan asin
+  acos atan sinh cosh tanh`, `/`) follow the §4.3.2 recipe: constant-part
+  split, Horner series in TM arithmetic, Lagrange remainder bounded over
+  `c + hull(0, B(P̄) + I)`. Domain violations throw `std::domain_error` —
+  never return garbage silently; validated computation depends on it.
+- **Rigor contract** (documented in `taylor_model.hpp`): all *interval*
+  computations are conservative; floating-point rounding of the polynomial
+  *coefficients* themselves is not swept into the remainder (COSY's ch. 5
+  coefficient-error tallying is future work). Keep new code on the right side
+  of this line: anything feeding a remainder must use `Interval` arithmetic.
+- **Range bounding is the naive order-sum** (`detail::polyRangeBound`, exact
+  for orders 0-1). The thesis's exact quadratic bounder / iterative refinement
+  (§5.4.3) are natural future upgrades — keep the bounder pluggable.
+- Tests live in `tests/model/`; `test_thesis_examples.cpp` pins worked
+  computations from the thesis (remainder values, Table 4.2/4.3 numbers, the
+  §5.5.2 verified double integral) as regression oracles. Containment sweeps
+  use `tax::test::ExpectEncloses` from `tests/model/modelTestUtils.hpp`.
 
 ---
 
