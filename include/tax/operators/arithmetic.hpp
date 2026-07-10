@@ -374,4 +374,32 @@ template < typename T, int N, int M >
     return r;
 }
 
+// Sparse compound assignment. A sparse result reshapes the support, so these
+// rebuild `a` from the corresponding binary operator rather than mutating in
+// place; the binary forms already emit a sorted, zero-free container.
+
+#define TAX_SPARSE_COMPOUND( OP )                                                               \
+    template < typename T, int N, int M >                                                       \
+    TaylorExpansion< T, IsotropicScheme< N, M >, Sparse >& operator OP##=(                      \
+        TaylorExpansion< T, IsotropicScheme< N, M >, Sparse >& a,                               \
+        const TaylorExpansion< T, IsotropicScheme< N, M >, Sparse >& b )                        \
+    {                                                                                           \
+        a = a OP b;                                                                             \
+        return a;                                                                               \
+    }                                                                                           \
+    template < typename T, int N, int M >                                                       \
+    TaylorExpansion< T, IsotropicScheme< N, M >, Sparse >& operator OP##=(                      \
+        TaylorExpansion< T, IsotropicScheme< N, M >, Sparse >& a, std::type_identity_t< T > s ) \
+    {                                                                                           \
+        a = a OP s;                                                                             \
+        return a;                                                                               \
+    }
+
+TAX_SPARSE_COMPOUND( +)
+TAX_SPARSE_COMPOUND( -)
+TAX_SPARSE_COMPOUND( * )
+TAX_SPARSE_COMPOUND( / )
+
+#undef TAX_SPARSE_COMPOUND
+
 }  // namespace tax

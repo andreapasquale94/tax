@@ -51,6 +51,8 @@ tax_add_test(test_sparse_conversion SOURCES sparse/test_sparse_conversion.cpp)
 tax_add_test(test_sparse_arith      SOURCES sparse/test_sparse_arith.cpp)
 tax_add_test(test_sparse_cauchy     SOURCES kernels/test_sparse_cauchy.cpp)
 tax_add_test(test_sparse_subs       SOURCES sparse/test_sparse_subs.cpp)
+tax_add_test(test_sparse_math       SOURCES sparse/test_sparse_math.cpp)
+tax_add_test(test_sparse_members    SOURCES sparse/test_sparse_members.cpp)
 
 # Eigen integration — slice 11
 tax_add_test(test_eigen_numtraits   SOURCES eigen/test_eigen_numtraits.cpp)

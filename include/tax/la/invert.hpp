@@ -106,7 +106,7 @@ template < typename Derived >
     for ( Eigen::Index i = 0; i < map_in.size(); ++i )
     {
         map( i ) = map_in.derived().coeff( i );
-        map( i )[0] = T{};  // drop constant term
+        map( i ) = map( i ) - map( i ).value();  // drop constant term (storage-generic)
     }
 
     // Build the identity map and Jacobian of the non-constant map.

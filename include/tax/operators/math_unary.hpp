@@ -85,4 +85,40 @@ template < typename T, int N, int M >
     return r;
 }
 
+// Remaining unary functions for sparse storage. A transcendental (or the
+// polynomial square/cube/cbrt) turns a sparse operand into a result whose
+// support is the additive closure of the input's — effectively dense — so we
+// evaluate the dense recurrence and re-sparsify, which is both exact and about
+// as fast as a bespoke sparse kernel would be. `sqrt` and `reciprocal` keep
+// their native forward-substitution kernels above.
+
+#define TAX_UNARY_SPARSE_BRIDGE( NAME )                                                \
+    template < typename T, int N, int M >                                              \
+    [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > NAME( \
+        const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )      \
+    {                                                                                  \
+        return sparse( NAME( x.dense() ) );                                            \
+    }
+
+TAX_UNARY_SPARSE_BRIDGE( square )
+TAX_UNARY_SPARSE_BRIDGE( cube )
+TAX_UNARY_SPARSE_BRIDGE( cbrt )
+TAX_UNARY_SPARSE_BRIDGE( exp )
+TAX_UNARY_SPARSE_BRIDGE( log )
+TAX_UNARY_SPARSE_BRIDGE( sinh )
+TAX_UNARY_SPARSE_BRIDGE( cosh )
+TAX_UNARY_SPARSE_BRIDGE( tanh )
+TAX_UNARY_SPARSE_BRIDGE( asinh )
+TAX_UNARY_SPARSE_BRIDGE( acosh )
+TAX_UNARY_SPARSE_BRIDGE( atanh )
+TAX_UNARY_SPARSE_BRIDGE( erf )
+TAX_UNARY_SPARSE_BRIDGE( sin )
+TAX_UNARY_SPARSE_BRIDGE( cos )
+TAX_UNARY_SPARSE_BRIDGE( tan )
+TAX_UNARY_SPARSE_BRIDGE( asin )
+TAX_UNARY_SPARSE_BRIDGE( acos )
+TAX_UNARY_SPARSE_BRIDGE( atan )
+
+#undef TAX_UNARY_SPARSE_BRIDGE
+
 }  // namespace tax

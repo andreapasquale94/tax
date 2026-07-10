@@ -86,6 +86,18 @@ class TaylorExpansion<T, Scheme, storage::Sparse>;
   merge; element lookup is $O(\log \text{nnz})$ via binary search.
 - Multiplication uses the dedicated sparse Cauchy kernel
   (`tax/kernels/sparse_cauchy.hpp`).
+- **Full API parity with Dense.** Arithmetic (including `+=`/`-=`/`*=`/`/=`),
+  the differential/evaluation members (`deriv`, `integ`, `eval`, `gradient`,
+  `hessian`), the complete math surface (`exp`, `log`, `sin`/`cos`/`tan` and
+  inverses, hyperbolics, `erf`, every `pow`/`halfPow`/`atan2` spelling, and the
+  fused `sinCos`/`sqrtInvSqrt`/`expSinCos` family), and the Eigen `tax::la`
+  helpers (`gradient`, `hessian`, `jacobian`, `norm`, `dot`, `invert`, …) all
+  accept `STE`. `sqrt`, `reciprocal`, integer `pow`, `+`/`-`/`*`/`/`, and the
+  Cauchy product run native sparse kernels that exploit the support; the
+  remaining transcendental / real-power / fused functions **densify** (their
+  result support is the additive closure of the input's), so they evaluate the
+  dense recurrence and re-sparsify — exact, and about as fast as a bespoke
+  sparse kernel would be.
 - A conversion helper is provided:
 
 ```cpp

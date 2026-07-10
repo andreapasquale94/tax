@@ -84,6 +84,53 @@ template < typename T, IndexScheme Scheme >
     return r;
 }
 
+// Fused surface for sparse storage: the coupled results densify like the plain
+// transcendentals, so each runs the dense fused pass and re-sparsifies both
+// outputs. See math_unary.hpp for the rationale.
+
+#define TAX_FUSED_SPARSE_UNARY_PAIR( FN )                                         \
+    template < typename T, int N, int M >                                         \
+    [[nodiscard]] auto FN(                                                        \
+        const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x ) \
+    {                                                                             \
+        auto p = FN( x.dense() );                                                 \
+        return std::pair{ sparse( p.first ), sparse( p.second ) };                \
+    }
+
+TAX_FUSED_SPARSE_UNARY_PAIR( sinCos )
+TAX_FUSED_SPARSE_UNARY_PAIR( sinhCosh )
+TAX_FUSED_SPARSE_UNARY_PAIR( sqrtInvSqrt )
+
+#undef TAX_FUSED_SPARSE_UNARY_PAIR
+
+/// Sparse `exp(v)*sin(u)`.
+template < typename T, int N, int M >
+[[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > expSin(
+    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& v,
+    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& u )
+{
+    return sparse( expSin( v.dense(), u.dense() ) );
+}
+
+/// Sparse `exp(v)*cos(u)`.
+template < typename T, int N, int M >
+[[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > expCos(
+    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& v,
+    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& u )
+{
+    return sparse( expCos( v.dense(), u.dense() ) );
+}
+
+/// Sparse `{exp(v)*sin(u), exp(v)*cos(u)}`.
+template < typename T, int N, int M >
+[[nodiscard]] auto expSinCos(
+    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& v,
+    const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& u )
+{
+    auto p = expSinCos( v.dense(), u.dense() );
+    return std::pair{ sparse( p.first ), sparse( p.second ) };
+}
+
 }  // namespace tax
 
 // Named (single-order) and mixed-order named overloads.

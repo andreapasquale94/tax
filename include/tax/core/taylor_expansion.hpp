@@ -530,6 +530,81 @@ class TaylorExpansion< T, Scheme, storage::Sparse >
         return r;
     }
 
+    /// Evaluate the polynomial at displacement `dx` from the expansion point.
+    [[nodiscard]] T eval( const Input& dx ) const noexcept { return dense().eval( dx ); }
+
+    /// Evaluate the polynomial at displacement given as an Eigen vector.
+    template < typename DxDerived >
+    [[nodiscard]] T eval( const Eigen::MatrixBase< DxDerived >& dx ) const
+    {
+        return dense().eval( dx );
+    }
+
+    /// Partial derivative polynomial with respect to variable `I`.
+    template < int I >
+    [[nodiscard]] TaylorExpansion deriv() const noexcept
+        requires( I >= 0 && I < M )
+    {
+        return derivImpl( I );
+    }
+
+    /// Partial derivative polynomial with respect to variable `var`. Throws std::out_of_range if
+    /// `var` is outside [0, M).
+    [[nodiscard]] TaylorExpansion deriv( int var ) const
+    {
+        if ( var < 0 || var >= M )
+            throw std::out_of_range( "tax::TaylorExpansion::deriv(var): var must be in [0, M)" );
+        return derivImpl( var );
+    }
+
+    /// Indefinite integral polynomial with respect to variable `I`.
+    template < int I >
+    [[nodiscard]] TaylorExpansion integ() const noexcept
+        requires( I >= 0 && I < M )
+    {
+        return integImpl( I );
+    }
+
+    /// Indefinite integral polynomial with respect to variable `var`. Throws std::out_of_range if
+    /// `var` is outside [0, M).
+    [[nodiscard]] TaylorExpansion integ( int var ) const
+    {
+        if ( var < 0 || var >= M )
+            throw std::out_of_range( "tax::TaylorExpansion::integ(var): var must be in [0, M)" );
+        return integImpl( var );
+    }
+
+    /// Compute the gradient vector `[df/dx_0, ..., df/dx_{M-1}]` at the expansion point.
+    [[nodiscard]] tax::la::VecNT< M, T > gradient() const noexcept
+    {
+        tax::la::VecNT< M, T > g;
+        MultiIndex< M > alpha{};
+        for ( int i = 0; i < M; ++i )
+        {
+            alpha[std::size_t( i )] = 1;
+            g( i ) = derivative( alpha );
+            alpha[std::size_t( i )] = 0;
+        }
+        return g;
+    }
+
+    /// Compute the Hessian matrix `H(i,j) = d^2 f / (dx_i dx_j)` at the expansion point.
+    [[nodiscard]] tax::la::MatNT< M, T > hessian() const noexcept
+    {
+        tax::la::MatNT< M, T > H;
+        for ( int i = 0; i < M; ++i )
+        {
+            for ( int j = 0; j < M; ++j )
+            {
+                MultiIndex< M > alpha{};
+                alpha[std::size_t( i )] += 1;
+                alpha[std::size_t( j )] += 1;
+                H( i, j ) = derivative( alpha );
+            }
+        }
+        return H;
+    }
+
     /// Order-reducing truncation: drop monomials of degree > N2, yielding a lower-order expansion.
     template < int N2 >
     [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N2, M >, storage::Sparse > truncate()
@@ -551,6 +626,38 @@ class TaylorExpansion< T, Scheme, storage::Sparse >
     [[nodiscard]] container_t& container() noexcept { return c_; }
 
    private:
+    /// Shared body of the compile-time-index and runtime-index deriv overloads.
+    /// Decrementing exponent `var` is injective on the support, so no two source
+    /// monomials collide — `accumulate` keeps the result sorted and zero-free.
+    [[nodiscard]] TaylorExpansion derivImpl( int var ) const noexcept
+    {
+        TaylorExpansion r;
+        c_.forEachNonzero( [&]( std::size_t k, T v ) {
+            auto alpha = unflatIndex< M >( k );
+            const int e = alpha[std::size_t( var )];
+            if ( e == 0 ) return;
+            alpha[std::size_t( var )] = e - 1;
+            r.c_.accumulate( flatIndex< M >( alpha ), v * T( e ) );
+        } );
+        return r;
+    }
+
+    /// Shared body of the compile-time-index and runtime-index integ overloads.
+    [[nodiscard]] TaylorExpansion integImpl( int var ) const noexcept
+    {
+        TaylorExpansion r;
+        c_.forEachNonzero( [&]( std::size_t k, T v ) {
+            auto alpha = unflatIndex< M >( k );
+            int deg = 0;
+            for ( int i = 0; i < M; ++i ) deg += alpha[std::size_t( i )];
+            if ( deg + 1 > N ) return;  // would exceed the kept set
+            const int e = alpha[std::size_t( var )];
+            alpha[std::size_t( var )] = e + 1;
+            r.c_.accumulate( flatIndex< M >( alpha ), v / T( e + 1 ) );
+        } );
+        return r;
+    }
+
     /// Copy the sorted prefix of stored slots with flat index < `limit` into a fresh result.
     template < typename Result >
     [[nodiscard]] Result truncatedBelow( std::size_t limit ) const noexcept
