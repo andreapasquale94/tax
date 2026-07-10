@@ -171,24 +171,33 @@ template < int P, typename T, int N, int M >
     return pow( x, P );
 }
 
-// Real / rational / Taylor-valued powers and atan2 for sparse storage densify
-// (their result support is the additive closure of the input's), so they run
-// the dense recurrence and re-sparsify. See math_unary.hpp for the rationale.
+// Real / rational / Taylor-valued powers and atan2 for sparse storage run native
+// recurrences: seriesPowFromSeedSparse for the real-exponent branch, and the
+// composed exp/log / atan2 quotient forms — see math_unary.hpp and sparse_subs.hpp.
 
-/// Sparse real-exponent power `out = x^p`. Requires `x.value() > 0`.
+/// Sparse real-exponent power `out = x^p` via the native real-power recurrence.
+/// Requires `x.value() > 0`.
 template < typename T, int N, int M, std::floating_point P >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > pow(
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x, P p )
 {
-    return sparse( pow( x.dense(), p ) );
+    using std::pow;
+    TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > r;
+    detail::kernels::seriesPowFromSeedSparse< T, N, M >( r.container(), pow( x.value(), T( p ) ),
+                                                         x.container(), T( p ) );
+    return r;
 }
 
-/// Sparse half-integer power `out = x^(K/2)`.
+/// Sparse half-integer power `out = x^(K/2)`: even K via the native integer
+/// power, odd K via the native real-power recurrence.
 template < int K, typename T, int N, int M >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > halfPow(
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
 {
-    return sparse( halfPow< K >( x.dense() ) );
+    if constexpr ( K % 2 == 0 )
+        return pow< K / 2 >( x );
+    else
+        return pow( x, T( K ) / T( 2 ) );
 }
 
 /// Sparse inverse square-root power `out = x^(-K/2)`.
@@ -196,42 +205,63 @@ template < int K, typename T, int N, int M >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > invSqrtPow(
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
 {
-    return sparse( invSqrtPow< K >( x.dense() ) );
+    static_assert( K >= 1, "invSqrtPow<K>: K must be >= 1 (computes x^(-K/2))" );
+    return halfPow< -K >( x );
 }
 
-/// Sparse compile-time rational power `out = x^(Num/Den)`.
+/// Sparse compile-time rational power `out = x^(Num/Den)` — reduced and bound to
+/// the cheapest native kernel, matching the dense dispatch.
 template < int Num, int Den, typename T, int N, int M >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > pow(
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
 {
-    return sparse( pow< Num, Den >( x.dense() ) );
+    static_assert( Den != 0, "pow<Num, Den>: denominator must be non-zero" );
+    constexpr int g = std::gcd( Num < 0 ? -Num : Num, Den < 0 ? -Den : Den );
+    constexpr int sign = Den < 0 ? -1 : 1;
+    constexpr int n = sign * Num / g;
+    constexpr int m = ( Den < 0 ? -Den : Den ) / g;
+
+    if constexpr ( m == 1 )
+        return pow< n >( x );
+    else if constexpr ( m == 2 )
+        return halfPow< n >( x );
+    else
+        return pow( x, T( n ) / T( m ) );
 }
 
-/// Sparse Taylor-valued exponent `out = a^b`.
+/// Sparse Taylor-valued exponent `out = a^b = exp(b*log(a))`. Requires `a.value() > 0`.
 template < typename T, int N, int M >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > pow(
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& a,
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& b )
 {
-    return sparse( pow( a.dense(), b.dense() ) );
+    return exp( b * log( a ) );
 }
 
-/// Sparse scalar-base Taylor exponent `out = s^b`.
+/// Sparse scalar-base Taylor exponent `out = s^b = exp(b*log(s))`. Requires `s > 0`.
 template < typename T, int N, int M >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > pow(
     std::type_identity_t< T > s,
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& b )
 {
-    return sparse( pow( s, b.dense() ) );
+    using std::log;
+    return exp( b * log( s ) );
 }
 
-/// Sparse `atan2(y, x)`.
+/// Sparse `atan2(y, x)`: r = y/x, then out' = r' / (1 + r^2) via the native
+/// quotient recurrence.
 template < typename T, int N, int M >
 [[nodiscard]] TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > atan2(
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& y,
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
 {
-    return sparse( atan2( y.dense(), x.dense() ) );
+    using std::atan2;
+    const auto r = y / x;
+    const auto h = T{ 1 } + square( r );
+    TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse > out;
+    detail::kernels::seriesDerivQuotientSparse< 1, T, N, M >(
+        out.container(), atan2( y.value(), x.value() ), r.container(), h.container() );
+    return out;
 }
 
 /// Sparse `atan2(y, x)` with a constant `x`.
@@ -240,7 +270,7 @@ template < typename T, int N, int M >
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& y,
     std::type_identity_t< T > x )
 {
-    return sparse( atan2( y.dense(), x ) );
+    return atan2( y, TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >{ x } );
 }
 
 /// Sparse `atan2(y, x)` with a constant `y`.
@@ -249,7 +279,7 @@ template < typename T, int N, int M >
     std::type_identity_t< T > y,
     const TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >& x )
 {
-    return sparse( atan2( y, x.dense() ) );
+    return atan2( TaylorExpansion< T, IsotropicScheme< N, M >, storage::Sparse >{ y }, x );
 }
 
 }  // namespace tax

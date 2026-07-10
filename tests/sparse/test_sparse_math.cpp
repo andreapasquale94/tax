@@ -159,6 +159,33 @@ TEST( SparseMath, SqrtInvSqrtMatchesDense )
     ExpectCoeffsNear( si.dense(), di );
 }
 
+// ---- Sparsity preservation ----------------------------------------------
+// A function of one axis of a multivariate expansion must never populate
+// monomials of the other axes — the native recurrence walks only the additive
+// closure of the input's support, so cross-axis coefficients stay structurally
+// absent (a dense round-trip would compute them all, then drop the zeros).
+
+TEST( SparseMath, PreservesSparsityAcrossAxes )
+{
+    using TE2 = tax::TE< 5, 2 >;
+    typename TE2::Input p{ 0.3, 0.7 };
+    auto sx = tax::sparse( TE2::variable< 0 >( p ) );  // depends on x only
+
+    // exp(x): support is {1, x, x^2, ..., x^5} — 6 monomials, no y appears.
+    auto e = tax::exp( sx );
+    EXPECT_EQ( e.nnz(), 6u );
+    // No stored monomial may carry a y exponent.
+    for ( auto k : e.support() )
+    {
+        auto alpha = tax::unflatIndex< 2 >( std::size_t( k ) );
+        EXPECT_EQ( alpha[1], 0 ) << "exp(x) leaked a y term at flat " << k;
+    }
+
+    // sin/atan likewise stay on the x axis.
+    EXPECT_EQ( tax::sin( sx ).nnz(), 6u );
+    EXPECT_EQ( tax::atan( sx ).nnz(), 6u );
+}
+
 TEST( SparseMath, ExpSinCosMatchesDense )
 {
     auto v = tax::TE< 6 >::variable( 0.2 );
