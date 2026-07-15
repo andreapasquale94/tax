@@ -192,3 +192,40 @@ template <typename Derived>
 ```
 
 The input vector size must equal `TE::vars_v` (statically or at runtime).
+
+---
+
+## Statistical moments
+
+`namespace tax::la` (header `tax/la/moments.hpp`), for dense, isotropic
+expansions only. Assumes the expansion's formal variables are i.i.d. standard
+normal — see [Guide / Eigen Integration](../guide/eigen.md#statistical-moments)
+and [Internals / Statistical Moments](../internals/moments.md).
+
+```cpp
+// E[F] — mean of a vector map F(x), x ~ N(0, I) i.i.d.
+template <typename Derived>
+    requires(/* Derived::Scalar is a dense, isotropic TaylorExpansion */)
+[[nodiscard]] auto mean(const Eigen::MatrixBase<Derived>& F);
+
+// Cov(F_i, F_j) — D x D covariance matrix.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto covariance(const Eigen::MatrixBase<Derived>& F);
+
+// S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)] — D slices of D x D matrices.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto skewnessTensor(const Eigen::MatrixBase<Derived>& F);
+
+// K_ijkl = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)(F_l-mu_l)] — D x D slices of D x D matrices.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto kurtosisTensor(const Eigen::MatrixBase<Derived>& F);
+
+// kurtosisTensor(F) minus the jointly-Gaussian Isserlis baseline
+// Cov_ij*Cov_kl + Cov_ik*Cov_jl + Cov_il*Cov_jk — a non-Gaussianity measure.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto excessKurtosisTensor(const Eigen::MatrixBase<Derived>& F);
+```

@@ -114,3 +114,38 @@ at $\mathbf y - \mathbf y_0$ and adding $\mathbf x_0$ yourself.
 For the underlying math — the linear/nonlinear split, the fixed-point form, and
 why the Picard iteration terminates at order $N$ — see
 [Internals / Map Inversion](../internals/map-inversion.md).
+
+---
+
+## Statistical moments
+
+`tax::la::mean`, `tax::la::covariance`, `tax::la::skewnessTensor`,
+`tax::la::kurtosisTensor`, and `tax::la::excessKurtosisTensor` (header
+`tax/la/moments.hpp`) extract statistical moments of a polynomial map
+$\mathbf F(\boldsymbol{\delta x})$ under one assumption: the expansion's
+formal variables are i.i.d. standard normal,
+$\boldsymbol{\delta x} \sim \mathcal N(\mathbf 0, I)$ — the usual
+differential-algebra convention, where any actual input covariance is folded
+into how you built $\mathbf x_0$ and the variables (e.g. scale through a
+Cholesky factor before calling `tax::la::variables`).
+
+```cpp
+auto x = tax::TE<4>::variable(0.0);
+Eigen::Matrix<tax::TE<4>, 1, 1> F;
+F(0) = x * x;                                 // chi-square(1)
+
+auto mu   = tax::la::mean(F);                 // [1.0]
+auto cov  = tax::la::covariance(F);           // [[2.0]]
+auto skew = tax::la::skewnessTensor(F);       // skew[0](0,0) == 8.0
+auto kurt = tax::la::excessKurtosisTensor(F); // kurt[0][0](0,0) == 48.0
+```
+
+`skewnessTensor`/`kurtosisTensor` return the third/fourth joint central-moment
+tensors as `D` (resp. `D×D`) slices of `D×D` matrices, since `tax` has no
+rank-3/4 tensor type. `excessKurtosisTensor` subtracts the jointly-Gaussian
+Isserlis baseline from `kurtosisTensor`, giving a standard non-Gaussianity
+diagnostic. These functions are Hermite/Chebyshev-conversion's motivating use
+case (see [Basis Conversion](results.md#basis-conversion)); for the full
+derivation and references (Isserlis' theorem, the differential-algebra
+whitening convention) see
+[Internals / Statistical Moments](../internals/moments.md).

@@ -1,6 +1,8 @@
 #pragma once
 // Umbrella header (core + linear algebra). Users should include only this.
 
+#include <tax/core/basis/chebyshev.hpp>
+#include <tax/core/basis/hermite.hpp>
 #include <tax/core/concepts.hpp>
 #include <tax/core/enumeration.hpp>
 #include <tax/core/mixed_named.hpp>

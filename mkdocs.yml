@@ -127,3 +127,5 @@ nav:
       - Kernels & Recurrences: internals/kernels.md
       - Recurrence Relations: internals/recurrences.md
       - Map Inversion: internals/map-inversion.md
+      - Basis Conversion: internals/basis-conversion.md
+      - Statistical Moments: internals/moments.md

@@ -148,6 +148,36 @@ double approx = f.eval({0.3, 0.5});   // ≈ sin(0.3) * cos(0.5)
 
 ---
 
+## Basis conversion
+
+`tax::toHermite`/`tax::fromHermite` and `tax::toChebyshev`/`tax::fromChebyshev`
+re-express a dense, isotropic expansion's coefficients in the (probabilists')
+Hermite or the (first-kind) Chebyshev polynomial basis, and back:
+
+```cpp
+auto x = tax::TE<3>::variable(0.0);
+tax::TE<3> f = x * x * x;              // f = x^3
+
+auto h = tax::toHermite(f);            // x^3 = He_3(x) + 3*He_1(x)
+double h1 = h.coeff<1>();              // 3.0
+double h3 = h.coeff<3>();              // 1.0
+
+auto back = tax::fromHermite(h);       // recovers f exactly
+```
+
+`toChebyshev`/`fromChebyshev` are the same idea for the first-kind Chebyshev
+basis. Both conversions work coefficient-wise on a `Coeffs<T,N,M>`-shaped
+array and return a distinct `HermiteCoefficients`/`ChebyshevCoefficients`
+wrapper — not a `TaylorExpansion` — so basis coefficients can't be fed
+directly into monomial-basis arithmetic (`+`, `*`, `sin`, ...) by mistake.
+Converting to the Hermite basis is also what makes
+[statistical moment extraction](eigen.md#statistical-moments) simple for a
+polynomial in Gaussian variables. See
+[Internals / Basis Conversion](../internals/basis-conversion.md) for the
+underlying math.
+
+---
+
 For vector- and matrix-valued results — gradients, Hessians, and Jacobians of
 Eigen-shaped expansions — see [Eigen Integration](eigen.md). The graded-lex
 coefficient ordering and the theory behind the $f_\alpha$ relationship are

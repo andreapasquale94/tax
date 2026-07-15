@@ -6,6 +6,7 @@
 #include <tax/la/derivatives.hpp>
 #include <tax/la/expansion_vectors.hpp>
 #include <tax/la/invert.hpp>
+#include <tax/la/moments.hpp>
 #include <tax/la/named.hpp>
 #include <tax/la/norm.hpp>
 #include <tax/la/num_traits.hpp>
