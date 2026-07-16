@@ -67,13 +67,22 @@ build on it.
 
 ## Tensor layout
 
-`tax` has no rank-3/4 tensor type, so the higher tensors are returned as
-slices of ordinary matrices:
+The third and fourth central-moment tensors are returned as `Eigen::Tensor`
+objects (Eigen's `unsupported/Eigen/CXX11/Tensor` module):
 
-- `skewnessTensor(F)[k]` is the $D \times D$ symmetric matrix with entry
-  $(i,j) = S_{ijk} = \mathbb E[(F_i-\mu_i)(F_j-\mu_j)(F_k-\mu_k)]$.
-- `kurtosisTensor(F)[k][l]` is the $D \times D$ symmetric matrix with entry
-  $(i,j) = K_{ijkl} = \mathbb E[(F_i-\mu_i)(F_j-\mu_j)(F_k-\mu_k)(F_l-\mu_l)]$.
+- `skewnessTensor(F)` is an `Eigen::Tensor<T, 3>` of shape $D \times D \times D$
+  with `(i, j, k)` $= S_{ijk} = \mathbb E[(F_i-\mu_i)(F_j-\mu_j)(F_k-\mu_k)]$.
+- `kurtosisTensor(F)` is an `Eigen::Tensor<T, 4>` of shape
+  $D \times D \times D \times D$ with
+  `(i, j, k, l)` $= K_{ijkl} = \mathbb E[(F_i-\mu_i)(F_j-\mu_j)(F_k-\mu_k)(F_l-\mu_l)]$.
+
+Both tensors are fully symmetric under any permutation of their indices. The
+implementation exploits this: it computes each value once over sorted index
+tuples ($i \le j \le k$, resp. $i \le j \le k \le l$) and scatters it to every
+distinct permutation via `std::next_permutation`, which also collapses repeated
+indices correctly. Because every index tuple is a permutation of exactly one
+sorted tuple, this fills every entry — no separate zero-initialization pass is
+needed.
 
 ## Excess kurtosis and non-Gaussianity
 
@@ -84,12 +93,13 @@ $$
 \mathbb E[Y_iY_jY_kY_l] = C_{ij}C_{kl} + C_{ik}C_{jl} + C_{il}C_{jk}.
 $$
 
-`excessKurtosisTensor(F)` subtracts exactly this baseline (built from
-`covariance(F)`) from `kurtosisTensor(F)`, elementwise. The diagonal entry
-`excessKurtosisTensor(F)[i][i](i,i)` recovers the familiar scalar excess
-kurtosis $\mathbb E[(F_i-\mu_i)^4]/\sigma_i^4 - 3$; the full tensor is the
-standard way to detect and quantify departure from joint Gaussianity in
-$\mathbf F$'s output distribution — the diagnostic this module was built for.
+`excessKurtosisTensor(F)` (also an `Eigen::Tensor<T, 4>`) subtracts exactly
+this baseline (built from `covariance(F)`) from `kurtosisTensor(F)`,
+elementwise. The diagonal entry `excessKurtosisTensor(F)(i, i, i, i)` recovers
+$\mathbb E[(F_i-\mu_i)^4] - 3\sigma_i^4$ (the familiar scalar excess kurtosis
+scaled by $\sigma_i^4$); the full tensor is the standard way to detect and
+quantify departure from joint Gaussianity in $\mathbf F$'s output distribution
+— the diagnostic this module was built for.
 
 ## Implementation notes
 

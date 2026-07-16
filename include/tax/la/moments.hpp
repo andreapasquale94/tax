@@ -15,11 +15,14 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <algorithm>
+#include <array>
 #include <tax/core/enumeration.hpp>
 #include <tax/core/multi_index.hpp>
 #include <tax/core/scheme/isotropic.hpp>
 #include <tax/core/storage/dense.hpp>
 #include <tax/la/num_traits.hpp>
+#include <unsupported/Eigen/CXX11/Tensor>
 #include <vector>
 
 namespace tax::la::detail
@@ -203,11 +206,13 @@ template < typename Derived >
 }
 
 /// Third joint central-moment tensor `S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)]`
-/// of a vector map, `x ~ N(0, I)` i.i.d., returned as `D` symmetric `D x D`
-/// slices: `skewnessTensor(F)[k](i, j) == S_ijk`.
+/// of a vector map, `x ~ N(0, I)` i.i.d., returned as a fully-symmetric
+/// `Eigen::Tensor<T, 3>` of shape `D x D x D`: `skewnessTensor(F)(i, j, k) == S_ijk`.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
-[[nodiscard]] auto skewnessTensor( const Eigen::MatrixBase< Derived >& F )
+[[nodiscard]] Eigen::Tensor< typename detail::te_traits< typename Derived::Scalar >::scalar_type,
+                             3 >
+skewnessTensor( const Eigen::MatrixBase< Derived >& F )
 {
     using TE = typename Derived::Scalar;
     using T = typename detail::te_traits< TE >::scalar_type;
@@ -215,7 +220,6 @@ template < typename Derived >
     constexpr int M = detail::te_traits< TE >::vars_v;
     const Eigen::Index D = F.size();
     const std::size_t Dn = static_cast< std::size_t >( D );
-    using MatT = Eigen::Matrix< T, Eigen::Dynamic, Eigen::Dynamic >;
 
     const auto mu = mean( F );
     std::vector< Coeffs< T, N, M > > centered( Dn );
@@ -223,26 +227,35 @@ template < typename Derived >
         centered[std::size_t( i )] =
             detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
 
-    std::vector< MatT > S( Dn, MatT( D, D ) );
-    for ( Eigen::Index k = 0; k < D; ++k )
-        for ( Eigen::Index i = 0; i < D; ++i )
-            for ( Eigen::Index j = i; j < D; ++j )
+    // S is fully symmetric in (i,j,k): compute each unique sorted triple once and
+    // scatter its value to every distinct permutation (next_permutation handles
+    // repeated indices without double-emitting). Every tuple is a permutation of
+    // exactly one sorted triple, so this writes every entry once — no setZero needed.
+    Eigen::Tensor< T, 3 > S( D, D, D );
+    for ( Eigen::Index i = 0; i < D; ++i )
+        for ( Eigen::Index j = i; j < D; ++j )
+            for ( Eigen::Index k = j; k < D; ++k )
             {
                 const T v = detail::jointRawMoment3< N, M, T >( centered[std::size_t( i )],
                                                                 centered[std::size_t( j )],
                                                                 centered[std::size_t( k )] );
-                S[std::size_t( k )]( i, j ) = v;
-                S[std::size_t( k )]( j, i ) = v;
+                std::array< Eigen::Index, 3 > p{ i, j, k };
+                do
+                {
+                    S( p[0], p[1], p[2] ) = v;
+                } while ( std::next_permutation( p.begin(), p.end() ) );
             }
     return S;
 }
 
 /// Fourth joint central-moment tensor `K_ijkl = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)(F_l-mu_l)]`
-/// of a vector map, `x ~ N(0, I)` i.i.d., returned as `D x D` symmetric `D x D`
-/// slices: `kurtosisTensor(F)[k][l](i, j) == K_ijkl`.
+/// of a vector map, `x ~ N(0, I)` i.i.d., returned as a fully-symmetric
+/// `Eigen::Tensor<T, 4>` of shape `D x D x D x D`: `kurtosisTensor(F)(i, j, k, l) == K_ijkl`.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
-[[nodiscard]] auto kurtosisTensor( const Eigen::MatrixBase< Derived >& F )
+[[nodiscard]] Eigen::Tensor< typename detail::te_traits< typename Derived::Scalar >::scalar_type,
+                             4 >
+kurtosisTensor( const Eigen::MatrixBase< Derived >& F )
 {
     using TE = typename Derived::Scalar;
     using T = typename detail::te_traits< TE >::scalar_type;
@@ -250,7 +263,6 @@ template < typename Derived >
     constexpr int M = detail::te_traits< TE >::vars_v;
     const Eigen::Index D = F.size();
     const std::size_t Dn = static_cast< std::size_t >( D );
-    using MatT = Eigen::Matrix< T, Eigen::Dynamic, Eigen::Dynamic >;
 
     const auto mu = mean( F );
     std::vector< Coeffs< T, N, M > > centered( Dn );
@@ -258,19 +270,23 @@ template < typename Derived >
         centered[std::size_t( i )] =
             detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
 
-    std::vector< std::vector< MatT > > K( Dn, std::vector< MatT >( Dn, MatT( D, D ) ) );
-    for ( Eigen::Index k = 0; k < D; ++k )
-        for ( Eigen::Index l = k; l < D; ++l )
-            for ( Eigen::Index i = 0; i < D; ++i )
-                for ( Eigen::Index j = i; j < D; ++j )
+    // K is fully symmetric in (i,j,k,l): compute each unique sorted quadruple once
+    // and scatter its value to every distinct permutation. Every tuple is a
+    // permutation of exactly one sorted quadruple, so this writes every entry once.
+    Eigen::Tensor< T, 4 > K( D, D, D, D );
+    for ( Eigen::Index i = 0; i < D; ++i )
+        for ( Eigen::Index j = i; j < D; ++j )
+            for ( Eigen::Index k = j; k < D; ++k )
+                for ( Eigen::Index l = k; l < D; ++l )
                 {
                     const T v = detail::jointRawMoment4< N, M, T >(
                         centered[std::size_t( i )], centered[std::size_t( j )],
                         centered[std::size_t( k )], centered[std::size_t( l )] );
-                    K[std::size_t( k )][std::size_t( l )]( i, j ) = v;
-                    K[std::size_t( k )][std::size_t( l )]( j, i ) = v;
-                    K[std::size_t( l )][std::size_t( k )]( i, j ) = v;
-                    K[std::size_t( l )][std::size_t( k )]( j, i ) = v;
+                    std::array< Eigen::Index, 4 > p{ i, j, k, l };
+                    do
+                    {
+                        K( p[0], p[1], p[2], p[3] ) = v;
+                    } while ( std::next_permutation( p.begin(), p.end() ) );
                 }
     return K;
 }
@@ -281,16 +297,19 @@ template < typename Derived >
 /// measure of how far `F`'s output distribution departs from Gaussian.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
-[[nodiscard]] auto excessKurtosisTensor( const Eigen::MatrixBase< Derived >& F )
+[[nodiscard]] Eigen::Tensor< typename detail::te_traits< typename Derived::Scalar >::scalar_type,
+                             4 >
+excessKurtosisTensor( const Eigen::MatrixBase< Derived >& F )
 {
-    auto K = kurtosisTensor( F );
+    using T = typename detail::te_traits< typename Derived::Scalar >::scalar_type;
+    Eigen::Tensor< T, 4 > K = kurtosisTensor( F );
     const auto C = covariance( F );
     const Eigen::Index D = F.size();
-    for ( Eigen::Index k = 0; k < D; ++k )
-        for ( Eigen::Index l = 0; l < D; ++l )
-            for ( Eigen::Index i = 0; i < D; ++i )
-                for ( Eigen::Index j = 0; j < D; ++j )
-                    K[std::size_t( k )][std::size_t( l )]( i, j ) -=
+    for ( Eigen::Index i = 0; i < D; ++i )
+        for ( Eigen::Index j = 0; j < D; ++j )
+            for ( Eigen::Index k = 0; k < D; ++k )
+                for ( Eigen::Index l = 0; l < D; ++l )
+                    K( i, j, k, l ) -=
                         C( i, j ) * C( k, l ) + C( i, k ) * C( j, l ) + C( i, l ) * C( j, k );
     return K;
 }

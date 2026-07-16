@@ -200,10 +200,12 @@ The input vector size must equal `TE::vars_v` (statically or at runtime).
 `namespace tax::la` (header `tax/la/moments.hpp`), for dense, isotropic
 expansions only. Assumes the expansion's formal variables are i.i.d. standard
 normal — see [Guide / Eigen Integration](../guide/eigen.md#statistical-moments)
-and [Internals / Statistical Moments](../internals/moments.md).
+and [Internals / Statistical Moments](../internals/moments.md). The rank-3/4
+returns use `Eigen::Tensor` from `unsupported/Eigen/CXX11/Tensor` and are fully
+symmetric under any index permutation.
 
 ```cpp
-// E[F] — mean of a vector map F(x), x ~ N(0, I) i.i.d.
+// E[F] — mean of a vector map F(x), x ~ N(0, I) i.i.d.  → Eigen vector (D x 1).
 template <typename Derived>
     requires(/* Derived::Scalar is a dense, isotropic TaylorExpansion */)
 [[nodiscard]] auto mean(const Eigen::MatrixBase<Derived>& F);
@@ -213,19 +215,21 @@ template <typename Derived>
     requires(/* ... */)
 [[nodiscard]] auto covariance(const Eigen::MatrixBase<Derived>& F);
 
-// S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)] — D slices of D x D matrices.
+// S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)] — Eigen::Tensor<T, 3>, shape D x D x D.
+//   Access: skewnessTensor(F)(i, j, k).
 template <typename Derived>
     requires(/* ... */)
-[[nodiscard]] auto skewnessTensor(const Eigen::MatrixBase<Derived>& F);
+[[nodiscard]] Eigen::Tensor<T, 3> skewnessTensor(const Eigen::MatrixBase<Derived>& F);
 
-// K_ijkl = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)(F_l-mu_l)] — D x D slices of D x D matrices.
+// K_ijkl = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)(F_l-mu_l)] — Eigen::Tensor<T, 4>, shape D x D x D x D.
+//   Access: kurtosisTensor(F)(i, j, k, l).
 template <typename Derived>
     requires(/* ... */)
-[[nodiscard]] auto kurtosisTensor(const Eigen::MatrixBase<Derived>& F);
+[[nodiscard]] Eigen::Tensor<T, 4> kurtosisTensor(const Eigen::MatrixBase<Derived>& F);
 
 // kurtosisTensor(F) minus the jointly-Gaussian Isserlis baseline
-// Cov_ij*Cov_kl + Cov_ik*Cov_jl + Cov_il*Cov_jk — a non-Gaussianity measure.
+// Cov_ij*Cov_kl + Cov_ik*Cov_jl + Cov_il*Cov_jk — a non-Gaussianity measure. → Eigen::Tensor<T, 4>.
 template <typename Derived>
     requires(/* ... */)
-[[nodiscard]] auto excessKurtosisTensor(const Eigen::MatrixBase<Derived>& F);
+[[nodiscard]] Eigen::Tensor<T, 4> excessKurtosisTensor(const Eigen::MatrixBase<Derived>& F);
 ```
