@@ -67,13 +67,19 @@ build on it.
 
 ## Tensor layout
 
-The third and fourth central-moment tensors are returned as `Eigen::Tensor`
-objects (Eigen's `unsupported/Eigen/CXX11/Tensor` module):
+The third and fourth central-moment tensors are returned as **fixed-size**
+`Eigen::TensorFixedSize` objects (Eigen's `unsupported/Eigen/CXX11/Tensor`
+module), so their shape is a compile-time constant and their storage is
+stack-allocated — matching the library's fixed-shape, allocation-free
+convention. The map dimension $D$ is taken from `Derived::SizeAtCompileTime`;
+a dynamic-size input map is rejected with a `static_assert` (the same
+compile-time-$D$ requirement is now shared by `covariance`, which returns a
+fixed-size $D \times D$ `Eigen::Matrix`).
 
-- `skewnessTensor(F)` is an `Eigen::Tensor<T, 3>` of shape $D \times D \times D$
+- `skewnessTensor(F)` is an `Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D>>`
   with `(i, j, k)` $= S_{ijk} = \mathbb E[(F_i-\mu_i)(F_j-\mu_j)(F_k-\mu_k)]$.
-- `kurtosisTensor(F)` is an `Eigen::Tensor<T, 4>` of shape
-  $D \times D \times D \times D$ with
+- `kurtosisTensor(F)` is an
+  `Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D, D>>` with
   `(i, j, k, l)` $= K_{ijkl} = \mathbb E[(F_i-\mu_i)(F_j-\mu_j)(F_k-\mu_k)(F_l-\mu_l)]$.
 
 Both tensors are fully symmetric under any permutation of their indices. The

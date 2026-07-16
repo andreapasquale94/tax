@@ -136,18 +136,20 @@ F(0) = x * x;                                 // chi-square(1)
 
 auto mu   = tax::la::mean(F);                 // [1.0]
 auto cov  = tax::la::covariance(F);           // [[2.0]]
-auto skew = tax::la::skewnessTensor(F);       // Eigen::Tensor<double,3>, skew(0,0,0) == 8.0
-auto kurt = tax::la::excessKurtosisTensor(F); // Eigen::Tensor<double,4>, kurt(0,0,0,0) == 48.0
+auto skew = tax::la::skewnessTensor(F);       // TensorFixedSize<double,Sizes<1,1,1>>, skew(0,0,0) == 8.0
+auto kurt = tax::la::excessKurtosisTensor(F); // TensorFixedSize<double,Sizes<1,1,1,1>>, kurt(0,0,0,0) == 48.0
 ```
 
-`mean` and `covariance` return an Eigen vector and matrix.
+`mean` and `covariance` return a fixed-size Eigen vector and matrix.
 `skewnessTensor`/`kurtosisTensor` return the third/fourth joint central-moment
-tensors as fully-symmetric `Eigen::Tensor<T, 3>` (shape $D^3$) and
-`Eigen::Tensor<T, 4>` (shape $D^4$) — indexed `S(i,j,k)` and `K(i,j,k,l)` — via
-Eigen's `unsupported/Eigen/CXX11/Tensor` module. `excessKurtosisTensor`
-subtracts the jointly-Gaussian Isserlis baseline from `kurtosisTensor`, giving a
-standard non-Gaussianity diagnostic. These functions are Hermite/Chebyshev
-conversion's motivating use case (see
-[Basis Conversion](results.md#basis-conversion)); for the full derivation and
-references (Isserlis' theorem, the differential-algebra whitening convention)
-see [Internals / Statistical Moments](../internals/moments.md).
+tensors as fully-symmetric **fixed-size** tensors —
+`Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D>>` and `<D, D, D, D>`, indexed
+`S(i,j,k)` and `K(i,j,k,l)` — via Eigen's `unsupported/Eigen/CXX11/Tensor`
+module. The map dimension $D$ must be known at compile time (a fixed-size Eigen
+vector, e.g. from `tax::la::variables`). `excessKurtosisTensor` subtracts the
+jointly-Gaussian Isserlis baseline from `kurtosisTensor`, giving a standard
+non-Gaussianity diagnostic. These functions are Hermite/Chebyshev conversion's
+motivating use case (see [Basis Conversion](results.md#basis-conversion)); for
+the full derivation and references (Isserlis' theorem, the differential-algebra
+whitening convention) see
+[Internals / Statistical Moments](../internals/moments.md).

@@ -41,6 +41,11 @@ TEST( Moments, KurtosisOfChiSquare1 )
     F( 0 ) = x * x;
 
     const auto K = tax::la::kurtosisTensor( F );
+    // Return type is a fixed-size (compile-time D x D x D x D) tensor.
+    static_assert(
+        std::is_same_v< decltype( K ),
+                        const Eigen::TensorFixedSize< double, Eigen::Sizes< 1, 1, 1, 1 > > >,
+        "kurtosisTensor must return a fixed-size rank-4 tensor" );
     EXPECT_NEAR( K( 0, 0, 0, 0 ), 60.0, 1e-8 );
 
     const auto Kexcess = tax::la::excessKurtosisTensor( F );
@@ -89,6 +94,11 @@ TEST( Moments, SkewnessTensorIsSymmetricWithCrossMoments )
     F( 1 ) = x * x;
 
     const auto S = tax::la::skewnessTensor( F );
+    // Return type is a fixed-size (compile-time D x D x D) tensor.
+    static_assert(
+        std::is_same_v< decltype( S ),
+                        const Eigen::TensorFixedSize< double, Eigen::Sizes< 2, 2, 2 > > >,
+        "skewnessTensor must return a fixed-size rank-3 tensor" );
     ASSERT_EQ( S.dimension( 0 ), 2 );
     ASSERT_EQ( S.dimension( 1 ), 2 );
     ASSERT_EQ( S.dimension( 2 ), 2 );

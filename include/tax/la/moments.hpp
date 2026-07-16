@@ -175,7 +175,8 @@ template < typename Derived >
     return out;
 }
 
-/// Covariance matrix `Cov(F_i, F_j)` of a vector map, `x ~ N(0, I)` i.i.d.
+/// Covariance matrix `Cov(F_i, F_j)` of a vector map, `x ~ N(0, I)` i.i.d.,
+/// returned as a fixed-size `D x D` Eigen matrix.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
 [[nodiscard]] auto covariance( const Eigen::MatrixBase< Derived >& F )
@@ -184,18 +185,19 @@ template < typename Derived >
     using T = typename detail::te_traits< TE >::scalar_type;
     constexpr int N = detail::te_traits< TE >::order_v;
     constexpr int M = detail::te_traits< TE >::vars_v;
-    const Eigen::Index D = F.size();
-    const std::size_t Dn = static_cast< std::size_t >( D );
+    static_assert( Derived::SizeAtCompileTime != Eigen::Dynamic,
+                   "covariance: the map's dimension D must be known at compile time" );
+    constexpr int D = Derived::SizeAtCompileTime;
 
     const auto mu = mean( F );
-    std::vector< Coeffs< T, N, M > > centered( Dn );
-    for ( Eigen::Index i = 0; i < D; ++i )
+    std::vector< Coeffs< T, N, M > > centered( static_cast< std::size_t >( D ) );
+    for ( int i = 0; i < D; ++i )
         centered[std::size_t( i )] =
             detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
 
-    Eigen::Matrix< T, Eigen::Dynamic, Eigen::Dynamic > out( D, D );
-    for ( Eigen::Index i = 0; i < D; ++i )
-        for ( Eigen::Index j = i; j < D; ++j )
+    Eigen::Matrix< T, D, D > out;
+    for ( int i = 0; i < D; ++i )
+        for ( int j = i; j < D; ++j )
         {
             const T v = detail::jointRawMoment2< N, M, T >( centered[std::size_t( i )],
                                                             centered[std::size_t( j )] );
@@ -207,23 +209,22 @@ template < typename Derived >
 
 /// Third joint central-moment tensor `S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)]`
 /// of a vector map, `x ~ N(0, I)` i.i.d., returned as a fully-symmetric
-/// `Eigen::Tensor<T, 3>` of shape `D x D x D`: `skewnessTensor(F)(i, j, k) == S_ijk`.
+/// fixed-size `Eigen::TensorFixedSize<T, Sizes<D, D, D>>`: `skewnessTensor(F)(i, j, k) == S_ijk`.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
-[[nodiscard]] Eigen::Tensor< typename detail::te_traits< typename Derived::Scalar >::scalar_type,
-                             3 >
-skewnessTensor( const Eigen::MatrixBase< Derived >& F )
+[[nodiscard]] auto skewnessTensor( const Eigen::MatrixBase< Derived >& F )
 {
     using TE = typename Derived::Scalar;
     using T = typename detail::te_traits< TE >::scalar_type;
     constexpr int N = detail::te_traits< TE >::order_v;
     constexpr int M = detail::te_traits< TE >::vars_v;
-    const Eigen::Index D = F.size();
-    const std::size_t Dn = static_cast< std::size_t >( D );
+    static_assert( Derived::SizeAtCompileTime != Eigen::Dynamic,
+                   "skewnessTensor: the map's dimension D must be known at compile time" );
+    constexpr int D = Derived::SizeAtCompileTime;
 
     const auto mu = mean( F );
-    std::vector< Coeffs< T, N, M > > centered( Dn );
-    for ( Eigen::Index i = 0; i < D; ++i )
+    std::vector< Coeffs< T, N, M > > centered( static_cast< std::size_t >( D ) );
+    for ( int i = 0; i < D; ++i )
         centered[std::size_t( i )] =
             detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
 
@@ -231,15 +232,15 @@ skewnessTensor( const Eigen::MatrixBase< Derived >& F )
     // scatter its value to every distinct permutation (next_permutation handles
     // repeated indices without double-emitting). Every tuple is a permutation of
     // exactly one sorted triple, so this writes every entry once — no setZero needed.
-    Eigen::Tensor< T, 3 > S( D, D, D );
-    for ( Eigen::Index i = 0; i < D; ++i )
-        for ( Eigen::Index j = i; j < D; ++j )
-            for ( Eigen::Index k = j; k < D; ++k )
+    Eigen::TensorFixedSize< T, Eigen::Sizes< D, D, D > > S;
+    for ( int i = 0; i < D; ++i )
+        for ( int j = i; j < D; ++j )
+            for ( int k = j; k < D; ++k )
             {
                 const T v = detail::jointRawMoment3< N, M, T >( centered[std::size_t( i )],
                                                                 centered[std::size_t( j )],
                                                                 centered[std::size_t( k )] );
-                std::array< Eigen::Index, 3 > p{ i, j, k };
+                std::array< int, 3 > p{ i, j, k };
                 do
                 {
                     S( p[0], p[1], p[2] ) = v;
@@ -249,40 +250,39 @@ skewnessTensor( const Eigen::MatrixBase< Derived >& F )
 }
 
 /// Fourth joint central-moment tensor `K_ijkl = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)(F_l-mu_l)]`
-/// of a vector map, `x ~ N(0, I)` i.i.d., returned as a fully-symmetric
-/// `Eigen::Tensor<T, 4>` of shape `D x D x D x D`: `kurtosisTensor(F)(i, j, k, l) == K_ijkl`.
+/// of a vector map, `x ~ N(0, I)` i.i.d., returned as a fully-symmetric fixed-size
+/// `Eigen::TensorFixedSize<T, Sizes<D, D, D, D>>`: `kurtosisTensor(F)(i, j, k, l) == K_ijkl`.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
-[[nodiscard]] Eigen::Tensor< typename detail::te_traits< typename Derived::Scalar >::scalar_type,
-                             4 >
-kurtosisTensor( const Eigen::MatrixBase< Derived >& F )
+[[nodiscard]] auto kurtosisTensor( const Eigen::MatrixBase< Derived >& F )
 {
     using TE = typename Derived::Scalar;
     using T = typename detail::te_traits< TE >::scalar_type;
     constexpr int N = detail::te_traits< TE >::order_v;
     constexpr int M = detail::te_traits< TE >::vars_v;
-    const Eigen::Index D = F.size();
-    const std::size_t Dn = static_cast< std::size_t >( D );
+    static_assert( Derived::SizeAtCompileTime != Eigen::Dynamic,
+                   "kurtosisTensor: the map's dimension D must be known at compile time" );
+    constexpr int D = Derived::SizeAtCompileTime;
 
     const auto mu = mean( F );
-    std::vector< Coeffs< T, N, M > > centered( Dn );
-    for ( Eigen::Index i = 0; i < D; ++i )
+    std::vector< Coeffs< T, N, M > > centered( static_cast< std::size_t >( D ) );
+    for ( int i = 0; i < D; ++i )
         centered[std::size_t( i )] =
             detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
 
     // K is fully symmetric in (i,j,k,l): compute each unique sorted quadruple once
     // and scatter its value to every distinct permutation. Every tuple is a
     // permutation of exactly one sorted quadruple, so this writes every entry once.
-    Eigen::Tensor< T, 4 > K( D, D, D, D );
-    for ( Eigen::Index i = 0; i < D; ++i )
-        for ( Eigen::Index j = i; j < D; ++j )
-            for ( Eigen::Index k = j; k < D; ++k )
-                for ( Eigen::Index l = k; l < D; ++l )
+    Eigen::TensorFixedSize< T, Eigen::Sizes< D, D, D, D > > K;
+    for ( int i = 0; i < D; ++i )
+        for ( int j = i; j < D; ++j )
+            for ( int k = j; k < D; ++k )
+                for ( int l = k; l < D; ++l )
                 {
                     const T v = detail::jointRawMoment4< N, M, T >(
                         centered[std::size_t( i )], centered[std::size_t( j )],
                         centered[std::size_t( k )], centered[std::size_t( l )] );
-                    std::array< Eigen::Index, 4 > p{ i, j, k, l };
+                    std::array< int, 4 > p{ i, j, k, l };
                     do
                     {
                         K( p[0], p[1], p[2], p[3] ) = v;
@@ -297,18 +297,15 @@ kurtosisTensor( const Eigen::MatrixBase< Derived >& F )
 /// measure of how far `F`'s output distribution departs from Gaussian.
 template < typename Derived >
     requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
-[[nodiscard]] Eigen::Tensor< typename detail::te_traits< typename Derived::Scalar >::scalar_type,
-                             4 >
-excessKurtosisTensor( const Eigen::MatrixBase< Derived >& F )
+[[nodiscard]] auto excessKurtosisTensor( const Eigen::MatrixBase< Derived >& F )
 {
-    using T = typename detail::te_traits< typename Derived::Scalar >::scalar_type;
-    Eigen::Tensor< T, 4 > K = kurtosisTensor( F );
+    constexpr int D = Derived::SizeAtCompileTime;
+    auto K = kurtosisTensor( F );
     const auto C = covariance( F );
-    const Eigen::Index D = F.size();
-    for ( Eigen::Index i = 0; i < D; ++i )
-        for ( Eigen::Index j = 0; j < D; ++j )
-            for ( Eigen::Index k = 0; k < D; ++k )
-                for ( Eigen::Index l = 0; l < D; ++l )
+    for ( int i = 0; i < D; ++i )
+        for ( int j = 0; j < D; ++j )
+            for ( int k = 0; k < D; ++k )
+                for ( int l = 0; l < D; ++l )
                     K( i, j, k, l ) -=
                         C( i, j ) * C( k, l ) + C( i, k ) * C( j, l ) + C( i, l ) * C( j, k );
     return K;
