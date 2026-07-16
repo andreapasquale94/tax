@@ -9,6 +9,12 @@ expansion's $M$ formal variables are **independent standard normal**,
 $\mathbf x \sim \mathcal N(\mathbf 0, I_M)$. This page documents the math; for
 usage see [Guide / Eigen Integration](../guide/eigen.md#statistical-moments).
 
+`tax/la/moments.hpp` is an **opt-in** header: it is deliberately not included
+by the `<tax/tax.hpp>` / `<tax/la.hpp>` umbrellas because it depends on Eigen's
+heavy `unsupported/Eigen/CXX11/Tensor` module, so every consumer of the
+umbrella would otherwise pay that compile-time cost. Include it explicitly
+(`#include <tax/la/moments.hpp>`) when you need moments.
+
 ## The Gaussian-input convention
 
 Differential-algebra uncertainty propagation typically *whitens* the input

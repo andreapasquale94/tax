@@ -12,6 +12,10 @@
 // `E[X^p] = (p-1)!!` for even `p`, `0` for odd `p` — the closed form behind
 // Isserlis'/Wick's theorem for a single Gaussian variable. See
 // `docs/internals/moments.md` for the full derivation and references.
+//
+// This header is NOT pulled in by the `<tax/tax.hpp>` / `<tax/la.hpp>` umbrellas
+// (it depends on Eigen's heavy `unsupported/Eigen/CXX11/Tensor` module), so
+// include it explicitly: `#include <tax/la/moments.hpp>`.
 
 #pragma once
 

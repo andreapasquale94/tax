@@ -197,15 +197,19 @@ The input vector size must equal `TE::vars_v` (statically or at runtime).
 
 ## Statistical moments
 
-`namespace tax::la` (header `tax/la/moments.hpp`), for dense, isotropic
-expansions only. Assumes the expansion's formal variables are i.i.d. standard
-normal — see [Guide / Eigen Integration](../guide/eigen.md#statistical-moments)
-and [Internals / Statistical Moments](../internals/moments.md). The map
-dimension `D = Derived::SizeAtCompileTime` must be a compile-time constant (a
-dynamic-size input is rejected with a `static_assert`); returns are fixed-size.
-The rank-3/4 returns use `Eigen::TensorFixedSize` from
-`unsupported/Eigen/CXX11/Tensor` and are fully symmetric under any index
-permutation.
+`namespace tax::la`, for dense, isotropic expansions only. Assumes the
+expansion's formal variables are i.i.d. standard normal — see
+[Guide / Eigen Integration](../guide/eigen.md#statistical-moments) and
+[Internals / Statistical Moments](../internals/moments.md). The map dimension
+`D = Derived::SizeAtCompileTime` must be a compile-time constant (a dynamic-size
+input is rejected with a `static_assert`); returns are fixed-size. The rank-3/4
+returns use `Eigen::TensorFixedSize` from `unsupported/Eigen/CXX11/Tensor` and
+are fully symmetric under any index permutation.
+
+!!! note "Opt-in header"
+    These live in `tax/la/moments.hpp`, which is **not** included by the
+    `<tax/tax.hpp>` / `<tax/la.hpp>` umbrellas (it pulls in Eigen's heavy Tensor
+    module). Include it explicitly: `#include <tax/la/moments.hpp>`.
 
 ```cpp
 // E[F] — mean of a vector map F(x), x ~ N(0, I) i.i.d.  → fixed-size Eigen vector (D x 1).

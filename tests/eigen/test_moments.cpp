@@ -2,6 +2,10 @@
 
 #include <tax/tax.hpp>
 
+// moments.hpp is an opt-in header (not pulled in by the umbrella) — include it
+// explicitly.
+#include <tax/la/moments.hpp>
+
 // All tests assume the expansion's formal variables are i.i.d. standard normal
 // (x ~ N(0, I)), per tax::la::mean/covariance/skewnessTensor/kurtosisTensor's
 // documented convention.

@@ -120,16 +120,24 @@ why the Picard iteration terminates at order $N$ — see
 ## Statistical moments
 
 `tax::la::mean`, `tax::la::covariance`, `tax::la::skewnessTensor`,
-`tax::la::kurtosisTensor`, and `tax::la::excessKurtosisTensor` (header
-`tax/la/moments.hpp`) extract statistical moments of a polynomial map
-$\mathbf F(\boldsymbol{\delta x})$ under one assumption: the expansion's
-formal variables are i.i.d. standard normal,
-$\boldsymbol{\delta x} \sim \mathcal N(\mathbf 0, I)$ — the usual
+`tax::la::kurtosisTensor`, and `tax::la::excessKurtosisTensor` extract
+statistical moments of a polynomial map $\mathbf F(\boldsymbol{\delta x})$
+under one assumption: the expansion's formal variables are i.i.d. standard
+normal, $\boldsymbol{\delta x} \sim \mathcal N(\mathbf 0, I)$ — the usual
 differential-algebra convention, where any actual input covariance is folded
 into how you built $\mathbf x_0$ and the variables (e.g. scale through a
 Cholesky factor before calling `tax::la::variables`).
 
+!!! note "Opt-in header"
+    These live in `tax/la/moments.hpp`, which is **not** pulled in by the
+    `<tax/tax.hpp>` umbrella — it depends on Eigen's heavy
+    `unsupported/Eigen/CXX11/Tensor` module. Include it explicitly:
+    `#include <tax/la/moments.hpp>` (in addition to `<tax/tax.hpp>`).
+
 ```cpp
+#include <tax/tax.hpp>
+#include <tax/la/moments.hpp>   // opt-in: statistical moments
+
 auto x = tax::TE<4>::variable(0.0);
 Eigen::Matrix<tax::TE<4>, 1, 1> F;
 F(0) = x * x;                                 // chi-square(1)
