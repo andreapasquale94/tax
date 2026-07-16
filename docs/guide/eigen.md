@@ -144,6 +144,7 @@ F(0) = x * x;                                 // chi-square(1)
 
 auto mu   = tax::la::mean(F);                 // [1.0]
 auto cov  = tax::la::covariance(F);           // [[2.0]]
+auto corr = tax::la::correlation(F);          // [[1.0]] (Pearson correlation matrix)
 auto g1   = tax::la::skewness(F);             // per-component γ₁ vector, g1(0) == 2√2
 auto ek   = tax::la::excessKurtosis(F);       // per-component excess-kurtosis vector, ek(0) == 12
 auto skew = tax::la::skewnessTensor(F);       // TensorFixedSize<double,Sizes<1,1,1>>, skew(0,0,0) == 8.0
@@ -151,6 +152,10 @@ auto kurt = tax::la::excessKurtosisTensor(F); // TensorFixedSize<double,Sizes<1,
 ```
 
 `mean` and `covariance` return a fixed-size Eigen vector and matrix.
+`correlation(F)` returns the fixed-size $D \times D$ Pearson correlation matrix
+$\mathrm{Corr}(F_i, F_j) = \mathrm{Cov}(F_i, F_j)/(\sigma_i \sigma_j)$ with a
+unit diagonal; if you already have a covariance matrix, `correlationFromCovariance(C)`
+performs the conversion directly (and works on any plain-scalar Eigen matrix).
 
 For the common **per-component** (marginal) non-Gaussianity coefficients,
 `skewness(F)`, `kurtosis(F)`, and `excessKurtosis(F)` each return a fixed-size

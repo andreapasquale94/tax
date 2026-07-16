@@ -1,6 +1,6 @@
-// Statistical moments (mean, covariance, per-component standardized
-// skewness/kurtosis, and the full skewness/kurtosis central-moment tensors) of a
-// polynomial map `F : R^M -> R^D` represented as an Eigen vector of dense,
+// Statistical moments (mean, covariance, correlation, per-component
+// standardized skewness/kurtosis, and the full skewness/kurtosis central-moment
+// tensors) of a polynomial map `F : R^M -> R^D` represented as an Eigen vector of dense,
 // isotropic `TaylorExpansion`s, under the assumption that the expansion's `M`
 // formal variables are i.i.d. standard normal (`x ~ N(0, I_M)`) — the usual
 // differential-algebra convention where any input covariance/correlation is
@@ -28,6 +28,7 @@
 #include <tax/core/scheme/isotropic.hpp>
 #include <tax/core/storage/dense.hpp>
 #include <tax/la/num_traits.hpp>
+#include <type_traits>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <vector>
 
@@ -211,6 +212,50 @@ template < typename Derived >
             out( j, i ) = v;
         }
     return out;
+}
+
+/// Convert a covariance matrix `C` to the corresponding Pearson correlation
+/// matrix `R` with `R(i, j) = C(i, j) / (sqrt(C(i,i)) sqrt(C(j,j)))`; the
+/// diagonal is set to exactly `1`. Returned in the same (fixed or dynamic)
+/// Eigen shape as `C`. A zero-variance component (`C(i,i) == 0`) yields
+/// non-finite off-diagonal entries in its row/column (correlation is undefined
+/// there). Constrained to plain-scalar matrices, so it never collides with the
+/// map-taking `correlation` overload below.
+template < typename Derived >
+    requires( std::is_arithmetic_v< typename Derived::Scalar > )
+[[nodiscard]] auto correlationFromCovariance( const Eigen::MatrixBase< Derived >& C )
+{
+    using T = typename Derived::Scalar;
+    const Eigen::Index D = C.rows();
+    using std::sqrt;
+
+    Eigen::Matrix< T, Derived::RowsAtCompileTime, 1 > sd( D );
+    for ( Eigen::Index i = 0; i < D; ++i ) sd( i ) = sqrt( C( i, i ) );
+
+    Eigen::Matrix< T, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime > R( C.rows(),
+                                                                                  C.cols() );
+    for ( Eigen::Index i = 0; i < D; ++i )
+    {
+        R( i, i ) = T( 1 );
+        for ( Eigen::Index j = i + 1; j < D; ++j )
+        {
+            const T v = C( i, j ) / ( sd( i ) * sd( j ) );
+            R( i, j ) = v;
+            R( j, i ) = v;
+        }
+    }
+    return R;
+}
+
+/// Pearson correlation matrix `Corr(F_i, F_j) = Cov(F_i, F_j) / (sigma_i sigma_j)`
+/// of a vector map, `x ~ N(0, I)` i.i.d., returned as a fixed-size `D x D` Eigen
+/// matrix with a unit diagonal. A zero-variance (constant) component yields
+/// non-finite entries in its row/column (correlation is undefined there).
+template < typename Derived >
+    requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
+[[nodiscard]] auto correlation( const Eigen::MatrixBase< Derived >& F )
+{
+    return correlationFromCovariance( covariance( F ) );
 }
 
 /// Third joint central-moment tensor `S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)]`

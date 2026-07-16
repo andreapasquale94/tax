@@ -222,6 +222,18 @@ template <typename Derived>
     requires(/* ... */)
 [[nodiscard]] auto covariance(const Eigen::MatrixBase<Derived>& F);
 
+// Corr(F_i, F_j) = Cov(F_i, F_j) / (sigma_i sigma_j) — fixed-size D x D Pearson
+// correlation matrix with a unit diagonal.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto correlation(const Eigen::MatrixBase<Derived>& F);
+
+// Conversion: covariance matrix -> correlation matrix, R(i,j) = C(i,j)/(sqrt(C_ii) sqrt(C_jj)),
+// unit diagonal. Takes any plain-scalar Eigen matrix; returns the same Eigen shape.
+template <typename Derived>
+    requires(/* Derived::Scalar is a plain arithmetic type */)
+[[nodiscard]] auto correlationFromCovariance(const Eigen::MatrixBase<Derived>& C);
+
 // Per-component (marginal) standardized coefficients — each a fixed-size D x 1
 // Eigen vector:
 //   skewness(F)(i)       = E[(F_i-mu_i)^3] / Var(F_i)^{3/2}   (Fisher skewness)

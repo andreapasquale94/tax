@@ -127,6 +127,55 @@ TEST( Moments, IndependentSumOfSquaresVariance )
     EXPECT_NEAR( C( 0, 0 ), 4.0, 1e-12 );
 }
 
+TEST( Moments, CorrelationOfCorrelatedComponents )
+{
+    // F = [X, X + Y], X,Y iid N(0,1): Var(X)=1, Var(X+Y)=2, Cov(X, X+Y)=1.
+    // Corr = 1 / (1 * sqrt(2)) = 1/sqrt(2).
+    typename tax::TE< 3, 2 >::Input p{ 0.0, 0.0 };
+    auto x = tax::TE< 3, 2 >::variable< 0 >( p );
+    auto y = tax::TE< 3, 2 >::variable< 1 >( p );
+    Eigen::Matrix< tax::TE< 3, 2 >, 2, 1 > F;
+    F( 0 ) = x;
+    F( 1 ) = x + y;
+
+    const auto R = tax::la::correlation( F );
+    // Return type is a fixed-size D x D matrix.
+    static_assert( std::is_same_v< decltype( R ), const Eigen::Matrix< double, 2, 2 > >,
+                   "correlation must return a fixed-size D x D matrix" );
+    EXPECT_NEAR( R( 0, 0 ), 1.0, 1e-12 );
+    EXPECT_NEAR( R( 1, 1 ), 1.0, 1e-12 );
+    EXPECT_NEAR( R( 0, 1 ), 1.0 / std::sqrt( 2.0 ), 1e-10 );
+    EXPECT_NEAR( R( 1, 0 ), 1.0 / std::sqrt( 2.0 ), 1e-10 );
+}
+
+TEST( Moments, CorrelationOfUncorrelatedComponentsIsIdentity )
+{
+    // F = [X, X^2]: uncorrelated (Cov = 0), so correlation is the identity.
+    auto x = tax::TE< 4 >::variable( 0.0 );
+    Eigen::Matrix< tax::TE< 4 >, 2, 1 > F;
+    F( 0 ) = x;
+    F( 1 ) = x * x;
+
+    const auto R = tax::la::correlation( F );
+    EXPECT_NEAR( R( 0, 0 ), 1.0, 1e-12 );
+    EXPECT_NEAR( R( 1, 1 ), 1.0, 1e-12 );
+    EXPECT_NEAR( R( 0, 1 ), 0.0, 1e-12 );
+    EXPECT_NEAR( R( 1, 0 ), 0.0, 1e-12 );
+}
+
+TEST( Moments, CorrelationFromCovarianceConversion )
+{
+    // Direct cov -> corr conversion on a hand-built covariance matrix.
+    // C = [[4, 3], [3, 9]] -> sd = [2, 3] -> Corr = [[1, 0.5], [0.5, 1]].
+    Eigen::Matrix2d C;
+    C << 4.0, 3.0, 3.0, 9.0;
+    const auto R = tax::la::correlationFromCovariance( C );
+    EXPECT_NEAR( R( 0, 0 ), 1.0, 1e-12 );
+    EXPECT_NEAR( R( 1, 1 ), 1.0, 1e-12 );
+    EXPECT_NEAR( R( 0, 1 ), 0.5, 1e-12 );
+    EXPECT_NEAR( R( 1, 0 ), 0.5, 1e-12 );
+}
+
 TEST( Moments, SkewnessTensorIsSymmetricWithCrossMoments )
 {
     // F = [X, X^2], X ~ N(0,1). Centered: c0 = X, c1 = X^2 - 1.

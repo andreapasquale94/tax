@@ -71,6 +71,25 @@ $\mathbb E[(F_{i_1}-\mu_{i_1})\cdots(F_{i_k}-\mu_{i_k})]$ is then simply
 supplies the $\mu_i$; `covariance`, `skewnessTensor`, and `kurtosisTensor` all
 build on it.
 
+## Correlation
+
+`correlation(F)` is the Pearson correlation matrix
+
+$$
+R_{ij} = \frac{\mathrm{Cov}(F_i, F_j)}{\sigma_i \sigma_j},
+\qquad \sigma_i = \sqrt{\mathrm{Cov}(F_i, F_i)},
+$$
+
+with the diagonal set to exactly $1$ (rather than relying on
+$C_{ii}/(\sigma_i\sigma_i)$ rounding to one). It is a thin wrapper over
+`covariance(F)` composed with the standalone conversion
+`correlationFromCovariance(C)`, which normalizes any plain-scalar covariance
+matrix and is useful on its own when a covariance is already in hand.
+`correlationFromCovariance` is constrained to arithmetic-scalar matrices, so it
+never overload-collides with the map-taking `correlation`. A zero-variance
+(constant) component makes its row/column non-finite (correlation is undefined
+there).
+
 ## Per-component standardized coefficients
 
 Besides the full joint tensors, the module exposes the everyday **marginal**
