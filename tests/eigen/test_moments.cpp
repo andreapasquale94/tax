@@ -52,6 +52,48 @@ TEST( Moments, KurtosisOfChiSquare1 )
     EXPECT_NEAR( Kexcess( 0, 0, 0, 0 ), 48.0, 1e-8 );
 }
 
+TEST( Moments, StandardizedSkewnessAndKurtosisVectors )
+{
+    // chi-square(1): skewness gamma1 = sqrt(8) = 2*sqrt(2) ~ 2.828427,
+    //                kurtosis (Pearson) = 15, excess kurtosis = 12.
+    auto x = tax::TE< 4 >::variable( 0.0 );
+    Eigen::Matrix< tax::TE< 4 >, 1, 1 > F;
+    F( 0 ) = x * x;
+
+    const auto g1 = tax::la::skewness( F );
+    // Vector-returning variants give one scalar coefficient per output dimension.
+    static_assert( std::is_same_v< decltype( g1 ), const Eigen::Matrix< double, 1, 1 > >,
+                   "skewness must return a fixed-size D x 1 vector" );
+    EXPECT_NEAR( g1( 0 ), 2.0 * std::sqrt( 2.0 ), 1e-8 );
+
+    const auto k = tax::la::kurtosis( F );
+    static_assert( std::is_same_v< decltype( k ), const Eigen::Matrix< double, 1, 1 > >,
+                   "kurtosis must return a fixed-size D x 1 vector" );
+    EXPECT_NEAR( k( 0 ), 15.0, 1e-7 );
+
+    const auto ek = tax::la::excessKurtosis( F );
+    EXPECT_NEAR( ek( 0 ), 12.0, 1e-7 );
+}
+
+TEST( Moments, StandardizedVectorsAreMarginalPerComponent )
+{
+    // F = [X, X^2]: component 0 is Gaussian (skew 0, excess kurtosis 0);
+    // component 1 is chi-square(1) (skew 2*sqrt(2), excess kurtosis 12).
+    auto x = tax::TE< 6 >::variable( 0.0 );
+    Eigen::Matrix< tax::TE< 6 >, 2, 1 > F;
+    F( 0 ) = x;
+    F( 1 ) = x * x;
+
+    const auto g1 = tax::la::skewness( F );
+    ASSERT_EQ( g1.size(), 2 );
+    EXPECT_NEAR( g1( 0 ), 0.0, 1e-8 );
+    EXPECT_NEAR( g1( 1 ), 2.0 * std::sqrt( 2.0 ), 1e-7 );
+
+    const auto ek = tax::la::excessKurtosis( F );
+    EXPECT_NEAR( ek( 0 ), 0.0, 1e-7 );
+    EXPECT_NEAR( ek( 1 ), 12.0, 1e-6 );
+}
+
 TEST( Moments, OddFunctionHasZeroMeanAndSkew )
 {
     auto x = tax::TE< 3 >::variable( 0.0 );

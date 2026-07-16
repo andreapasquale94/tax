@@ -1,4 +1,5 @@
-// Statistical moments (mean, covariance, skewness/kurtosis tensors) of a
+// Statistical moments (mean, covariance, per-component standardized
+// skewness/kurtosis, and the full skewness/kurtosis central-moment tensors) of a
 // polynomial map `F : R^M -> R^D` represented as an Eigen vector of dense,
 // isotropic `TaylorExpansion`s, under the assumption that the expansion's `M`
 // formal variables are i.i.d. standard normal (`x ~ N(0, I_M)`) — the usual
@@ -17,6 +18,7 @@
 #include <Eigen/Core>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <tax/core/enumeration.hpp>
 #include <tax/core/multi_index.hpp>
 #include <tax/core/scheme/isotropic.hpp>
@@ -309,6 +311,81 @@ template < typename Derived >
                     K( i, j, k, l ) -=
                         C( i, j ) * C( k, l ) + C( i, k ) * C( j, l ) + C( i, l ) * C( j, k );
     return K;
+}
+
+/// Per-component (marginal) standardized skewness coefficient
+/// `gamma1_i = E[(F_i-mu_i)^3] / Var(F_i)^{3/2}` (Fisher's skewness), one scalar
+/// per output dimension, returned as a fixed-size `D x 1` Eigen vector. This is
+/// the diagonal of `skewnessTensor(F)` normalized by `sigma_i^3` — cheaper to
+/// obtain directly, as here. Zero for any symmetric marginal; a zero-variance
+/// (constant) component yields a non-finite value (skewness is undefined there).
+template < typename Derived >
+    requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
+[[nodiscard]] auto skewness( const Eigen::MatrixBase< Derived >& F )
+{
+    using TE = typename Derived::Scalar;
+    using T = typename detail::te_traits< TE >::scalar_type;
+    constexpr int N = detail::te_traits< TE >::order_v;
+    constexpr int M = detail::te_traits< TE >::vars_v;
+    static_assert( Derived::SizeAtCompileTime != Eigen::Dynamic,
+                   "skewness: the map's dimension D must be known at compile time" );
+    constexpr int D = Derived::SizeAtCompileTime;
+
+    const auto mu = mean( F );
+    Eigen::Matrix< T, D, 1 > out;
+    for ( int i = 0; i < D; ++i )
+    {
+        const Coeffs< T, N, M > c =
+            detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
+        const T var = detail::jointRawMoment2< N, M, T >( c, c );
+        const T m3 = detail::jointRawMoment3< N, M, T >( c, c, c );
+        using std::sqrt;
+        out( i ) = m3 / ( var * sqrt( var ) );
+    }
+    return out;
+}
+
+/// Per-component (marginal) standardized kurtosis `E[(F_i-mu_i)^4] / Var(F_i)^2`
+/// (Pearson kurtosis, `== 3` for a Gaussian marginal), one scalar per output
+/// dimension, returned as a fixed-size `D x 1` Eigen vector. For the departure
+/// from the Gaussian value use `excessKurtosis` below.
+template < typename Derived >
+    requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
+[[nodiscard]] auto kurtosis( const Eigen::MatrixBase< Derived >& F )
+{
+    using TE = typename Derived::Scalar;
+    using T = typename detail::te_traits< TE >::scalar_type;
+    constexpr int N = detail::te_traits< TE >::order_v;
+    constexpr int M = detail::te_traits< TE >::vars_v;
+    static_assert( Derived::SizeAtCompileTime != Eigen::Dynamic,
+                   "kurtosis: the map's dimension D must be known at compile time" );
+    constexpr int D = Derived::SizeAtCompileTime;
+
+    const auto mu = mean( F );
+    Eigen::Matrix< T, D, 1 > out;
+    for ( int i = 0; i < D; ++i )
+    {
+        const Coeffs< T, N, M > c =
+            detail::centeredCoeffs< N, M, T >( F.derived().coeff( i ).coefficients(), mu( i ) );
+        const T var = detail::jointRawMoment2< N, M, T >( c, c );
+        const T m4 = detail::jointRawMoment4< N, M, T >( c, c, c, c );
+        out( i ) = m4 / ( var * var );
+    }
+    return out;
+}
+
+/// Per-component (marginal) excess kurtosis `kurtosis(F) - 3` (Fisher's excess
+/// kurtosis, `== 0` for a Gaussian marginal), one scalar per output dimension,
+/// returned as a fixed-size `D x 1` Eigen vector — a compact non-Gaussianity
+/// diagnostic per output coordinate.
+template < typename Derived >
+    requires( detail::MomentsCompatibleTE< typename Derived::Scalar > )
+[[nodiscard]] auto excessKurtosis( const Eigen::MatrixBase< Derived >& F )
+{
+    using T = typename detail::te_traits< typename Derived::Scalar >::scalar_type;
+    auto out = kurtosis( F );
+    for ( Eigen::Index i = 0; i < out.size(); ++i ) out( i ) -= T( 3 );
+    return out;
 }
 
 }  // namespace tax::la

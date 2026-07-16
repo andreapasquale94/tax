@@ -65,6 +65,29 @@ $\mathbb E[(F_{i_1}-\mu_{i_1})\cdots(F_{i_k}-\mu_{i_k})]$ is then simply
 supplies the $\mu_i$; `covariance`, `skewnessTensor`, and `kurtosisTensor` all
 build on it.
 
+## Per-component standardized coefficients
+
+Besides the full joint tensors, the module exposes the everyday **marginal**
+non-Gaussianity coefficients as fixed-size $D \times 1$ vectors:
+
+$$
+\text{skewness}(F)_i = \frac{\mathbb E[(F_i-\mu_i)^3]}{\sigma_i^3},
+\qquad
+\text{kurtosis}(F)_i = \frac{\mathbb E[(F_i-\mu_i)^4]}{\sigma_i^4},
+\qquad
+\text{excessKurtosis}(F)_i = \text{kurtosis}(F)_i - 3,
+$$
+
+with $\sigma_i^2 = \mathrm{Var}(F_i)$. These are exactly the diagonal entries of
+the corresponding central-moment tensors, normalized by the appropriate power of
+$\sigma_i$ — but they are computed **directly** per component (one `jointRawMoment2`
+plus a `jointRawMoment3`/`jointRawMoment4` on the centered coefficients of
+$F_i$), which is $O(D)$ evaluations rather than the $O(D^3)$/$O(D^4)$ of building
+the whole tensor. `kurtosis` follows the Pearson convention (value $3$ for a
+Gaussian marginal); `excessKurtosis` is the Fisher form (value $0$ for a
+Gaussian). A zero-variance (constant) component makes the normalization
+undefined and yields a non-finite entry.
+
 ## Tensor layout
 
 The third and fourth central-moment tensors are returned as **fixed-size**

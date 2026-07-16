@@ -218,6 +218,18 @@ template <typename Derived>
     requires(/* ... */)
 [[nodiscard]] auto covariance(const Eigen::MatrixBase<Derived>& F);
 
+// Per-component (marginal) standardized coefficients — each a fixed-size D x 1
+// Eigen vector:
+//   skewness(F)(i)       = E[(F_i-mu_i)^3] / Var(F_i)^{3/2}   (Fisher skewness)
+//   kurtosis(F)(i)       = E[(F_i-mu_i)^4] / Var(F_i)^2       (Pearson; 3 for a Gaussian)
+//   excessKurtosis(F)(i) = kurtosis(F)(i) - 3                 (0 for a Gaussian)
+template <typename Derived> requires(/* ... */)
+[[nodiscard]] auto skewness(const Eigen::MatrixBase<Derived>& F);
+template <typename Derived> requires(/* ... */)
+[[nodiscard]] auto kurtosis(const Eigen::MatrixBase<Derived>& F);
+template <typename Derived> requires(/* ... */)
+[[nodiscard]] auto excessKurtosis(const Eigen::MatrixBase<Derived>& F);
+
 // S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)]
 //   → Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D>>.  Access: skewnessTensor(F)(i, j, k).
 template <typename Derived>
