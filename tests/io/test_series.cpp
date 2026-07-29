@@ -114,14 +114,6 @@ TEST( SeriesTabular, UnivariateHasHeaderAndRows )
     EXPECT_NE( s.find( "5.000000000000000e-01" ), std::string::npos );
 }
 
-TEST( SeriesSparse, MatchesDensePolynomial )
-{
-    auto xd = tax::TE< 3 >::variable( 0.0 );
-    auto fd = tax::exp( xd );
-    auto fs = tax::sparse( fd );
-    EXPECT_EQ( str( fs ), str( fd ) );
-}
-
 TEST( SeriesVector, LabeledRows )
 {
     using TE = tax::TE< 2 >;

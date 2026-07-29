@@ -353,7 +353,7 @@ class NamedTaylorExpansion
     static constexpr int order_v = N;
 
     /// Underlying anonymous dense expansion type.
-    using Inner = TaylorExpansion< T, IsotropicScheme< N, vars_v >, storage::Dense >;
+    using Inner = TaylorExpansion< T, IsotropicScheme< N, vars_v > >;
     using Input = typename Inner::Input;
 
     // Mirror the underlying storage traits so NamedTaylorExpansion satisfies the

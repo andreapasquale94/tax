@@ -76,37 +76,6 @@ TEST( TruncateDense, RuntimeNegativeDIsZero )
     for ( std::size_t k = 0; k < f.nCoefficients; ++k ) EXPECT_EQ( h[k], 0.0 );
 }
 
-// Sparse: both forms.
-TEST( TruncateSparse, OrderReducing )
-{
-    auto xd = tax::TE< 5 >::variable( 0.0 );
-    auto fd = tax::exp( xd );
-    auto f = tax::sparse( fd );
-
-    auto g = f.truncate< 2 >();
-    static_assert( decltype( g )::order_v == 2 );
-    auto gd = g.dense();
-    for ( std::size_t k = 0; k < gd.nCoefficients; ++k )
-        EXPECT_NEAR( gd[k], fd[k], 1e-12 ) << "flat index " << k;
-}
-
-TEST( TruncateSparse, RuntimeZeroesHighDegree )
-{
-    auto xd = tax::TE< 5 >::variable( 0.0 );
-    auto fd = tax::exp( xd );
-    auto f = tax::sparse( fd );
-
-    auto h = f.truncate( 2 );
-    static_assert( decltype( h )::order_v == 5 );
-    auto hd = h.dense();
-    for ( std::size_t k = 0; k < hd.nCoefficients; ++k )
-    {
-        const int deg = tax::totalDegree( tax::unflatIndex< 1 >( k ) );
-        const double want = ( deg > 2 ) ? 0.0 : fd[k];
-        EXPECT_NEAR( hd[k], want, 1e-12 ) << "flat index " << k;
-    }
-}
-
 // Named: both forms (axes preserved).
 TEST( TruncateNamed, OrderReducingPreservesAxes )
 {

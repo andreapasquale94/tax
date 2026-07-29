@@ -45,11 +45,10 @@ f.eval(0.3);        // sin(0.3) within machine precision
     pure-polynomial surface (arithmetic, `square`, `cube`, `reciprocal`,
     integer `pow`) is `constexpr` and works in constant evaluation.
 
-- :material-tune-vertical:{ .lg .middle } **Dense or sparse storage**
+- :material-tune-vertical:{ .lg .middle } **Mixed-order axes**
 
-    `TE<N, M>` (dense, `std::array`) for the hot path; `STE<N, M>` (sparse,
-    sorted-index map) when only a handful of monomials are non-zero. The two
-    share the kernel layer and agree numerically.
+    `MTE<Axes...>` gives every axis its own truncation order, so you pay for
+    high-order sensitivity only where the problem needs it.
 
 - :material-orbit:{ .lg .middle } **Eigen-native**
 

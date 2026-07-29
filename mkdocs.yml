@@ -113,7 +113,7 @@ nav:
       - Variables & Expressions: guide/expressions.md
       - Fused Operations: guide/fused.md
       - Extracting Results: guide/results.md
-      - Dense vs Sparse Storage: guide/storage.md
+      - Coefficient Storage: guide/storage.md
       - Named & Mixed-Order Expansions: guide/named.md
       - Eigen Integration: guide/eigen.md
   - Reference:

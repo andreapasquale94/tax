@@ -7,7 +7,7 @@
 //
 // Polynomial output uses Unicode subscripts for variable indices and
 // superscripts for powers, with implicit multiplication. The tabular style is
-// a plain-ASCII DACE-like table. Works for dense / sparse / named expansions
+// a plain-ASCII DACE-like table. Works for plain / named expansions
 // and for Eigen vectors/matrices of expansions.
 
 #include <Eigen/Core>
@@ -198,19 +198,12 @@ void writeSeries( std::ostream& os, CoeffAt&& coeffAt, NameOf&& nameOf, const Se
 
 // Per-kind streaming (dispatches coefficient access + naming).
 template < typename T, typename Scheme >
-void streamScalar( std::ostream& os, const TaylorExpansion< T, Scheme, storage::Dense >& f,
+void streamScalar( std::ostream& os, const TaylorExpansion< T, Scheme >& f,
                    const SeriesOptions& opts )
 {
     writeSeries< Scheme, T >(
         os, [&]( std::size_t k ) { return f[k]; },
         [&]( int v ) { return defaultVarName( v, opts ); }, opts );
-}
-
-template < typename T, typename Scheme >
-void streamScalar( std::ostream& os, const TaylorExpansion< T, Scheme, storage::Sparse >& f,
-                   const SeriesOptions& opts )
-{
-    streamScalar( os, f.dense(), opts );
 }
 
 template < typename T, int N, typename... Axes >
@@ -270,8 +263,8 @@ std::ostream& operator<<( std::ostream& os, const MatrixSeriesProxy< Derived >& 
 }  // namespace detail
 
 // Public operator<< (zero-config polynomial series).
-template < typename T, typename Scheme, typename S >
-std::ostream& operator<<( std::ostream& os, const TaylorExpansion< T, Scheme, S >& f )
+template < typename T, typename Scheme >
+std::ostream& operator<<( std::ostream& os, const TaylorExpansion< T, Scheme >& f )
 {
     detail::streamScalar( os, f, SeriesOptions{} );
     return os;

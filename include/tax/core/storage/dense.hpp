@@ -8,11 +8,6 @@
 namespace tax::storage
 {
 
-/// Tag type selecting the dense (std::array) storage policy.
-struct Dense
-{
-};
-
 /// Dense coefficient container for a TaylorExpansion, sized by `Size` slots.
 template < typename T, std::size_t Size >
 struct DenseContainer

@@ -22,8 +22,6 @@ in `tax/operators/` is a thin wrapper that calls a kernel and returns a fresh
 | `tax/kernels/transcendental.hpp` | `seriesExp`, `seriesLog`, `seriesSinhCosh` (+ single-output `seriesSinh`/`seriesCosh`), `seriesTanh`, inverse hyperbolics, `seriesErf` | exp/log/hyperbolic/erf |
 | `tax/kernels/fused.hpp` | `seriesExpSinCos` (+ `seriesExpSin`/`seriesExpCos`), `seriesSqrtInvSqrt` | pair-fused exp·trig and sqrt/invsqrt |
 | `tax/kernels/mixed_stencils.hpp` | Cauchy / recurrence stencils for `MixedScheme` | mixed-order (anisotropic) layouts |
-| `tax/kernels/sparse_cauchy.hpp` | sparse Cauchy product / self-product | multiplication on sparse polynomials |
-| `tax/kernels/sparse_subs.hpp` | shared sparse subroutines (add/sub merges, etc.) | sparse arithmetic helpers |
 
 ---
 
@@ -168,20 +166,6 @@ ordering of the flat index.
 
 ---
 
-## Sparse Cauchy
-
-`sparse_cauchy` exploits the parallel-sorted-vector representation of
-`storage::Sparse`. For inputs with `nnz_a` and `nnz_b` nonzeros, the kernel
-enumerates pairs in roughly $\mathcal{O}(\text{nnz}_a \cdot \text{nnz}_b)$
-operations (rather than the dense $\mathcal{O}(\binom{N+M}{M}^2)$) and
-inserts each contribution into a result buffer keyed by flat index. The result
-is materialised into a sorted-index representation at the end.
-
-Sparse add/sub uses the standard two-pointer merge over the sorted index
-arrays — $\mathcal{O}(\text{nnz}_a + \text{nnz}_b)$.
-
----
-
 ## Tests as the canonical executable spec
 
 Every kernel has a paired test in `tests/kernels/`:
@@ -191,7 +175,6 @@ Every kernel has a paired test in `tests/kernels/`:
 | `test_cauchy_dense.cpp`         | Dense `cauchy` against a direct convolution baseline |
 | `test_cauchy_unroll_diff.cpp`   | Unrolled vs non-unrolled univariate Cauchy agree |
 | `test_cauchy_stencil_diff.cpp`  | Stencil vs non-stencil multivariate Cauchy agree |
-| `test_sparse_cauchy.cpp`        | Sparse Cauchy against the Dense Cauchy reference |
 
 Treat these tests as the canonical executable specification: when in doubt
 about a recurrence's expected behavior, they show inputs and the exact

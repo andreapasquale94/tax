@@ -8,7 +8,6 @@
 #include <tax/core/named.hpp>
 #include <tax/core/promote.hpp>
 #include <tax/core/storage/dense.hpp>
-#include <tax/core/storage/sparse.hpp>
 #include <tax/core/taylor_expansion.hpp>
 #include <tax/io/series.hpp>
 #include <tax/la.hpp>

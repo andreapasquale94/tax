@@ -13,9 +13,9 @@ for `MixedTE` — the scheme is deduced from the type.
 
 ```cpp
 namespace Eigen {
-    template <typename T, typename Scheme, typename Storage>
-    struct NumTraits<tax::TaylorExpansion<T, Scheme, Storage>> : NumTraits<T> {
-        using Self = tax::TaylorExpansion<T, Scheme, Storage>;
+    template <typename T, typename Scheme>
+    struct NumTraits<tax::TaylorExpansion<T, Scheme>> : NumTraits<T> {
+        using Self = tax::TaylorExpansion<T, Scheme>;
         using Real = Self;
         using NonInteger = Self;
         using Nested = Self;

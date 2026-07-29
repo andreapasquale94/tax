@@ -128,7 +128,7 @@ class MixedTaylorExpansion
     static constexpr int vars_v = detail::TotalDim< axis_list >::value;
 
     /// Underlying anonymous dense expansion type (MixedScheme backing).
-    using Inner = TaylorExpansion< T, detail::AxesToMixedScheme_t< Axes... >, storage::Dense >;
+    using Inner = TaylorExpansion< T, detail::AxesToMixedScheme_t< Axes... > >;
     using Input = typename Inner::Input;
 
     // Mirror the underlying storage traits.

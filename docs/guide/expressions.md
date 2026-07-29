@@ -43,12 +43,6 @@ there propagates the full Taylor series in one pass.
     auto& y = v(1);
     ```
 
-=== "Sparse"
-
-    ```cpp
-    auto x = tax::STE<5>::variable(1.0);   // identical factories, sparse storage
-    ```
-
 The per-coordinate index can also be chosen at runtime when it is not known at
 compile time:
 

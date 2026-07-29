@@ -51,7 +51,7 @@ pack by hand (a `static_assert` enforces canonical order).
 | `order_v`      | `int` | Truncation order $N$ |
 | `scalar_type`  | type alias | `T` |
 | `axis_list`    | type alias | Internal `TypeList<Axes...>` |
-| `Inner`        | type alias | Underlying `TaylorExpansion<T, N, vars_v, storage::Dense>` |
+| `Inner`        | type alias | Underlying `TaylorExpansion<T, IsotropicScheme<N, vars_v>>` |
 | `Input`        | type alias | `Inner::Input` — expansion-point / displacement vector |
 | `nCoefficients`| `std::size_t` | `Inner::nCoefficients` |
 

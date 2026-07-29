@@ -16,9 +16,9 @@ The headline ideas:
    sees through the storage container, the recurrences, and the Eigen matrix
    wrappers because none of them allocate at runtime.
 
-2. **Storage policy.** A single class template is partial-specialised on
-   `storage::Dense` vs `storage::Sparse`. The two share the kernel surface and
-   differ only in how coefficients are stored and how the surface is wired.
+2. **Flat dense storage.** Coefficients sit in one `std::array` in
+   graded-lexicographic order, so the kernels address them by flat index and
+   the contiguous degree blocks fall out of the layout for free.
 
 3. **Eager operators, hot-path kernels.** Free-function operators (`+`, `*`,
    `sin`, …) materialise into a fresh `TaylorExpansion` by calling a single

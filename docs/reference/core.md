@@ -3,8 +3,8 @@
 Complete reference for the core **tax** types, constructors, accessors,
 operators, and mathematical functions.
 
-All names live in `namespace tax` unless noted; storage tags live in
-`namespace tax::storage`.
+All names live in `namespace tax` unless noted; the coefficient container
+lives in `namespace tax::storage`.
 
 ---
 
@@ -13,9 +13,7 @@ All names live in `namespace tax` unless noted; storage tags live in
 ```cpp
 namespace tax {
 
-template <typename T,
-          typename Scheme,
-          typename Storage = storage::Dense>
+template <typename T, typename Scheme>
     requires IndexScheme<Scheme>
 class TaylorExpansion;
 
@@ -26,7 +24,7 @@ class TaylorExpansion;
 monomial set. Two schemes ship today:
 
 - **`IsotropicScheme<N, M>`** — classic total-degree-$\le N$ graded-lex layout
-  over $M$ variables. This is the `TE<N,M>` / `STE<N,M>` form.
+  over $M$ variables. This is the `TE<N,M>` form.
 - **`MixedScheme<Group<Dim,Order>...>`** — anisotropic per-axis order caps
   (a product of per-group simplices). This is the `MixedTE<Group<Dim,Order>...>`
   form. See [Named & Mixed-Order Expansions](../guide/named.md#anisotropic-axes-per-axis-orders).
@@ -40,22 +38,18 @@ isotropic form; they apply equally to any scheme via template deduction.
 |---|---|
 | `T`       | Scalar coefficient type — must satisfy `tax::Scalar` (`std::floating_point`) |
 | `Scheme`  | Index scheme — must satisfy `IndexScheme`; typically `IsotropicScheme<N,M>` or `MixedScheme<...>` |
-| `Storage` | Storage policy: `tax::storage::Dense` (default) or `tax::storage::Sparse` |
 
 ### Convenience aliases
 
 ```cpp
 template <int N, int M = 1>
-using TE  = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Dense>;
+using TE  = TaylorExpansion<double, IsotropicScheme<N,M>>;
 
 template <int N, int M>
-using TEn = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Dense>;
-
-template <int N, int M = 1>
-using STE = TaylorExpansion<double, IsotropicScheme<N,M>, storage::Sparse>;
+using TEn = TaylorExpansion<double, IsotropicScheme<N,M>>;
 
 template <typename... Groups>   // each Group = Group<Dim, Order>
-using MixedTE = TaylorExpansion<double, MixedScheme<Groups...>, storage::Dense>;
+using MixedTE = TaylorExpansion<double, MixedScheme<Groups...>>;
 ```
 
 ### Compile-time members
@@ -125,15 +119,6 @@ free function `tax::variables<TE>(x0)` from
 //   Usage: f.coeff<2, 1>()  → coefficient of δx₁²·δx₂
 template <int... Alpha>
 [[nodiscard]] constexpr T coeff() const noexcept;
-```
-
-Dense and Sparse expose the same shape. Sparse additionally exposes:
-
-```cpp
-[[nodiscard]] std::size_t nnz() const noexcept;                              // # nonzeros
-[[nodiscard]] std::span<const storage::flat_index_t> support() const;        // flat indices
-[[nodiscard]] std::span<const T>                     values()  const;        // values
-[[nodiscard]] auto dense() const noexcept;                                   // → Dense conversion
 ```
 
 ---
@@ -212,8 +197,8 @@ Vector-valued counterparts (Jacobian of a vector function) live in
 ## Arithmetic operators
 
 All binary arithmetic operators are free functions defined for any combination
-of TE × TE and TE × scalar. They are eager for both Dense and Sparse storage:
-each operator materialises a fresh `TaylorExpansion` by a single kernel pass
+of TE × TE and TE × scalar. They are eager: each operator materialises a
+fresh `TaylorExpansion` by a single kernel pass
 (there is no lazy expression-template layer).
 
 ```cpp
@@ -281,13 +266,12 @@ See [Recurrence Relations](../internals/recurrences.md#shared-recurrence-drivers
 
 ## Binary math functions
 
-Only integer `pow(f, int n)` is `constexpr` (both Dense and Sparse — the
-sparse overload is `constexpr`-inert but usable at runtime). The real-exponent
-`pow`, the Taylor-valued and scalar-base `pow`, `halfPow<K>`, `invSqrtPow<K>`,
-and `atan2` seed with a libm call and are **runtime-only**.
+Only integer `pow(f, int n)` is `constexpr`. The real-exponent `pow`, the
+Taylor-valued and scalar-base `pow`, `halfPow<K>`, `invSqrtPow<K>`, and
+`atan2` seed with a libm call and are **runtime-only**.
 
 ```cpp
-// Integer power via binary exponentiation (Dense and Sparse) — constexpr.
+// Integer power via binary exponentiation — constexpr.
 //   Requires f_0 != 0 only when n < 0 (reciprocal path).
 [[nodiscard]] constexpr TaylorExpansion<T, N, M> pow(const TaylorExpansion<T, N, M>& f, int n);
 

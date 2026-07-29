@@ -39,8 +39,7 @@ this page is the how-to.
 | Jacobian of a vector TE | `tax::jacobian(F)` |
 | Local map inverse | `tax::invert(F)` |
 
-All helpers are free functions in `namespace tax` and work uniformly with
-Dense and Sparse TE scalars.
+All helpers are free functions in `namespace tax`.
 
 ---
 
@@ -53,7 +52,8 @@ algorithms when working with TE-valued matrices.
 
 You can use any Eigen routine that does not require additional traits
 (determinant via `FullPivLU`, dense matrix products, `.norm()` on a vector,
-fixed-size linear solves). Sparse-matrix routines are not (yet) wired up.
+fixed-size linear solves). Eigen's sparse-matrix routines are not (yet)
+wired up.
 
 ---
 

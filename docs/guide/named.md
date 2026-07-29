@@ -189,8 +189,6 @@ auto f = sin(x * ME::variable<1>(p)) + exp(x);   // 5 × 4 = 20 coefficients
 - **Box, not joint simplex.** A monomial is kept iff every group's block degree
   is within that group's cap; there is no joint total-degree constraint across
   groups. A joint cap is a planned follow-up, not part of the API today.
-- **Dense storage only.** Sparse storage (`STE<N, M>`) is defined for the
-  isotropic scheme only.
 - **Multi-dimensional axes truncate by total degree *within* the axis.** A
   `Group<3, 4>` keeps monomials whose total degree across its three variables is
   ≤ 4; the per-axis cap operates *across* groups, not *within* one group.

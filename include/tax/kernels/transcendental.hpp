@@ -167,10 +167,7 @@ void seriesErf( std::array< T, Scheme::nCoeff >& out,
 {
     using std::erf;
     constexpr std::size_t S = Scheme::nCoeff;
-    // Name the constant in the underlying real scalar so vectorised coefficient
-    // types (whose lanes are floating-point) work too; broadcast into T.
-    using R = real_scalar_t< T >;
-    const T two_over_sqrtpi = T( R{ 2 } * std::numbers::inv_sqrtpi_v< R > );
+    const T two_over_sqrtpi = T{ 2 } * std::numbers::inv_sqrtpi_v< T >;
 
     // h = (2/sqrt(pi)) * exp(-a^2)
     std::array< T, S > asq{}, h{};

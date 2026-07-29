@@ -25,16 +25,16 @@ template < int... Alpha, typename Derived >
     return out;
 }
 
-template < typename T, typename Scheme, typename S >
+template < typename T, typename Scheme >
 [[nodiscard]] Eigen::Matrix< T, Scheme::vars, 1 > gradient(
-    const TaylorExpansion< T, Scheme, S >& f ) noexcept
+    const TaylorExpansion< T, Scheme >& f ) noexcept
 {
     return f.gradient();
 }
 
-template < typename T, typename Scheme, typename S >
+template < typename T, typename Scheme >
 [[nodiscard]] Eigen::Matrix< T, Scheme::vars, Scheme::vars > hessian(
-    const TaylorExpansion< T, Scheme, S >& f ) noexcept
+    const TaylorExpansion< T, Scheme >& f ) noexcept
 {
     return f.hessian();
 }

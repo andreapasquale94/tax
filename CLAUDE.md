@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N. It provides dense and sparse storage, *named* expansions (type-level variable axes) including *mixed-order* axes and Eigen integration (`tax::la`).
+**tax** is a header-only C++23 library for **Truncated Algebraic eXpansions (TAX)** — truncated multivariate Taylor polynomials that propagate complete Taylor series through arbitrary expressions. In a single evaluation pass, it yields function values and all partial derivatives up to order N. It provides allocation-free dense storage, *named* expansions (type-level variable axes) including *mixed-order* axes and Eigen integration (`tax::la`).
 
 > **Note:** adaptive ODE integration (`tax::ode`) and Automatic Domain Splitting (`tax::ads`) are no longer part of this repository — they were split out, unchanged, into a separate companion plugin built on top of `tax` (see the README). Do not look for `include/tax/ode` or `include/tax/ads` here.
 
@@ -26,11 +26,11 @@ tax/
 │   │   ├── enumeration.hpp   #   forEachMonomial / forEachSubIndex
 │   │   ├── scheme.hpp        #   index-scheme facade; scheme/{concept,isotropic,mixed}.hpp
 │   │   │                     #   IsotropicScheme<N,M> (single order) + MixedScheme (per-axis)
-│   │   ├── taylor_expansion.hpp  # TaylorExpansion<T, Scheme, Storage>: Dense + Sparse
+│   │   ├── taylor_expansion.hpp  # TaylorExpansion<T, Scheme>: the dense expansion type
 │   │   ├── named.hpp         #   NamedTaylorExpansion<T,N,Axes...>: single-order named axes
 │   │   ├── mixed_named.hpp   #   MixedTaylorExpansion<T,Axes...>: per-axis-order named axes
 │   │   ├── promote.hpp       #   promote_t<Ts...>: common (union-of-axes) expansion type
-│   │   └── storage/          #   Dense (std::array) and Sparse (sorted idx/val) policies
+│   │   └── storage/          #   DenseContainer (std::array) coefficient container
 │   ├── kernels/              # Series recurrence kernels (tax::detail::kernels)
 │   │   ├── cauchy.hpp        #   cauchyProduct dispatch (+ in-header config macros)
 │   │   ├── cauchy_unroll.hpp #   fully unrolled univariate (M == 1) product
@@ -41,11 +41,9 @@ tax/
 │   │   │                     #   seriesDerivProduct), square/cube, reciprocal, sqrt, cbrt, pow
 │   │   ├── trigonometric.hpp #   sin, cos, tan, asin, acos, atan
 │   │   ├── transcendental.hpp#   exp, log, sinh/cosh/tanh (+ fused sinhCosh) + inverses, erf
-│   │   ├── fused.hpp         #   pair-fused kernels: expSinCos (exp·trig), sqrtInvSqrt
-│   │   ├── sparse_cauchy.hpp #   sparse Cauchy product / self-product
-│   │   └── sparse_subs.hpp   #   sparse substitution helpers
+│   │   └── fused.hpp         #   pair-fused kernels: expSinCos (exp·trig), sqrtInvSqrt
 │   ├── operators/            # Free-function operator surface over the kernels
-│   │   ├── arithmetic.hpp        #   +, -, *, /, compound assignment (dense + sparse)
+│   │   ├── arithmetic.hpp        #   +, -, *, /, compound assignment
 │   │   ├── math_unary.hpp        #   sin, exp, sqrt, square, …
 │   │   ├── math_binary.hpp       #   pow, pow<N>/pow<N,M>, halfPow<K>/invSqrtPow<K>, atan2, …
 │   │   ├── math_fused.hpp        #   sinCos, sinhCosh, sqrtInvSqrt, expSin/expCos/expSinCos
@@ -67,9 +65,8 @@ tax/
 │   └── io/series.hpp         # human-readable streaming: operator<<, series(), to_string()
 ├── tests/                    # Google Test suite
 │   ├── core/                 #   ctor/accessors, multi-index, enumeration, deriv/integ, named
-│   ├── kernels/              #   dense/unroll/stencil/sparse Cauchy verification
+│   ├── kernels/              #   dense/unroll/stencil Cauchy verification
 │   ├── operators/            #   one file per math-function family
-│   ├── sparse/               #   sparse ctor/arith/conversion/substitution
 │   ├── mixed/                #   MixedScheme + mixed-order named expansions
 │   ├── eigen/                #   tax::la helpers (gradient, jacobian, invert, named, …)
 │   ├── io/                   #   series / streaming
@@ -125,28 +122,23 @@ pre-define either macro to `0`, but the value must be identical project-wide.
 ### The Main Type
 
 ```cpp
-tax::TaylorExpansion<T, Scheme, Storage = tax::storage::Dense>
+tax::TaylorExpansion<T, Scheme>
 // T       = coefficient type (double or float)
 // Scheme  = index scheme: IsotropicScheme<N,M> (one order N over M vars)
 //           or MixedScheme<...> (per-axis orders); fixes the monomial layout
-// Storage = storage::Dense (std::array) or storage::Sparse (sorted idx/val vectors)
 ```
 
 Most code uses the aliases rather than naming a `Scheme` directly (all `double`-valued unless noted):
 ```cpp
-tax::TE<N, M = 1>         // dense
-tax::TEn<N, M>            // dense, explicit multivariate spelling
-tax::STE<N, M = 1>        // sparse
+tax::TE<N, M = 1>         // plain (integer-indexed) expansion
+tax::TEn<N, M>            // explicit multivariate spelling
 tax::NE<N, Axes...>       // named (single order)          — see Named Expansions
 tax::MTE<Axes...>         // mixed-order named             — see Named Expansions
 ```
 
-- **Dense:** `std::array<T, numMonomials(N, M)>` coefficients in graded-lex
-  order, full `constexpr` surface, no heap. This is the hot path and the basis
-  for named expansions.
-- **Sparse:** two parallel sorted vectors of (flat-index, value) pairs.
-  Element access is O(log nnz); arithmetic is a sorted merge walk. Both
-  share the same recurrence relations via the kernel layer.
+Coefficients are a `std::array<T, numMonomials(N, M)>` in graded-lex order:
+full `constexpr` surface, no heap. Named and mixed-order expansions are thin
+wrappers over the same array.
 
 ### Creating Variables
 
@@ -240,9 +232,7 @@ sqrt, ...) are driven by one shared decomposition table:
 kernel the precomputed (flatIndex(beta), flatIndex(gamma), |beta|) rows
 per output monomial; only the recurrence weight stays in the kernel.
 Constant evaluation (and `TAX_USE_STENCIL=0`) enumerates the same rows
-on the fly — bit-identical results. Sparse variants live in
-`sparse_cauchy.hpp` and reuse a `thread_local` scratch accumulator (no
-per-call heap allocation).
+on the fly — bit-identical results.
 
 When adding a new math function: implement the recurrence in the right
 kernel file, expose it via `operators/math_unary.hpp` or `math_binary.hpp`,
@@ -340,7 +330,7 @@ like `NE`. Key files: `core/mixed_named.hpp`, `kernels/mixed_stencils.hpp`,
 | Free functions & methods | `camelCase` | `variable()`, `flatIndex()`, `seriesReciprocal()`, `deriv()`, `popFront()` |
 | Local variables | `snake_case` | `n_coeff`, `dx`, `half_width` |
 | Namespaces | `lowercase` | `tax`, `tax::detail`, `tax::named`, `tax::la` |
-| Type aliases | Short uppercase | `TE<N, M>`, `TEn<N, M>`, `STE<N, M>` |
+| Type aliases | Short uppercase | `TE<N, M>`, `TEn<N, M>`, `NE<N, Axes...>` |
 
 ### C++ Patterns
 
@@ -349,8 +339,8 @@ like `NE`. Key files: `core/mixed_named.hpp`, `kernels/mixed_stencils.hpp`,
   statics (stencil) must keep a `constexpr`-safe fallback behind `if !consteval`
 - **`noexcept` on all operations** (exception: methods that `throw`, e.g.
   runtime-index `deriv(int)`)
-- **No heap allocation in core:** `std::array` for dense storage;
-  `std::vector` is acceptable in Sparse storage only
+- **No heap allocation anywhere in the library:** coefficients are always a
+  `std::array`
 - **Concepts over SFINAE:** `tax::Scalar`, `TaylorPolynomial`,
   `DensePolynomial`
 - **`if constexpr`** for univariate (M == 1) vs multivariate branches
@@ -418,8 +408,7 @@ with `-DTAX_BUILD_REGRESSIONS=ON`.
 
 ## Common Pitfalls
 
-- **Do not heap-allocate in core:** dense `TaylorExpansion` must remain
-  allocation-free; `std::vector` belongs to Sparse storage only
+- **Do not heap-allocate:** `TaylorExpansion` must remain allocation-free
 - **Do not break `constexpr`:** all index arithmetic stays compile-time; if a
   fast path needs runtime statics, guard it with `if !consteval` and keep the
   loop kernel as the constant-evaluation fallback
@@ -427,9 +416,6 @@ with `-DTAX_BUILD_REGRESSIONS=ON`.
   relied on everywhere — including contiguous-degree-block tricks — never change it
 - **Kernel config macros are in-header:** never re-introduce
   `TAX_USE_UNROLL`/`TAX_USE_STENCIL` as build-system definitions (ODR hazard)
-- **Sparse invariants:** the idx/val vectors are sorted and deduplicated;
-  kernels and operators that append directly (`rawIndices()/rawValues()`)
-  must emit in ascending flat-index order with no zeros
 - **M = 0 is invalid:** always assert or `static_assert` M >= 1
 - **Include the umbrella header:** `<tax/tax.hpp>` (core + named + mixed + la) —
   not individual sub-headers

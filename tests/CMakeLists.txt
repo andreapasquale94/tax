@@ -46,11 +46,6 @@ tax_add_test(test_mixed_te SOURCES mixed/test_mixed_te.cpp)
 tax_add_test(test_mixed_la SOURCES mixed/test_mixed_la.cpp)
 tax_add_test(test_mixed_named SOURCES mixed/test_mixed_named.cpp)
 tax_add_test(test_mixed_named_la SOURCES mixed/test_mixed_named_la.cpp)
-tax_add_test(test_sparse_ctor       SOURCES sparse/test_sparse_ctor.cpp)
-tax_add_test(test_sparse_conversion SOURCES sparse/test_sparse_conversion.cpp)
-tax_add_test(test_sparse_arith      SOURCES sparse/test_sparse_arith.cpp)
-tax_add_test(test_sparse_cauchy     SOURCES kernels/test_sparse_cauchy.cpp)
-tax_add_test(test_sparse_subs       SOURCES sparse/test_sparse_subs.cpp)
 
 # Eigen integration — slice 11
 tax_add_test(test_eigen_numtraits   SOURCES eigen/test_eigen_numtraits.cpp)

@@ -20,34 +20,20 @@ up to order \(N\) in a single evaluation pass.
 
 ## Features
 
-- **Compile-time fixed shape** — `TaylorExpansion<T, Scheme, Storage>`; the
-  `Scheme` fixes the truncation order(s) and variable count at compile time, and
-  `Storage` is `Dense` (stack `std::array`) or `Sparse` (sorted-index map). Both
-  storages share the kernel layer and agree numerically.
-- **Convenience aliases** — `TE<N, M=1>` / `TEn<N, M>` (dense), `STE<N, M=1>`
-  (sparse), `NE<N, Axes...>` (named), `MTE<Axes...>` (mixed-order named).
+- **Compile-time fixed shape** — `TaylorExpansion<T, Scheme>`; the `Scheme`
+  fixes the truncation order(s) and variable count at compile time, and the
+  coefficients live in a stack `std::array`.
+- **Convenience aliases** — `TE<N, M=1>` / `TEn<N, M>`, `NE<N, Axes...>`
+  (named), `MTE<Axes...>` (mixed-order named).
 - **Comprehensive math** — arithmetic, trigonometric, hyperbolic,
   transcendental, square/cubic root, reciprocal, integer & real powers,
   half-integer powers (`halfPow<K>` for x^(K/2), `invSqrtPow<K>` for
   x^(-K/2) — the 1/r^3 gravity kernel is `invSqrtPow<3>(r2)`), `atan2`,
   `erf`.
-- **Fused kernels** — `sinCos`, `sinhCosh`, `sqrtInvSqrt`, `expSin`, `expCos`,
-  `expSinCos` compute coupled pairs in a single recurrence pass:
-  `expCos(v, u)` is ~2x faster than `exp(v) * cos(u)`, and the pair-returning
-  forms give both results for the price of one.
-- **Powers & vector norms** — compile-time `pow<N>` / rational `pow<N, M>`
-  (= `x^(N/M)`, reduced to the cheapest kernel), half-integer `halfPow<K>` /
-  `invSqrtPow<K>`, and `norm<P, Q>` of a vector of expansions (`norm<2,-3>` is
-  the `1/|r|³` gravity kernel, ~1.6x faster than taking the norm and
-  re-raising).
 - **Vector algebra** — `dot` (vector·vector and matrix·vector, the latter also
   taking a constant real linear map), `cross`, `angle`, `unitvec`,
   `unitcross`, `projvec`, `projplane` over Eigen vectors of expansions; results
   are full Taylor series (so `gradient(angle(a, b))` is meaningful).
-- **constexpr polynomial surface** — arithmetic, `square`/`cube`/`reciprocal`,
-  integer powers, division, and the differential/evaluation accessors are
-  `constexpr` and run in constant evaluation. (Transcendentals seed their
-  recurrence with a libm call, so they are runtime-only.)
 - **Direct derivative access** — coefficients, partial derivatives at the
   expansion point, full gradient / Hessian / Jacobian.
 - **Eigen integration** — `NumTraits` specialisation plus helpers for
@@ -85,7 +71,7 @@ f_\alpha = \frac{1}{\alpha!}\,
 $$
 
 The $\binom{N+M}{M}$ coefficients are laid out in graded-lexicographic order in a
-`std::array` (dense) or a sorted index/value map (sparse). Every operation is a
+`std::array`. Every operation is a
 **degree-by-degree recurrence relation** that writes the result coefficients
 directly, so one evaluation pass yields the value *and* all derivatives up to
 order $N$. For example, multiplication is the truncated Cauchy product, and the
@@ -151,14 +137,6 @@ int main() {
     f.derivative<1, 0>();   // ∂f/∂x   = cos(3)
     f.derivative<1, 1>();   // ∂²f/∂x∂y = -sin(3)
 }
-```
-
-### Sparse storage
-
-```cpp
-auto x = tax::STE<5>::variable(1.0);     // same API, sparse storage
-tax::STE<5> f = x * x + 2.0 * x - 1.0;   // arithmetic merges sorted nonzeros
-auto g = tax::exp(x.dense());            // transcendental math runs on the dense form
 ```
 
 ### Eigen integration

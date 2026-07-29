@@ -18,15 +18,15 @@ operators       │ +, −, ·, /, sin, exp, log, sqrt, …      │  user-facin
                 ┌────────────────▼────────────────────────┐
 kernels         │ degree-by-degree recurrences            │  computational core
                 │ cauchy, algebra, trig, transcendental,  │
-                │ sparse_cauchy, sparse_subs              │
+                │ fused, recurrence/mixed stencils        │
                 └────────────────┬────────────────────────┘
                                  │
                 ┌────────────────▼────────────────────────┐
-core            │ TaylorExpansion<T,Scheme,Storage>       │  data type
+core            │ TaylorExpansion<T, Scheme>              │  data type
                 │ IndexScheme: IsotropicScheme<N,M>       │
                 │           / MixedScheme<Groups...>      │
                 │ MultiIndex, enumeration, concepts       │
-                │ storage::Dense, storage::Sparse         │
+                │ storage::DenseContainer                 │
                 └─────────────────────────────────────────┘
 ```
 
@@ -34,37 +34,31 @@ core            │ TaylorExpansion<T,Scheme,Storage>       │  data type
 
 ## Core data type
 
-`tax::TaylorExpansion<T, Scheme, Storage>` is parameterized by an `IndexScheme`
-(constrained via `requires IndexScheme<Scheme>`) and partial-specialised on the
-storage tag. The scheme encodes the monomial index set: `IsotropicScheme<N,M>`
-gives the classic total-degree-$\le N$ graded-lex layout (exposed as `TE<N,M>`),
-while `MixedScheme<Groups...>` supports anisotropic per-axis order caps
-(exposed as `MixedTE<Group<Dim,Order>...>`). The kernels are scheme-generic.
+`tax::TaylorExpansion<T, Scheme>` is parameterized by an `IndexScheme`
+(constrained via `requires IndexScheme<Scheme>`). The scheme encodes the
+monomial index set: `IsotropicScheme<N,M>` gives the classic
+total-degree-$\le N$ graded-lex layout (exposed as `TE<N,M>`), while
+`MixedScheme<Groups...>` supports anisotropic per-axis order caps (exposed as
+`MixedTE<Group<Dim,Order>...>`). The kernels are scheme-generic.
 
-- `storage::Dense` keeps a `std::array<T, C(N+M, M)>` — stack-resident, no heap,
-  `constexpr`-friendly accessors.
-- `storage::Sparse` keeps two parallel sorted vectors of flat-index / value
-  pairs. `nnz()` returns the current support size.
-
-Both expose the same public API (`value`, `coeff`, `derivative`, `eval`,
-`deriv`, `integ`). `MultiIndex<M>` and the graded-lexicographic flat indexing
-in `tax/core/enumeration.hpp` are storage-agnostic.
+Coefficients live in `storage::DenseContainer` — a `std::array<T, C(N+M, M)>`,
+stack-resident, no heap, with `constexpr`-friendly accessors. `MultiIndex<M>`
+and the graded-lexicographic flat indexing in `tax/core/enumeration.hpp` work
+directly on that flat layout.
 
 ---
 
 ## Kernels
 
 Every mathematical recurrence lives in `tax/kernels/`. A kernel takes raw
-coefficient buffers — `T*` for dense, sorted index/value pairs for sparse —
-plus the compile-time shape $(N, M)$ and writes directly into the result.
+coefficient buffers plus the compile-time shape $(N, M)$ and writes directly
+into the result.
 The kernel layer is the one place where the recurrences of
 [Recurrence Relations](recurrences.md) live in code.
 
 Univariate vs multivariate is dispatched by `if constexpr (M == 1)` — the
 univariate path runs scalar loops over flat indices, the multivariate path
-routes through `forEachSubIndex<M>(alpha, lo, hi, callback)`. Sparse uses its
-own `sparse_cauchy` and `sparse_subs` kernels that exploit the sorted-index
-representation for two-pointer merges.
+routes through `forEachSubIndex<M>(alpha, lo, hi, callback)`.
 
 See [Kernels & Recurrences](kernels.md) for the file-by-file map.
 
@@ -118,8 +112,8 @@ control-flow predicates that branch on a representative value.
    `TaylorExpansion` accessors and route through Eigen shape templates so they
    work uniformly with static-size, dynamic-size, and mixed expressions.
 
-The integration is symmetric: any Eigen routine that doesn't require sparse
-matrix traits accepts `TE` as a scalar; any user-written generic lambda on
+The integration is symmetric: any Eigen routine that doesn't require
+sparse-matrix traits accepts `TE` as a scalar; any user-written generic lambda on
 Eigen vectors can be re-instantiated on `TE`-valued state without source
 changes. This is exactly what downstream Taylor-based solvers exploit — they
 compose a user function on `TE`-valued state to obtain Taylor coefficients via

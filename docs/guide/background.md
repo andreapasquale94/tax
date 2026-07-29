@@ -42,10 +42,9 @@ $$
 
 Coefficients are stored using **graded lexicographic (grlex) ordering**:
 monomials are grouped by total degree $|\alpha|$, and within each degree group
-they are sorted lexicographically by the exponent vector $\alpha$. For dense
-storage the container is a `std::array<T, S>`; for sparse storage only the
-nonzero coefficients are stored alongside their flat indices (see
-[Dense vs Sparse Storage](storage.md)).
+they are sorted lexicographically by the exponent vector $\alpha$. The
+container is a `std::array<T, S>` indexed by that flat index (see
+[Coefficient Storage](storage.md)).
 
 **Example for $M = 2$, $N = 2$:**
 

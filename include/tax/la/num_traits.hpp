@@ -10,10 +10,10 @@
 namespace Eigen
 {
 
-template < typename T, typename Scheme, typename Storage >
-struct NumTraits< tax::TaylorExpansion< T, Scheme, Storage > > : NumTraits< T >
+template < typename T, typename Scheme >
+struct NumTraits< tax::TaylorExpansion< T, Scheme > > : NumTraits< T >
 {
-    using Self = tax::TaylorExpansion< T, Scheme, Storage >;
+    using Self = tax::TaylorExpansion< T, Scheme >;
     using Real = Self;
     using NonInteger = Self;
     using Nested = Self;
@@ -53,14 +53,13 @@ namespace tax::la::detail
 template < typename >
 struct te_traits;
 
-template < typename T, typename Scheme, typename S >
-struct te_traits< TaylorExpansion< T, Scheme, S > >
+template < typename T, typename Scheme >
+struct te_traits< TaylorExpansion< T, Scheme > >
 {
     using scalar_type = T;
     static constexpr int order_v = Scheme::order;
     static constexpr int vars_v = Scheme::vars;
     using scheme_t = Scheme;
-    using storage_t = S;
 };
 
 template < typename T >
@@ -68,8 +67,8 @@ struct is_te : std::false_type
 {
 };
 
-template < typename T, typename Scheme, typename S >
-struct is_te< TaylorExpansion< T, Scheme, S > > : std::true_type
+template < typename T, typename Scheme >
+struct is_te< TaylorExpansion< T, Scheme > > : std::true_type
 {
 };
 
