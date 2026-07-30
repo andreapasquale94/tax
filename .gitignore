@@ -1,5 +1,6 @@
 .vscode
 .claude
+.cache/
 build*/
 site/
 __pycache__/
