@@ -79,6 +79,8 @@ f.eval(0.3);        // sin(0.3) within machine precision
 | `f.derivative<2, 1>()` | $\partial^3 f / \partial x^2 \partial y$ at $x_0$ |
 | `f.eval(dx)` | Horner evaluation of the polynomial at $x_0 + \delta x$ |
 | `tax::jacobian(F, M)` | Eigen Jacobian of a vector function |
+| `tax::toHermite(f)` / `tax::toChebyshev(f)` | monomial-basis coefficients converted to the Hermite / Chebyshev basis |
+| `tax::la::mean(F)` / `covariance(F)` / `correlation(F)` / `skewness(F)` / `excessKurtosis(F)` / `skewnessTensor(F)` / `kurtosisTensor(F)` | statistical moments of a polynomial map (per-component coefficients + full joint tensors), `x ~ N(0, I)` |
 | `tax::MixedTE<Group<Dim,Order>...>` | anisotropic per-axis order caps (see [Named & Mixed-Order expansions](guide/named.md#anisotropic-axes-per-axis-orders)) |
 | `tax::NamedTaylorExpansion<T, N, Axes...>` | TE with named, type-level variables |
 

@@ -355,6 +355,35 @@ a single-output caller should use `sqrt`/`pow`/`invSqrtPow` instead.
 
 ---
 
+## Basis conversion
+
+Free functions in `namespace tax` (header `tax/core/basis/hermite.hpp` /
+`chebyshev.hpp`), for dense, isotropic expansions only. See
+[Guide / Extracting Results](../guide/results.md#basis-conversion) and
+[Internals / Basis Conversion](../internals/basis-conversion.md).
+
+```cpp
+// Coefficients expressed in the (probabilists') Hermite / Chebyshev product
+// basis instead of the monomial basis — same Coeffs<T,N,M> layout, distinct
+// type so they can't be fed into monomial-basis arithmetic by mistake.
+template <typename T, int N, int M>
+struct HermiteCoefficients   { Coeffs<T,N,M> data; /* coeff(alpha), coeff<Alpha...>() */ };
+template <typename T, int N, int M>
+struct ChebyshevCoefficients { Coeffs<T,N,M> data; /* coeff(alpha), coeff<Alpha...>() */ };
+
+template <typename T, int N, int M>
+[[nodiscard]] HermiteCoefficients<T,N,M> toHermite(const TaylorExpansion<T, IsotropicScheme<N,M>, storage::Dense>& f) noexcept;
+template <typename T, int N, int M>
+[[nodiscard]] TaylorExpansion<T, IsotropicScheme<N,M>, storage::Dense> fromHermite(const HermiteCoefficients<T,N,M>& h) noexcept;
+
+template <typename T, int N, int M>
+[[nodiscard]] ChebyshevCoefficients<T,N,M> toChebyshev(const TaylorExpansion<T, IsotropicScheme<N,M>, storage::Dense>& f) noexcept;
+template <typename T, int N, int M>
+[[nodiscard]] TaylorExpansion<T, IsotropicScheme<N,M>, storage::Dense> fromChebyshev(const ChebyshevCoefficients<T,N,M>& c) noexcept;
+```
+
+---
+
 ## Streaming
 
 ```cpp

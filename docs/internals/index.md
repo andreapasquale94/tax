@@ -9,6 +9,8 @@ above the public API that make the library both fast and ergonomic.
 | [Kernels & Recurrences](kernels.md) | Where each mathematical operation is implemented and how |
 | [Recurrence Relations](recurrences.md) | The univariate and multivariate recurrence math for every operation |
 | [Map Inversion](map-inversion.md) | Picard-iteration inversion of polynomial maps (`tax::invert`) |
+| [Basis Conversion](basis-conversion.md) | Monomial ↔ Hermite / Chebyshev basis conversion |
+| [Statistical Moments](moments.md) | Mean, covariance, skewness/kurtosis tensors via Isserlis' theorem |
 
 The headline ideas:
 

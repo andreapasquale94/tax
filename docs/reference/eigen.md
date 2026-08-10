@@ -192,3 +192,76 @@ template <typename Derived>
 ```
 
 The input vector size must equal `TE::vars_v` (statically or at runtime).
+
+---
+
+## Statistical moments
+
+`namespace tax::la`, for dense, isotropic expansions only. Assumes the
+expansion's formal variables are i.i.d. standard normal — see
+[Guide / Eigen Integration](../guide/eigen.md#statistical-moments) and
+[Internals / Statistical Moments](../internals/moments.md). The map dimension
+`D = Derived::SizeAtCompileTime` must be a compile-time constant (a dynamic-size
+input is rejected with a `static_assert`); returns are fixed-size. The rank-3/4
+returns use `Eigen::TensorFixedSize` from `unsupported/Eigen/CXX11/Tensor` and
+are fully symmetric under any index permutation.
+
+!!! note "Opt-in header"
+    These live in `tax/la/moments.hpp`, which is **not** included by the
+    `<tax/tax.hpp>` / `<tax/la.hpp>` umbrellas (it pulls in Eigen's heavy Tensor
+    module). Include it explicitly: `#include <tax/la/moments.hpp>`.
+
+```cpp
+// E[F] — mean of a vector map F(x), x ~ N(0, I) i.i.d.  → fixed-size Eigen vector (D x 1).
+template <typename Derived>
+    requires(/* Derived::Scalar is a dense, isotropic TaylorExpansion */)
+[[nodiscard]] auto mean(const Eigen::MatrixBase<Derived>& F);
+
+// Cov(F_i, F_j) — fixed-size D x D covariance matrix (Eigen::Matrix<T, D, D>).
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto covariance(const Eigen::MatrixBase<Derived>& F);
+
+// Corr(F_i, F_j) = Cov(F_i, F_j) / (sigma_i sigma_j) — fixed-size D x D Pearson
+// correlation matrix with a unit diagonal.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto correlation(const Eigen::MatrixBase<Derived>& F);
+
+// Conversion: covariance matrix -> correlation matrix, R(i,j) = C(i,j)/(sqrt(C_ii) sqrt(C_jj)),
+// unit diagonal. Takes any plain-scalar Eigen matrix; returns the same Eigen shape.
+template <typename Derived>
+    requires(/* Derived::Scalar is a plain arithmetic type */)
+[[nodiscard]] auto correlationFromCovariance(const Eigen::MatrixBase<Derived>& C);
+
+// Per-component (marginal) standardized coefficients — each a fixed-size D x 1
+// Eigen vector:
+//   skewness(F)(i)       = E[(F_i-mu_i)^3] / Var(F_i)^{3/2}   (Fisher skewness)
+//   kurtosis(F)(i)       = E[(F_i-mu_i)^4] / Var(F_i)^2       (Pearson; 3 for a Gaussian)
+//   excessKurtosis(F)(i) = kurtosis(F)(i) - 3                 (0 for a Gaussian)
+template <typename Derived> requires(/* ... */)
+[[nodiscard]] auto skewness(const Eigen::MatrixBase<Derived>& F);
+template <typename Derived> requires(/* ... */)
+[[nodiscard]] auto kurtosis(const Eigen::MatrixBase<Derived>& F);
+template <typename Derived> requires(/* ... */)
+[[nodiscard]] auto excessKurtosis(const Eigen::MatrixBase<Derived>& F);
+
+// S_ijk = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)]
+//   → Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D>>.  Access: skewnessTensor(F)(i, j, k).
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto skewnessTensor(const Eigen::MatrixBase<Derived>& F);
+
+// K_ijkl = E[(F_i-mu_i)(F_j-mu_j)(F_k-mu_k)(F_l-mu_l)]
+//   → Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D, D>>.  Access: kurtosisTensor(F)(i, j, k, l).
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto kurtosisTensor(const Eigen::MatrixBase<Derived>& F);
+
+// kurtosisTensor(F) minus the jointly-Gaussian Isserlis baseline
+// Cov_ij*Cov_kl + Cov_ik*Cov_jl + Cov_il*Cov_jk — a non-Gaussianity measure.
+//   → Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D, D>>.
+template <typename Derived>
+    requires(/* ... */)
+[[nodiscard]] auto excessKurtosisTensor(const Eigen::MatrixBase<Derived>& F);
+```

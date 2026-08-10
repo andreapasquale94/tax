@@ -114,3 +114,65 @@ at $\mathbf y - \mathbf y_0$ and adding $\mathbf x_0$ yourself.
 For the underlying math — the linear/nonlinear split, the fixed-point form, and
 why the Picard iteration terminates at order $N$ — see
 [Internals / Map Inversion](../internals/map-inversion.md).
+
+---
+
+## Statistical moments
+
+`tax::la::mean`, `tax::la::covariance`, `tax::la::skewnessTensor`,
+`tax::la::kurtosisTensor`, and `tax::la::excessKurtosisTensor` extract
+statistical moments of a polynomial map $\mathbf F(\boldsymbol{\delta x})$
+under one assumption: the expansion's formal variables are i.i.d. standard
+normal, $\boldsymbol{\delta x} \sim \mathcal N(\mathbf 0, I)$ — the usual
+differential-algebra convention, where any actual input covariance is folded
+into how you built $\mathbf x_0$ and the variables (e.g. scale through a
+Cholesky factor before calling `tax::la::variables`).
+
+!!! note "Opt-in header"
+    These live in `tax/la/moments.hpp`, which is **not** pulled in by the
+    `<tax/tax.hpp>` umbrella — it depends on Eigen's heavy
+    `unsupported/Eigen/CXX11/Tensor` module. Include it explicitly:
+    `#include <tax/la/moments.hpp>` (in addition to `<tax/tax.hpp>`).
+
+```cpp
+#include <tax/tax.hpp>
+#include <tax/la/moments.hpp>   // opt-in: statistical moments
+
+auto x = tax::TE<4>::variable(0.0);
+Eigen::Matrix<tax::TE<4>, 1, 1> F;
+F(0) = x * x;                                 // chi-square(1)
+
+auto mu   = tax::la::mean(F);                 // [1.0]
+auto cov  = tax::la::covariance(F);           // [[2.0]]
+auto corr = tax::la::correlation(F);          // [[1.0]] (Pearson correlation matrix)
+auto g1   = tax::la::skewness(F);             // per-component γ₁ vector, g1(0) == 2√2
+auto ek   = tax::la::excessKurtosis(F);       // per-component excess-kurtosis vector, ek(0) == 12
+auto skew = tax::la::skewnessTensor(F);       // TensorFixedSize<double,Sizes<1,1,1>>, skew(0,0,0) == 8.0
+auto kurt = tax::la::excessKurtosisTensor(F); // TensorFixedSize<double,Sizes<1,1,1,1>>, kurt(0,0,0,0) == 48.0
+```
+
+`mean` and `covariance` return a fixed-size Eigen vector and matrix.
+`correlation(F)` returns the fixed-size $D \times D$ Pearson correlation matrix
+$\mathrm{Corr}(F_i, F_j) = \mathrm{Cov}(F_i, F_j)/(\sigma_i \sigma_j)$ with a
+unit diagonal; if you already have a covariance matrix, `correlationFromCovariance(C)`
+performs the conversion directly (and works on any plain-scalar Eigen matrix).
+
+For the common **per-component** (marginal) non-Gaussianity coefficients,
+`skewness(F)`, `kurtosis(F)`, and `excessKurtosis(F)` each return a fixed-size
+$D \times 1$ vector of standardized scalars — Fisher skewness
+$\gamma_{1,i} = \mathbb E[(F_i-\mu_i)^3]/\sigma_i^3$, Pearson kurtosis
+$\mathbb E[(F_i-\mu_i)^4]/\sigma_i^4$ (which is $3$ for a Gaussian marginal), and
+its excess $(-3)$ form (which is $0$ for a Gaussian marginal).
+
+For the full **joint** moments, `skewnessTensor`/`kurtosisTensor` return the
+third/fourth joint central-moment tensors as fully-symmetric **fixed-size**
+tensors — `Eigen::TensorFixedSize<T, Eigen::Sizes<D, D, D>>` and `<D, D, D, D>`,
+indexed `S(i,j,k)` and `K(i,j,k,l)` — via Eigen's
+`unsupported/Eigen/CXX11/Tensor` module. `excessKurtosisTensor` subtracts the
+jointly-Gaussian Isserlis baseline from `kurtosisTensor`. In every case the map
+dimension $D$ must be known at compile time (a fixed-size Eigen vector, e.g.
+from `tax::la::variables`). These functions are Hermite/Chebyshev conversion's
+motivating use case (see [Basis Conversion](results.md#basis-conversion)); for
+the full derivation and references (Isserlis' theorem, the differential-algebra
+whitening convention) see
+[Internals / Statistical Moments](../internals/moments.md).
